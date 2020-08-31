@@ -90,6 +90,11 @@ func (r *Reader) DictionaryIterator(field string, automaton segment.Automaton, s
 	return r.reader.DictionaryIterator(field, automaton, start, end)
 }
 
+func (r *Reader) Backup(path string, cancel chan struct{}) error {
+	dir := index.NewFileSystemDirectory(path)
+	return r.reader.Backup(dir, cancel)
+}
+
 func (r *Reader) Close() error {
 	return r.reader.Close()
 }

@@ -1185,3 +1185,68 @@ func TestBatchRaceBug1149(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestBackup(t *testing.T) {
+	tmpIndexPath := createTmpIndexPath(t)
+	defer cleanupTmpIndexPath(t, tmpIndexPath)
+
+	config := DefaultConfig(tmpIndexPath)
+	indexWriter, err := OpenWriter(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	docA := NewDocument("a").
+		AddField(NewTextField("name", "marty").StoreValue()).
+		AddField(NewTextField("desc", "gophercon india")).
+		AddField(NewCompositeFieldExcluding("_all", nil))
+	err = indexWriter.Update(Identifier("a"), docA)
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = indexWriter.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	snapshotReader, err := OpenSnapshotReader(config)
+	if err != nil {
+		t.Fatalf("error opening snapshot reader: %v", err)
+	}
+
+	tmpBackupPath := createTmpIndexPath(t)
+	defer cleanupTmpIndexPath(t, tmpBackupPath)
+
+	err = snapshotReader.Backup(tmpBackupPath, nil)
+	if err != nil {
+		t.Fatalf("error backing up index: %v", err)
+	}
+
+	err = snapshotReader.Close()
+	if err != nil {
+		t.Fatalf("error closing snapshot reader: %v", err)
+	}
+
+	// open up the backup
+	config = DefaultConfig(tmpBackupPath)
+	snapshotReader, err = OpenSnapshotReader(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	q := NewMatchQuery("marty").SetField("name")
+	req := NewTopNSearch(10, q).WithStandardAggregations()
+	dmi, err := snapshotReader.Search(context.Background(), req)
+	if err != nil {
+		t.Fatalf("error searching: %v", err)
+	}
+	if dmi.Aggregations().Count() != 1 {
+		t.Errorf("expected 1 match, got %d", dmi.Aggregations().Count())
+	}
+
+	err = snapshotReader.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+}

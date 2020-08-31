@@ -649,6 +649,23 @@ func (i *Snapshot) DocumentValueReader(fields []string) (
 	return &documentValueReader{i: i, fields: fields, currSegmentIndex: -1}, nil
 }
 
+func (i *Snapshot) Backup(remote Directory, cancel chan struct{}) error {
+	// first copy all the segments
+	for j := range i.segment {
+		err := remote.Persist(ItemKindSegment, i.segment[j].id, i.segment[j].segment, cancel)
+		if err != nil {
+			return fmt.Errorf("error backing up segment %d: %w", i.segment[j].id, err)
+		}
+	}
+	// now persist ourself (snapshot)
+	err := remote.Persist(ItemKindSnapshot, i.epoch, i, cancel)
+	if err != nil {
+		return fmt.Errorf("error backing up snapshot %d: %w", i.epoch, err)
+	}
+
+	return nil
+}
+
 type documentValueReader struct {
 	i      *Snapshot
 	fields []string
