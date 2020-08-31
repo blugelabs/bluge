@@ -378,15 +378,25 @@ func (i *Snapshot) recyclePostingsIterator(tfr *postingsIterator) {
 	i.m2.Unlock()
 }
 
+const blugeSnapshotFormatVersion1 = 1
+const blugeSnapshotFormatVersion = blugeSnapshotFormatVersion1
+
 func (i *Snapshot) WriteTo(w io.Writer, _ chan struct{}) (int64, error) {
 	bw := bufio.NewWriter(w)
 
 	var bytesWritten int64
+	var intBuf = make([]byte, binary.MaxVarintLen64)
+	// write the bluge snapshot format version number
+	n := binary.PutUvarint(intBuf, uint64(blugeSnapshotFormatVersion))
+	sz, err := bw.Write(intBuf[:n])
+	if err != nil {
+		return bytesWritten, fmt.Errorf("error writing snapshot %d: %w", i.epoch, err)
+	}
+	bytesWritten += int64(sz)
 
 	// write number of segments
-	var intBuf = make([]byte, binary.MaxVarintLen64)
-	n := binary.PutUvarint(intBuf, uint64(len(i.segment)))
-	sz, err := bw.Write(intBuf[:n])
+	n = binary.PutUvarint(intBuf, uint64(len(i.segment)))
+	sz, err = bw.Write(intBuf[:n])
 	if err != nil {
 		return bytesWritten, fmt.Errorf("error writing snapshot %d: %w", i.epoch, err)
 	}
@@ -486,6 +496,31 @@ func writeVarLenString(w io.Writer, intBuf []byte, str string) (int, error) {
 func (i *Snapshot) ReadFrom(r io.Reader) (int64, error) {
 	var bytesRead int64
 	br := bufio.NewReader(r)
+
+	// read bluge snapshot format version
+	peek, err := br.Peek(binary.MaxVarintLen64)
+	if err != nil {
+		return bytesRead, fmt.Errorf("error peeking snapshot format version %d: %w", i.epoch, err)
+	}
+	snapshotFormatVersion, n := binary.Uvarint(peek)
+	sz, err := br.Discard(n)
+	if err != nil {
+		return bytesRead, fmt.Errorf("error reading snapshot format version %d: %w", i.epoch, err)
+	}
+	bytesRead += int64(sz)
+
+	if snapshotFormatVersion == blugeSnapshotFormatVersion1 {
+		n, err := i.readFromVersion1(br)
+		return n + bytesRead, err
+	}
+
+	return bytesRead, fmt.Errorf("unsupportred snapshot format version: %d", snapshotFormatVersion)
+}
+
+func (i *Snapshot) readFromVersion1(br *bufio.Reader) (int64, error) {
+	var bytesRead int64
+
+	// read number of segments
 	peek, err := br.Peek(binary.MaxVarintLen64)
 	if err != nil {
 		return bytesRead, fmt.Errorf("error peeking snapshot number of segments %d: %w", i.epoch, err)
