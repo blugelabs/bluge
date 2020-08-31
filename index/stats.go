@@ -23,7 +23,7 @@ func (s *Writer) Stats() Stats {
 	rv := s.stats
 
 	// add some computed values
-	numFilesOnDisk, numBytesUsedDisk := s.config.Directory.Stats()
+	numFilesOnDisk, numBytesUsedDisk := s.directory.Stats()
 
 	rv.CurOnDiskBytes = numBytesUsedDisk
 	rv.CurOnDiskFiles = numFilesOnDisk

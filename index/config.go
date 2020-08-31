@@ -36,8 +36,8 @@ type Config struct {
 	NumAnalysisWorkers int
 	AnalysisChan       chan func()
 	GoFunc             func(func())
-	DeletionPolicy     DeletionPolicy
-	Directory          Directory
+	DeletionPolicyFunc func() DeletionPolicy
+	DirectoryFunc      func() Directory
 	NormCalc           func(string, int) float32
 
 	MergeBufferSize int
@@ -74,6 +74,8 @@ type Config struct {
 	// be a very high number to always favor the merging of memory segments.
 	MemoryPressurePauseThreshold int
 
+	ValidateSnapshotCRC bool
+
 	virtualFields map[string][]segment.Field
 }
 
@@ -102,13 +104,17 @@ func (config Config) WithSegmentPlugin(plugin *SegmentPlugin) Config {
 
 func DefaultConfig(path string) Config {
 	rv := defaultConfig()
-	rv.Directory = NewFileSystemDirectory(path)
+	rv.DirectoryFunc = func() Directory {
+		return NewFileSystemDirectory(path)
+	}
 	return rv
 }
 
 func InMemoryOnlyConfig() Config {
 	rv := defaultConfig()
-	rv.Directory = NewInMemoryDirectory()
+	rv.DirectoryFunc = func() Directory {
+		return NewInMemoryDirectory()
+	}
 	return rv
 }
 
@@ -117,7 +123,9 @@ func defaultConfig() Config {
 		SegmentType:      ice.Type,
 		SegmentVersion:   ice.Version,
 		MergePlanOptions: mergeplan.DefaultMergePlanOptions,
-		DeletionPolicy:   NewKeepNLatestDeletionPolicy(1),
+		DeletionPolicyFunc: func() DeletionPolicy {
+			return NewKeepNLatestDeletionPolicy(1)
+		},
 
 		MergeBufferSize: 1024 * 1024,
 
@@ -166,6 +174,8 @@ func defaultConfig() Config {
 		GoFunc: func(f func()) {
 			go f()
 		},
+
+		ValidateSnapshotCRC: true,
 
 		supportedSegmentPlugins: map[string]map[uint32]*SegmentPlugin{},
 	}

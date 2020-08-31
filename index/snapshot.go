@@ -380,15 +380,17 @@ func (i *Snapshot) recyclePostingsIterator(tfr *postingsIterator) {
 
 const blugeSnapshotFormatVersion1 = 1
 const blugeSnapshotFormatVersion = blugeSnapshotFormatVersion1
+const crcWidth = 4
 
 func (i *Snapshot) WriteTo(w io.Writer, _ chan struct{}) (int64, error) {
 	bw := bufio.NewWriter(w)
+	chw := newCountHashWriter(bw)
 
 	var bytesWritten int64
 	var intBuf = make([]byte, binary.MaxVarintLen64)
 	// write the bluge snapshot format version number
 	n := binary.PutUvarint(intBuf, uint64(blugeSnapshotFormatVersion))
-	sz, err := bw.Write(intBuf[:n])
+	sz, err := chw.Write(intBuf[:n])
 	if err != nil {
 		return bytesWritten, fmt.Errorf("error writing snapshot %d: %w", i.epoch, err)
 	}
@@ -396,19 +398,28 @@ func (i *Snapshot) WriteTo(w io.Writer, _ chan struct{}) (int64, error) {
 
 	// write number of segments
 	n = binary.PutUvarint(intBuf, uint64(len(i.segment)))
-	sz, err = bw.Write(intBuf[:n])
+	sz, err = chw.Write(intBuf[:n])
 	if err != nil {
 		return bytesWritten, fmt.Errorf("error writing snapshot %d: %w", i.epoch, err)
 	}
 	bytesWritten += int64(sz)
 
 	for _, segmentSnapshot := range i.segment {
-		sz, err = recordSegment(bw, segmentSnapshot, segmentSnapshot.id, segmentSnapshot.segment.Type(), segmentSnapshot.segment.Version())
+		sz, err = recordSegment(chw, segmentSnapshot, segmentSnapshot.id, segmentSnapshot.segment.Type(), segmentSnapshot.segment.Version())
 		if err != nil {
 			return bytesWritten, fmt.Errorf("error writing snapshot %d: %w", i.epoch, err)
 		}
 		bytesWritten += int64(sz)
 	}
+
+	// write crc32 at end of file
+	crc32 := chw.Sum32()
+	binary.BigEndian.PutUint32(intBuf, crc32)
+	sz, err = chw.Write(intBuf[:crcWidth])
+	if err != nil {
+		return bytesWritten, fmt.Errorf("error writing snapshot %d: %w", i.epoch, err)
+	}
+	bytesWritten += int64(sz)
 
 	err = bw.Flush()
 	if err != nil {

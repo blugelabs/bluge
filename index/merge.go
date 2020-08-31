@@ -344,7 +344,7 @@ func (s *Writer) merge(segments []segment.Segment, drops []*roaring.Bitmap, id u
 	[][]int, error) {
 	merger := s.segPlugin.Merge(segments, drops, s.config.MergeBufferSize)
 
-	err := s.config.Directory.Persist(ItemKindSegment, id, merger, s.closeCh)
+	err := s.directory.Persist(ItemKindSegment, id, merger, s.closeCh)
 	if err != nil {
 		return nil, err
 	}

@@ -15,7 +15,10 @@
 package index
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
+	"io"
 	"log"
 	"sync"
 	"sync/atomic"
@@ -27,8 +30,10 @@ import (
 )
 
 type Writer struct {
-	config    Config
-	segPlugin *SegmentPlugin // segment plug-in in use
+	config         Config
+	deletionPolicy DeletionPolicy
+	directory      Directory
+	segPlugin      *SegmentPlugin // segment plug-in in use
 
 	rootLock sync.RWMutex
 	root     *Snapshot // holds 1 ref-count on the root
@@ -52,8 +57,10 @@ type Writer struct {
 
 func OpenWriter(config Config) (*Writer, error) {
 	rv := &Writer{
-		config:  config,
-		closeCh: make(chan struct{}),
+		config:         config,
+		deletionPolicy: config.DeletionPolicyFunc(),
+		directory:      config.DirectoryFunc(),
+		closeCh:        make(chan struct{}),
 	}
 
 	// start the requested number of analysis workers
@@ -75,12 +82,12 @@ func OpenWriter(config Config) (*Writer, error) {
 		creator: "NewChill",
 	}
 
-	err = rv.config.Directory.Setup(false)
+	err = rv.directory.Setup(false)
 	if err != nil {
 		return nil, fmt.Errorf("error setting up directory: %w", err)
 	}
 
-	err = rv.config.Directory.Lock()
+	err = rv.directory.Lock()
 	if err != nil {
 		return nil, fmt.Errorf("error getting exclusive access to diretory: %w", err)
 	}
@@ -92,7 +99,7 @@ func OpenWriter(config Config) (*Writer, error) {
 	}
 
 	// initialize nextSegmentID to a safe value
-	existingSegments, err := rv.config.Directory.List(ItemKindSegment)
+	existingSegments, err := rv.directory.List(ItemKindSegment)
 	if err != nil {
 		_ = rv.Close()
 		return nil, err
@@ -103,7 +110,7 @@ func OpenWriter(config Config) (*Writer, error) {
 	rv.nextSegmentID++
 
 	// give deletion policy an opportunity to cleanup now before we begin
-	err = rv.config.DeletionPolicy.Cleanup(rv.config.Directory)
+	err = rv.deletionPolicy.Cleanup(rv.directory)
 	if err != nil {
 		_ = rv.Close()
 		return nil, fmt.Errorf("error cleaning up on open: %v", err)
@@ -128,7 +135,7 @@ func OpenWriter(config Config) (*Writer, error) {
 
 func (s *Writer) loadSnapshots() (lastPersistedEpoch, nextSnapshotEpoch uint64, err error) {
 	nextSnapshotEpoch = 1
-	snapshotEpochs, err := s.config.Directory.List(ItemKindSnapshot)
+	snapshotEpochs, err := s.directory.List(ItemKindSnapshot)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -154,7 +161,7 @@ func (s *Writer) loadSnapshots() (lastPersistedEpoch, nextSnapshotEpoch uint64, 
 		nextSnapshotEpoch = indexSnapshot.epoch + 1
 
 		// inform the deletion policy about this commit
-		s.config.DeletionPolicy.Commit(indexSnapshot)
+		s.deletionPolicy.Commit(indexSnapshot)
 
 		// make this snapshot the root (and retire the previous)
 		atomic.StoreUint64(&s.stats.TotFileSegmentsAtRoot, uint64(len(indexSnapshot.segment)))
@@ -207,7 +214,7 @@ func (s *Writer) close() (err error) {
 
 	s.replaceRoot(nil, nil, nil)
 
-	err = s.config.Directory.Unlock()
+	err = s.directory.Unlock()
 	if err != nil {
 		return err
 	}
@@ -403,7 +410,8 @@ func (s *Writer) currentEpoch() uint64 {
 
 func OpenReader(config Config) (*Snapshot, error) {
 	parent := &Writer{
-		config: config,
+		config:    config,
+		directory: config.DirectoryFunc(),
 	}
 
 	var err error
@@ -413,12 +421,12 @@ func OpenReader(config Config) (*Snapshot, error) {
 		return nil, fmt.Errorf("error loadign segment plugin: %v", err)
 	}
 
-	err = parent.config.Directory.Setup(true)
+	err = parent.directory.Setup(true)
 	if err != nil {
 		return nil, fmt.Errorf("error setting up directory: %w", err)
 	}
 
-	snapshotEpochs, err := parent.config.Directory.List(ItemKindSnapshot)
+	snapshotEpochs, err := parent.directory.List(ItemKindSnapshot)
 	if err != nil {
 		return nil, err
 	}
@@ -449,15 +457,37 @@ func (s *Writer) loadSnapshot(epoch uint64) (*Snapshot, error) {
 		creator: "loadSnapshot",
 	}
 
-	data, closer, err := s.config.Directory.Load(ItemKindSnapshot, epoch)
+	data, closer, err := s.directory.Load(ItemKindSnapshot, epoch)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = snapshot.ReadFrom(data.Reader())
+	// wrap the reader so we never read the last 4 bytes (CRC)
+	dataReader := io.LimitReader(data.Reader(), int64(data.Len()-crcWidth))
+	var crcReader *countHashReader
+	if s.config.ValidateSnapshotCRC {
+		crcReader = newCountHashReader(dataReader)
+		dataReader = crcReader
+	}
+
+	_, err = snapshot.ReadFrom(dataReader)
 	if err != nil {
 		_ = closer.Close()
 		return nil, err
+	}
+
+	if crcReader != nil {
+		computedCRCBytes := make([]byte, crcWidth)
+		binary.BigEndian.PutUint32(computedCRCBytes, crcReader.Sum32())
+		var fileCRCBytes []byte
+		fileCRCBytes, err = data.Read(data.Len()-crcWidth, data.Len())
+		if err != nil {
+			return nil, fmt.Errorf("error reading snapshot CRC: %w", err)
+		}
+		if !bytes.Equal(computedCRCBytes, fileCRCBytes) {
+			return nil, fmt.Errorf("CRC mismatch loading snapshot %d: computed: %x file: %x",
+				epoch, computedCRCBytes, fileCRCBytes)
+		}
 	}
 
 	err = closer.Close()
@@ -480,7 +510,7 @@ func (s *Writer) loadSnapshot(epoch uint64) (*Snapshot, error) {
 }
 
 func (s *Writer) loadSegment(id uint64, plugin *SegmentPlugin) (*segmentWrapper, error) {
-	data, closer, err := s.config.Directory.Load(ItemKindSegment, id)
+	data, closer, err := s.directory.Load(ItemKindSegment, id)
 	if err != nil {
 		return nil, fmt.Errorf("error loading segment fromt directory: %v", err)
 	}

@@ -139,7 +139,7 @@ OUTER:
 				break OUTER
 			}
 
-			err = s.config.DeletionPolicy.Cleanup(s.config.Directory) // might as well cleanup while waiting
+			err = s.deletionPolicy.Cleanup(s.directory) // might as well cleanup while waiting
 			if err != nil {
 				s.config.AsyncError(err)
 			}
@@ -155,7 +155,7 @@ func (s *Writer) pausePersisterForMergerCatchUp(persisterNotifier watcherChan,
 	persistWatchers.NotifySatisfiedWatchers(lastPersistedEpoch)
 
 	// Check the merger lag by counting the segment files on disk,
-	numFilesOnDisk, _ := s.config.Directory.Stats()
+	numFilesOnDisk, _ := s.directory.Stats()
 
 	// On finding fewer files on disk, persister takes a short pause
 	// for sufficient in-memory segments to pile up for the next
@@ -181,11 +181,11 @@ func (s *Writer) pausePersisterForMergerCatchUp(persisterNotifier watcherChan,
 	// 1. Too many older snapshots awaiting the clean up.
 	// 2. The merger could be lagging behind on merging the disk files.
 	if numFilesOnDisk > uint64(s.config.PersisterNapUnderNumFiles) {
-		err := s.config.DeletionPolicy.Cleanup(s.config.Directory)
+		err := s.deletionPolicy.Cleanup(s.directory)
 		if err != nil {
 			s.config.AsyncError(err)
 		}
-		numFilesOnDisk, _ = s.config.Directory.Stats()
+		numFilesOnDisk, _ = s.directory.Stats()
 	}
 
 	// Persister pause until the merger catches up to reduce the segment
@@ -210,7 +210,7 @@ OUTER:
 		// let the watchers proceed if they lag behind
 		persistWatchers.NotifySatisfiedWatchers(lastPersistedEpoch)
 
-		numFilesOnDisk, _ = s.config.Directory.Stats()
+		numFilesOnDisk, _ = s.directory.Stats()
 	}
 
 	return lastMergedEpoch, persistWatchers
@@ -313,7 +313,7 @@ func (s *Writer) persistSnapshotDirect(persists chan *persistIntroduction, snaps
 	var newSegmentIds []uint64
 	for _, segmentSnapshot := range snapshot.segment {
 		if !segmentSnapshot.segment.Persisted() {
-			err = s.config.Directory.Persist(ItemKindSegment, segmentSnapshot.id, segmentSnapshot.segment.Segment, s.closeCh)
+			err = s.directory.Persist(ItemKindSegment, segmentSnapshot.id, segmentSnapshot.segment.Segment, s.closeCh)
 			if err != nil {
 				return fmt.Errorf("error persisting segment: %v", err)
 			}
@@ -328,12 +328,12 @@ func (s *Writer) persistSnapshotDirect(persists chan *persistIntroduction, snaps
 		}
 	}
 
-	err = s.config.Directory.Persist(ItemKindSnapshot, snapshot.epoch, snapshot, s.closeCh)
+	err = s.directory.Persist(ItemKindSnapshot, snapshot.epoch, snapshot, s.closeCh)
 	if err != nil {
 		return err
 	}
 
-	s.config.DeletionPolicy.Commit(snapshot)
+	s.deletionPolicy.Commit(snapshot)
 
 	return nil
 }
