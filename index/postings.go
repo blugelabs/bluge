@@ -34,6 +34,7 @@ type postingsIterator struct {
 	includeTermVectors bool
 	currPosting        segment.Posting
 	currID             int
+	recycle            bool
 }
 
 func (i *postingsIterator) Size() int {

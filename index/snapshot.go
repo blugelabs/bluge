@@ -361,10 +361,20 @@ func (i *Snapshot) allocPostingsIterator(field string) (tfr *postingsIterator) {
 		}
 	}
 	i.m2.Unlock()
-	return &postingsIterator{}
+	return &postingsIterator{
+		recycle: true,
+	}
 }
 
 func (i *Snapshot) recyclePostingsIterator(tfr *postingsIterator) {
+	if !tfr.recycle {
+		// Do not recycle an optimized unadorned term field reader (used for
+		// ConjunctionUnadorned or DisjunctionUnadorned), during when a fresh
+		// roaring.Bitmap is built by AND-ing or OR-ing individual bitmaps,
+		// and we'll need to release them for GC. (See MB-40916)
+		return
+	}
+
 	if i.epoch != i.parent.currentEpoch() {
 		// if we're not the current root (mutations happened), don't bother recycling
 		return
@@ -376,6 +386,23 @@ func (i *Snapshot) recyclePostingsIterator(tfr *postingsIterator) {
 	}
 	i.fieldTFRs[tfr.field] = append(i.fieldTFRs[tfr.field], tfr)
 	i.m2.Unlock()
+}
+
+func (i *Snapshot) unadornedPostingsIterator(
+	term []byte, field string) *postingsIterator {
+	// This IndexSnapshotTermFieldReader will not be recycled, more
+	// conversation here: https://github.com/blevesearch/bleve/pull/1438
+	return &postingsIterator{
+		term:               term,
+		field:              field,
+		snapshot:           i,
+		iterators:          make([]segment.PostingsIterator, len(i.segment)),
+		segmentOffset:      0,
+		includeFreq:        false,
+		includeNorm:        false,
+		includeTermVectors: false,
+		recycle:            false,
+	}
 }
 
 const blugeSnapshotFormatVersion1 = 1

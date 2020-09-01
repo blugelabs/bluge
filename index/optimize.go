@@ -156,16 +156,8 @@ func (o *optimizeConjunctionUnadorned) Finish() (rv segment.PostingsIterator, er
 
 	// We use an artificial term and field because the optimized
 	// termFieldReader can represent multiple terms and fields.
-	oTFR := &postingsIterator{
-		term:               optimizeConjunctionUnadornedTerm,
-		field:              optimizeConjunctionUnadornedField,
-		snapshot:           o.snapshot,
-		iterators:          make([]segment.PostingsIterator, len(o.snapshot.segment)),
-		segmentOffset:      0,
-		includeFreq:        false,
-		includeNorm:        false,
-		includeTermVectors: false,
-	}
+	oTFR := o.snapshot.unadornedPostingsIterator(
+		optimizeConjunctionUnadornedTerm, optimizeConjunctionUnadornedField)
 
 	var actualBMs []*roaring.Bitmap // Collected from regular posting lists.
 
@@ -331,16 +323,8 @@ func (o *optimizeDisjunctionUnadorned) Finish() (rv segment.PostingsIterator, er
 
 	// We use an artificial term and field because the optimized
 	// termFieldReader can represent multiple terms and fields.
-	oTFR := &postingsIterator{
-		term:               optimizeDisjunctionUnadornedTerm,
-		field:              optimizeDisjunctionUnadornedField,
-		snapshot:           o.snapshot,
-		iterators:          make([]segment.PostingsIterator, len(o.snapshot.segment)),
-		segmentOffset:      0,
-		includeFreq:        false,
-		includeNorm:        false,
-		includeTermVectors: false,
-	}
+	oTFR := o.snapshot.unadornedPostingsIterator(
+		optimizeDisjunctionUnadornedTerm, optimizeDisjunctionUnadornedField)
 
 	var docNums []uint32            // Collected docNum's from 1-hit posting lists.
 	var actualBMs []*roaring.Bitmap // Collected from regular posting lists.
