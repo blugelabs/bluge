@@ -13,7 +13,7 @@ require (
 	github.com/blugelabs/bluge_segment_api v0.0.0-00010101000000-000000000000
 	github.com/blugelabs/ice v0.0.0-00010101000000-000000000000
 	github.com/caio/go-tdigest v3.1.0+incompatible
-	github.com/couchbase/vellum v1.0.1
+	github.com/couchbase/vellum v1.0.2
 	github.com/leesper/go_rng v0.0.0-20190531154944-a612b043e353 // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/willf/bitset v1.1.10
