@@ -1250,3 +1250,98 @@ func TestBackup(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestOptimisedConjunctionSearchHits(t *testing.T) {
+	tmpIndexPath := createTmpIndexPath(t)
+	defer cleanupTmpIndexPath(t, tmpIndexPath)
+
+	config := DefaultConfig(tmpIndexPath).DisableOptimizeDisjunctionUnadorned()
+	indexWriter, err := OpenWriter(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	docA := NewDocument("a").
+		AddField(NewTextField("country", "united")).
+		AddField(NewTextField("name", "Mercure Hotel")).
+		AddField(NewTextField("directions", "B560 and B56 Follow signs to the M56")).
+		AddField(NewCompositeFieldExcluding("_all", nil))
+
+	docB := NewDocument("b").
+		AddField(NewTextField("country", "united")).
+		AddField(NewTextField("name", "Mercure Altrincham Bowdon Hotel")).
+		AddField(NewTextField("directions", "A570 and A57 Follow signs to the M56 Manchester Airport")).
+		AddField(NewCompositeFieldExcluding("_all", nil))
+
+	docC := NewDocument("c").
+		AddField(NewTextField("country", "india united")).
+		AddField(NewTextField("name", "Sonoma Hotel")).
+		AddField(NewTextField("directions", "Northwest")).
+		AddField(NewCompositeFieldExcluding("_all", nil))
+
+	docD := NewDocument("d").
+		AddField(NewTextField("country", "United Kingdom")).
+		AddField(NewTextField("name", "Cresta Court Hotel")).
+		AddField(NewTextField("directions", "junction of A560 and A56")).
+		AddField(NewCompositeFieldExcluding("_all", nil))
+
+	b := NewBatch()
+	b.Update(docA.ID(), docA)
+	b.Update(docB.ID(), docB)
+	b.Update(docC.ID(), docC)
+	b.Update(docD.ID(), docD)
+	// execute the batch
+	err = indexWriter.Batch(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	indexReader, err := indexWriter.Reader()
+	if err != nil {
+		t.Fatalf("error getting index reader: %v", err)
+	}
+
+	mq := NewMatchQuery("united")
+	mq.SetField("country")
+
+	cq := NewConjunctionQuery(mq)
+
+	mq1 := NewMatchQuery("hotel")
+	mq1.SetField("name")
+	cq.AddQuery(mq1)
+
+	mq2 := NewMatchQuery("56")
+	mq2.SetField("directions")
+	mq2.SetFuzziness(1)
+	cq.AddQuery(mq2)
+
+	req := NewTopNSearch(10, cq).WithStandardAggregations().SetScore("none")
+
+	res, err := indexReader.Search(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hitsWithOutScore := res.Aggregations().Count()
+
+	req = NewTopNSearch(10, cq).WithStandardAggregations()
+
+	res, err = indexReader.Search(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hitsWithScore := res.Aggregations().Count()
+
+	if hitsWithOutScore != hitsWithScore {
+		t.Errorf("expected %d hits without score, got %d", hitsWithScore, hitsWithOutScore)
+	}
+
+	err = indexReader.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = indexWriter.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+}

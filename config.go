@@ -59,6 +59,21 @@ func (config Config) WithSegmentVersion(ver uint32) Config {
 	return config
 }
 
+func (config Config) DisableOptimizeConjunction() Config {
+	config.indexConfig = config.indexConfig.DisableOptimizeConjunction()
+	return config
+}
+
+func (config Config) DisableOptimizeConjunctionUnadorned() Config {
+	config.indexConfig = config.indexConfig.DisableOptimizeConjunctionUnadorned()
+	return config
+}
+
+func (config Config) DisableOptimizeDisjunctionUnadorned() Config {
+	config.indexConfig = config.indexConfig.DisableOptimizeDisjunctionUnadorned()
+	return config
+}
+
 func (config Config) WithSearchStartFunc(f func(size uint64) error) Config {
 	config.SearchStartFunc = f
 	return config

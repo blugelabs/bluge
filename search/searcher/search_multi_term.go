@@ -108,7 +108,7 @@ func optimizeMultiTermSearcher(indexReader search.Reader, terms []string,
 				}
 			}
 		}
-		finalSearcher, err = optimizeCompositeSearcher("disjunction:unadorned-force",
+		finalSearcher, err = optimizeCompositeSearcher("disjunction:unadorned",
 			indexReader, batch, options)
 		// all searchers in batch should be closed, regardless of error or optimization failure
 		// either we're returning, or continuing and only finalSearcher is needed for next loop
@@ -171,7 +171,7 @@ func optimizeMultiTermSearcherBytes(indexReader search.Reader, terms [][]byte,
 				}
 			}
 		}
-		finalSearcher, err = optimizeCompositeSearcher("disjunction:unadorned-force",
+		finalSearcher, err = optimizeCompositeSearcher("disjunction:unadorned",
 			indexReader, batch, options)
 		// all searchers in batch should be closed, regardless of error or optimization failure
 		// either we're returning, or continuing and only finalSearcher is needed for next loop

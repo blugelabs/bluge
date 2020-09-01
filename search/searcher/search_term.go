@@ -129,7 +129,7 @@ func (s *TermSearcher) Optimize(kind string, octx segment.OptimizableContext) (
 		return o.Optimize(kind, octx)
 	}
 
-	return octx, nil
+	return nil, nil
 }
 
 func (s *TermSearcher) buildDocumentMatch(ctx *search.Context, termMatch segment.Posting) *search.DocumentMatch {

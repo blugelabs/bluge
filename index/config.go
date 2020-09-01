@@ -109,6 +109,21 @@ func (config Config) WithSegmentPlugin(plugin *SegmentPlugin) Config {
 	return config
 }
 
+func (config Config) DisableOptimizeConjunction() Config {
+	config.OptimizeConjunction = false
+	return config
+}
+
+func (config Config) DisableOptimizeConjunctionUnadorned() Config {
+	config.OptimizeConjunctionUnadorned = false
+	return config
+}
+
+func (config Config) DisableOptimizeDisjunctionUnadorned() Config {
+	config.OptimizeDisjunctionUnadorned = false
+	return config
+}
+
 func DefaultConfig(path string) Config {
 	rv := defaultConfig()
 	rv.DirectoryFunc = func() Directory {

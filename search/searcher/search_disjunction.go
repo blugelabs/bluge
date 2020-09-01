@@ -74,7 +74,6 @@ func optimizeCompositeSearcher(optimizationKind string,
 	indexReader search.Reader, qsearchers []search.Searcher,
 	options search.SearcherOptions) (search.Searcher, error) {
 	var octx segment.OptimizableContext
-
 	for _, searcher := range qsearchers {
 		o, ok := searcher.(segment.Optimizable)
 		if !ok {

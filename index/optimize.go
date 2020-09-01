@@ -36,7 +36,7 @@ func (i *postingsIterator) Optimize(kind string,
 		return i.optimizeDisjunctionUnadorned(octx)
 	}
 
-	return octx, nil
+	return nil, nil
 }
 
 // ----------------------------------------------------------------

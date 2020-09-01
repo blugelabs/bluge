@@ -30,6 +30,7 @@ type SearchRequest interface {
 type SearchOptions struct {
 	ExplainScores    bool
 	IncludeLocations bool
+	Score            string // FIXME go away
 }
 
 type BaseSearch struct {
@@ -136,6 +137,11 @@ func (s *TopNSearch) IncludeLocations() *TopNSearch {
 	return s
 }
 
+func (s *TopNSearch) SetScore(mode string) *TopNSearch {
+	s.options.Score = mode
+	return s
+}
+
 func (s *TopNSearch) Collector() search.Collector {
 	if s.after != nil {
 		collectorSort := s.sort
@@ -162,6 +168,7 @@ func searchOptionsFromConfig(config Config, options SearchOptions) search.Search
 		DefaultAnalyzer:    config.DefaultSearchAnalyzer,
 		Explain:            options.ExplainScores,
 		IncludeTermVectors: options.IncludeLocations,
+		Score:              options.Score,
 	}
 }
 

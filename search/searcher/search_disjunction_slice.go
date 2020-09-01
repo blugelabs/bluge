@@ -253,7 +253,7 @@ func (s *DisjunctionSliceSearcher) Optimize(kind string, octx segment.Optimizabl
 		}
 	}
 
-	return octx, nil
+	return nil, nil
 }
 
 func docNumberCompare(a, b int) int {
