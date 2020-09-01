@@ -22,22 +22,67 @@ import (
 
 func TestRegexpCharFilter(t *testing.T) {
 	tests := []struct {
-		name    string
-		pattern string
-		input   []byte
-		output  []byte
+		name        string
+		pattern     string
+		replacement []byte
+		input       []byte
+		output      []byte
 	}{
 		{
-			name:    "html",
-			pattern: `</?[!\w]+((\s+\w+(\s*=\s*(?:".*?"|'.*?'|[^'">\s]+))?)+\s*|\s*)/?>`,
-			input:   []byte(`<html>test</html>`),
-			output:  []byte(`      test       `),
+			name:        "html",
+			pattern:     `</?[!\w]+((\s+\w+(\s*=\s*(?:".*?"|'.*?'|[^'">\s]+))?)+\s*|\s*)/?>`,
+			replacement: []byte{' '},
+			input:       []byte(`<html>test</html>`),
+			output:      []byte(` test `),
 		},
 		{
-			name:    "zero width non-joiner",
-			pattern: `\x{200C}`,
-			input:   []byte("water\u200Cunder\u200Cthe\u200Cbridge"),
-			output:  []byte("water   under   the   bridge"),
+			name:        "zero width non-joiner",
+			pattern:     `\x{200C}`,
+			replacement: []byte{' '},
+			input:       []byte("water\u200Cunder\u200Cthe\u200Cbridge"),
+			output:      []byte("water under the bridge"),
+		},
+		{
+			name:        "pattern replacement",
+			pattern:     `([a-z])\s+(\d)`,
+			replacement: []byte(`$1-$2`),
+			input:       []byte("temp 1"),
+			output:      []byte("temp-1"),
+		},
+
+		{
+			name:        "pattern replacement2",
+			pattern:     `([a-z])\s+(\d)`,
+			replacement: []byte(`$1-$2`),
+			input:       []byte(`temp 1`),
+			output:      []byte(`temp-1`),
+		},
+		{
+			name:        "pattern replacement3",
+			pattern:     `foo.?`,
+			replacement: []byte(`X`),
+			input:       []byte(`seafood, fool`),
+			output:      []byte(`seaX, X`),
+		},
+		{
+			name:        "pattern replacement4",
+			pattern:     `def`,
+			replacement: []byte(`_`),
+			input:       []byte(`abcdefghi`),
+			output:      []byte(`abc_ghi`),
+		},
+		{
+			name:        "pattern replacement5",
+			pattern:     `456`,
+			replacement: []byte(`000000`),
+			input:       []byte(`123456789`),
+			output:      []byte(`123000000789`),
+		},
+		{
+			pattern:     `“|”`,
+			replacement: []byte(`"`),
+			input:       []byte(`“hello”`),
+			output:      []byte(`"hello"`),
 		},
 	}
 
@@ -45,7 +90,7 @@ func TestRegexpCharFilter(t *testing.T) {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
 			patternRegexp := regexp.MustCompile(test.pattern)
-			filter := NewRegexpCharFilter(patternRegexp, []byte{' '})
+			filter := NewRegexpCharFilter(patternRegexp, test.replacement)
 			output := filter.Filter(test.input)
 			if !reflect.DeepEqual(output, test.output) {
 				t.Errorf("Expected:\n`%s`\ngot:\n`%s`\nfor:\n`%s`\n", string(test.output), string(output), string(test.input))

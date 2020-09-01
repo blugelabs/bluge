@@ -17,8 +17,13 @@ package bluge
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strconv"
 	"testing"
+
+	"github.com/blugelabs/bluge/search/highlight"
+
+	"github.com/blugelabs/bluge/analysis/char"
 
 	"github.com/blugelabs/bluge/numeric/geo"
 
@@ -1166,5 +1171,75 @@ func TestGeoDistanceIssue1301(t *testing.T) {
 	err = indexWriter.Close()
 	if err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestSearchHighlightingWithRegexpReplacement(t *testing.T) {
+	r := regexp.MustCompile(`([a-z])\s+(\d)`)
+	regexpReplace := char.NewRegexpCharFilter(r, []byte("ooooo$1-$2"))
+	customAnalyzer := &analysis.Analyzer{
+		CharFilters: []analysis.CharFilter{
+			regexpReplace,
+		},
+		Tokenizer: tokenizer.NewUnicodeTokenizer(),
+	}
+
+	tmpIndexPath := createTmpIndexPath(t)
+	defer cleanupTmpIndexPath(t, tmpIndexPath)
+
+	config := DefaultConfig(tmpIndexPath)
+	indexWriter, err := OpenWriter(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	doc := NewDocument("doc").
+		AddField(NewTextField("status", "fool 10").
+			StoreValue().
+			HighlightMatches().
+			WithAnalyzer(customAnalyzer))
+
+	batch := NewBatch()
+	batch.Update(doc.ID(), doc)
+
+	if err = indexWriter.Batch(batch); err != nil {
+		t.Fatal(err)
+	}
+
+	indexReader, err := indexWriter.Reader()
+	if err != nil {
+		t.Fatalf("error getting index reader: %v", err)
+	}
+
+	query := NewMatchQuery("fool 10").SetAnalyzer(customAnalyzer).SetField("status")
+	sreq := NewTopNSearch(10, query).WithStandardAggregations().IncludeLocations()
+
+	dmi, err := indexReader.Search(context.Background(), sreq)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ansiHighligher := highlight.NewANSIHighlighter()
+
+	next, err := dmi.Next()
+	for err == nil && next != nil {
+		err = next.VisitStoredFields(func(field string, value []byte) bool {
+			if field == "status" {
+				// will panic without fix
+				_ = ansiHighligher.BestFragment(next.Locations["status"], value)
+			}
+			return true
+		})
+		if err != nil {
+			t.Fatalf("error visiting stored fields: %v", err)
+		}
+		next, err = dmi.Next()
+	}
+	if err != nil {
+		t.Fatalf("error iterating search results: %v", err)
+	}
+
+	if dmi.Aggregations().Count() != 1 {
+		t.Fatalf("Expected 1 hit, got: %v", dmi.Aggregations().Count())
 	}
 }

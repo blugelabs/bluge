@@ -15,7 +15,6 @@
 package char
 
 import (
-	"bytes"
 	"regexp"
 )
 
@@ -32,5 +31,5 @@ func NewRegexpCharFilter(r *regexp.Regexp, replacement []byte) *RegexpCharFilter
 }
 
 func (s *RegexpCharFilter) Filter(input []byte) []byte {
-	return s.r.ReplaceAllFunc(input, func(in []byte) []byte { return bytes.Repeat(s.replacement, len(in)) })
+	return s.r.ReplaceAll(input, s.replacement)
 }
