@@ -23,7 +23,7 @@ func NewMultiTermSearcher(indexReader search.Reader, terms []string,
 	field string, boost float64, scorer search.Scorer, options search.SearcherOptions, limit bool) (
 	search.Searcher, error) {
 	if limit && tooManyClauses(len(terms)) {
-		return nil, tooManyClausesErr(len(terms))
+		return nil, tooManyClausesErr(field, len(terms))
 	}
 
 	qsearchers := make([]search.Searcher, len(terms))
@@ -50,7 +50,7 @@ func NewMultiTermSearcherBytes(indexReader search.Reader, terms [][]byte,
 	field string, boost float64, scorer search.Scorer, options search.SearcherOptions, limit bool) (
 	search.Searcher, error) {
 	if limit && tooManyClauses(len(terms)) {
-		return nil, tooManyClausesErr(len(terms))
+		return nil, tooManyClausesErr(field, len(terms))
 	}
 
 	qsearchers := make([]search.Searcher, len(terms))

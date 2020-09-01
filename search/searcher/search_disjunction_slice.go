@@ -38,7 +38,7 @@ func newDisjunctionSliceSearcher(qsearchers []search.Searcher, min int, scorer s
 	limit bool) (
 	*DisjunctionSliceSearcher, error) {
 	if limit && tooManyClauses(len(qsearchers)) {
-		return nil, tooManyClausesErr(len(qsearchers))
+		return nil, tooManyClausesErr("", len(qsearchers))
 	}
 	// build the downstream searchers
 	searchers := make(OrderedSearcherList, len(qsearchers))

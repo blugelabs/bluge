@@ -98,7 +98,7 @@ func findFuzzyCandidateTerms(indexReader search.Reader, term string,
 	for err == nil && tfd != nil {
 		rv = append(rv, tfd.Term())
 		if tooManyClauses(len(rv)) {
-			return nil, tooManyClausesErr(len(rv))
+			return nil, tooManyClausesErr(field, len(rv))
 		}
 		tfd, err = fieldDict.Next()
 	}

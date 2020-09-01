@@ -44,7 +44,7 @@ func newDisjunctionHeapSearcher(searchers []search.Searcher, min int, scorer sea
 	limit bool) (
 	*DisjunctionHeapSearcher, error) {
 	if limit && tooManyClauses(len(searchers)) {
-		return nil, tooManyClausesErr(len(searchers))
+		return nil, tooManyClausesErr("", len(searchers))
 	}
 
 	// build our searcher
