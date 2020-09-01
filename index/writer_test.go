@@ -1542,3 +1542,93 @@ func TestAllFieldWithDifferentTermVectorsEnabled(t *testing.T) {
 		t.Errorf("Error updating index: %v", err)
 	}
 }
+
+func TestIndexSeekBackwardsStats(t *testing.T) {
+	cfg, cleanup := CreateConfig("TestIndexOpenReopen")
+	defer func() {
+		err := cleanup()
+		if err != nil {
+			t.Log(err)
+		}
+	}()
+
+	idx, err := OpenWriter(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		err = idx.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	// insert a doc
+	batch := NewBatch()
+	doc := &FakeDocument{
+		NewFakeField("_id", "1", true, false, false),
+		NewFakeField("name", "cat", true, false, true),
+	}
+	doc.FakeComposite("_all", nil)
+	batch.Update(testIdentifier("1"), doc)
+	err = idx.Batch(batch)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// insert another doc
+	batch.Reset()
+	doc = &FakeDocument{
+		NewFakeField("_id", "2", true, false, false),
+		NewFakeField("name", "cat", true, false, true),
+	}
+	doc.FakeComposite("_all", nil)
+	batch.Update(testIdentifier("2"), doc)
+	err = idx.Batch(batch)
+	if err != nil {
+		t.Error(err)
+	}
+
+	reader, err := idx.Reader()
+	if err != nil {
+		t.Fatalf("error getting index reader: %v", err)
+	}
+	defer func() {
+		err = reader.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	tfr, err := reader.PostingsIterator([]byte("cat"), "name", false, false, false)
+	if err != nil {
+		t.Fatalf("error getting term field readyer for name/cat: %v", err)
+	}
+
+	tfdFirst, err := tfr.Next()
+	if err != nil {
+		t.Fatalf("error getting first tfd: %v", err)
+	}
+
+	_, err = tfr.Next()
+	if err != nil {
+		t.Fatalf("error getting second tfd: %v", err)
+	}
+
+	// seek backwards to the first
+	_, err = tfr.Advance(tfdFirst.Number())
+	if err != nil {
+		t.Fatalf("error adancing backwards: %v", err)
+	}
+
+	err = tfr.Close()
+	if err != nil {
+		t.Fatalf("error closing term field reader: %v", err)
+	}
+
+	if idx.stats.TotTermSearchersStarted != idx.stats.TotTermSearchersFinished {
+		t.Errorf("expected term searchers started %d to equal term searchers finished %d",
+			idx.stats.TotTermSearchersStarted,
+			idx.stats.TotTermSearchersFinished)
+	}
+}

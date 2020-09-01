@@ -85,6 +85,8 @@ func (i *postingsIterator) Advance(number int) (segment.Posting, error) {
 		if err != nil {
 			return nil, err
 		}
+		// close the current term field reader before replacing it with a new one
+		_ = i.Close()
 		*i = *(i2.(*postingsIterator))
 	}
 	segIndex, ldocNum := i.snapshot.segmentIndexAndLocalDocNumFromGlobal(number)
