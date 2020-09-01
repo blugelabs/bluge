@@ -18,6 +18,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/blugelabs/bluge/search/similarity"
+
 	"github.com/blugelabs/bluge/search"
 )
 
@@ -200,7 +202,8 @@ func TestTermRangeSearch(t *testing.T) {
 
 	for _, test := range tests {
 		searcher, err := NewTermRangeSearcher(baseTestIndexReader, test.min, test.max,
-			test.inclusiveMin, test.inclusiveMax, test.field, 1.0, nil, testSearchOptions)
+			test.inclusiveMin, test.inclusiveMax, test.field,
+			1.0, nil, similarity.NewCompositeSumScorer(), testSearchOptions)
 		if err != nil {
 			t.Fatal(err)
 		}

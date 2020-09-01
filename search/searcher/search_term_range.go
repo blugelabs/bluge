@@ -20,7 +20,8 @@ import (
 
 func NewTermRangeSearcher(indexReader search.Reader,
 	min, max []byte, inclusiveMin, inclusiveMax bool, field string,
-	boost float64, scorer search.Scorer, options search.SearcherOptions) (search.Searcher, error) {
+	boost float64, scorer search.Scorer, compScorer search.CompositeScorer,
+	options search.SearcherOptions) (search.Searcher, error) {
 	if min == nil {
 		min = []byte{}
 	}
@@ -62,5 +63,5 @@ func NewTermRangeSearcher(indexReader search.Reader,
 		}
 	}
 
-	return NewMultiTermSearcher(indexReader, terms, field, boost, scorer, options, true)
+	return NewMultiTermSearcher(indexReader, terms, field, boost, scorer, compScorer, options, true)
 }

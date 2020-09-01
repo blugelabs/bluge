@@ -29,7 +29,8 @@ const minPointsInPolygon = 3
 
 func NewGeoBoundedPolygonSearcher(indexReader search.Reader,
 	polygon []geo.Point, field string, boost float64, scorer search.Scorer,
-	options search.SearcherOptions, precisionStep uint) (search.Searcher, error) {
+	compScorer search.CompositeScorer, options search.SearcherOptions,
+	precisionStep uint) (search.Searcher, error) {
 	if len(polygon) < minPointsInPolygon {
 		return nil, fmt.Errorf("too few points specified for the polygon boundary")
 	}
@@ -44,7 +45,7 @@ func NewGeoBoundedPolygonSearcher(indexReader search.Reader,
 	// build a searcher for the bounding box on the polygon
 	boxSearcher, err := boxSearcher(indexReader,
 		topLeftLon, topLeftLat, bottomRightLon, bottomRightLat,
-		field, boost, scorer, options, true, precisionStep)
+		field, boost, scorer, compScorer, options, true, precisionStep)
 	if err != nil {
 		return nil, err
 	}

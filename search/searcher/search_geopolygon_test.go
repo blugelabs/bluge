@@ -159,7 +159,8 @@ func TestGeoRectanglePolygon(t *testing.T) {
 
 func testGeoPolygonSearch(i search.Reader, polygon []geo.Point, field string) ([]int, error) {
 	var rv []int
-	gbs, err := NewGeoBoundedPolygonSearcher(i, polygon, field, 1.0, similarity.ConstantScorer(1.0),
+	gbs, err := NewGeoBoundedPolygonSearcher(i, polygon, field, 1.0,
+		similarity.ConstantScorer(1.0), similarity.NewCompositeSumScorer(),
 		search.SearcherOptions{}, testGeoPrecisionStep)
 	if err != nil {
 		return nil, err

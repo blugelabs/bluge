@@ -19,8 +19,8 @@ import (
 )
 
 func NewTermPrefixSearcher(indexReader search.Reader, prefix, field string,
-	boost float64, scorer search.Scorer, options search.SearcherOptions) (
-	search.Searcher, error) {
+	boost float64, scorer search.Scorer, compScorer search.CompositeScorer,
+	options search.SearcherOptions) (search.Searcher, error) {
 	// find the terms with this prefix
 	kBeg := []byte(prefix)
 	kEnd := incrementBytes(kBeg)
@@ -47,5 +47,5 @@ func NewTermPrefixSearcher(indexReader search.Reader, prefix, field string,
 		return nil, err
 	}
 
-	return NewMultiTermSearcher(indexReader, terms, field, boost, scorer, options, true)
+	return NewMultiTermSearcher(indexReader, terms, field, boost, scorer, compScorer, options, true)
 }

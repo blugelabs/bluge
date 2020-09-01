@@ -15,17 +15,116 @@
 package searcher
 
 import (
+	"fmt"
+
 	"github.com/blugelabs/bluge/search"
-	"github.com/blugelabs/bluge/search/similarity"
 )
 
 func NewMultiTermSearcher(indexReader search.Reader, terms []string,
-	field string, boost float64, scorer search.Scorer, options search.SearcherOptions, limit bool) (
+	field string, boost float64, scorer search.Scorer, compScorer search.CompositeScorer,
+	options search.SearcherOptions, limit bool) (
 	search.Searcher, error) {
-	if limit && tooManyClauses(len(terms)) {
-		return nil, tooManyClausesErr(field, len(terms))
+	if tooManyClauses(len(terms)) {
+		if optionsDisjunctionOptimizable(options) {
+			return optimizeMultiTermSearcher(indexReader, terms, field, boost, scorer, options)
+		}
+		if limit {
+			return nil, tooManyClausesErr(field, len(terms))
+		}
 	}
 
+	qsearchers, err := makeBatchSearchers(indexReader, terms, field, boost, scorer, options)
+	if err != nil {
+		return nil, err
+	}
+
+	// build disjunction searcher of these ranges
+	return newMultiTermSearcherInternal(indexReader, qsearchers, compScorer, options, limit)
+}
+
+func NewMultiTermSearcherBytes(indexReader search.Reader, terms [][]byte,
+	field string, boost float64, scorer search.Scorer, compScorer search.CompositeScorer,
+	options search.SearcherOptions, limit bool) (search.Searcher, error) {
+	if tooManyClauses(len(terms)) {
+		if optionsDisjunctionOptimizable(options) {
+			return optimizeMultiTermSearcherBytes(indexReader, terms, field, boost, scorer, options)
+		}
+
+		if limit {
+			return nil, tooManyClausesErr(field, len(terms))
+		}
+	}
+
+	qsearchers, err := makeBatchSearchersBytes(indexReader, terms, field, boost, scorer, options)
+	if err != nil {
+		return nil, err
+	}
+
+	// build disjunction searcher of these ranges
+	return newMultiTermSearcherInternal(indexReader, qsearchers, compScorer, options, limit)
+}
+
+func newMultiTermSearcherInternal(indexReader search.Reader,
+	searchers []search.Searcher, compScorer search.CompositeScorer,
+	options search.SearcherOptions, limit bool) (
+	search.Searcher, error) {
+	// build disjunction searcher of these ranges
+	searcher, err := newDisjunctionSearcher(indexReader, searchers, 0, compScorer, options,
+		limit)
+	if err != nil {
+		for _, s := range searchers {
+			_ = s.Close()
+		}
+		return nil, err
+	}
+
+	return searcher, nil
+}
+
+func optimizeMultiTermSearcher(indexReader search.Reader, terms []string,
+	field string, boost float64, scorer search.Scorer, options search.SearcherOptions) (
+	search.Searcher, error) {
+	var finalSearcher search.Searcher
+	for len(terms) > 0 {
+		var batchTerms []string
+		if len(terms) > DisjunctionMaxClauseCount {
+			batchTerms = terms[:DisjunctionMaxClauseCount]
+			terms = terms[DisjunctionMaxClauseCount:]
+		} else {
+			batchTerms = terms
+			terms = nil
+		}
+		batch, err := makeBatchSearchers(indexReader, batchTerms, field, boost, scorer, options)
+		if err != nil {
+			return nil, err
+		}
+		if finalSearcher != nil {
+			batch = append(batch, finalSearcher)
+		}
+		cleanup := func() {
+			for _, searcher := range batch {
+				if searcher != nil {
+					_ = searcher.Close()
+				}
+			}
+		}
+		finalSearcher, err = optimizeCompositeSearcher("disjunction:unadorned-force",
+			indexReader, batch, options)
+		// all searchers in batch should be closed, regardless of error or optimization failure
+		// either we're returning, or continuing and only finalSearcher is needed for next loop
+		cleanup()
+		if err != nil {
+			return nil, err
+		}
+		if finalSearcher == nil {
+			return nil, fmt.Errorf("unable to optimize")
+		}
+	}
+	return finalSearcher, nil
+}
+
+func makeBatchSearchers(indexReader search.Reader, terms []string, field string,
+	boost float64, scorer search.Scorer, options search.SearcherOptions) ([]search.Searcher, error) {
 	qsearchers := make([]search.Searcher, len(terms))
 	qsearchersClose := func() {
 		for _, searcher := range qsearchers {
@@ -42,17 +141,53 @@ func NewMultiTermSearcher(indexReader search.Reader, terms []string,
 			return nil, err
 		}
 	}
-	// build disjunction searcher of these ranges
-	return newMultiTermSearcherBytes(indexReader, qsearchers, options, limit)
+	return qsearchers, nil
 }
 
-func NewMultiTermSearcherBytes(indexReader search.Reader, terms [][]byte,
-	field string, boost float64, scorer search.Scorer, options search.SearcherOptions, limit bool) (
+func optimizeMultiTermSearcherBytes(indexReader search.Reader, terms [][]byte,
+	field string, boost float64, scorer search.Scorer, options search.SearcherOptions) (
 	search.Searcher, error) {
-	if limit && tooManyClauses(len(terms)) {
-		return nil, tooManyClausesErr(field, len(terms))
+	var finalSearcher search.Searcher
+	for len(terms) > 0 {
+		var batchTerms [][]byte
+		if len(terms) > DisjunctionMaxClauseCount {
+			batchTerms = terms[:DisjunctionMaxClauseCount]
+			terms = terms[DisjunctionMaxClauseCount:]
+		} else {
+			batchTerms = terms
+			terms = nil
+		}
+		batch, err := makeBatchSearchersBytes(indexReader, batchTerms, field, boost, scorer, options)
+		if err != nil {
+			return nil, err
+		}
+		if finalSearcher != nil {
+			batch = append(batch, finalSearcher)
+		}
+		cleanup := func() {
+			for _, searcher := range batch {
+				if searcher != nil {
+					_ = searcher.Close()
+				}
+			}
+		}
+		finalSearcher, err = optimizeCompositeSearcher("disjunction:unadorned-force",
+			indexReader, batch, options)
+		// all searchers in batch should be closed, regardless of error or optimization failure
+		// either we're returning, or continuing and only finalSearcher is needed for next loop
+		cleanup()
+		if err != nil {
+			return nil, err
+		}
+		if finalSearcher == nil {
+			return nil, fmt.Errorf("unable to optimize")
+		}
 	}
+	return finalSearcher, nil
+}
 
+func makeBatchSearchersBytes(indexReader search.Reader, terms [][]byte, field string,
+	boost float64, scorer search.Scorer, options search.SearcherOptions) ([]search.Searcher, error) {
 	qsearchers := make([]search.Searcher, len(terms))
 	qsearchersClose := func() {
 		for _, searcher := range qsearchers {
@@ -69,22 +204,5 @@ func NewMultiTermSearcherBytes(indexReader search.Reader, terms [][]byte,
 			return nil, err
 		}
 	}
-	return newMultiTermSearcherBytes(indexReader, qsearchers, options, limit)
-}
-
-func newMultiTermSearcherBytes(indexReader search.Reader,
-	searchers []search.Searcher,
-	options search.SearcherOptions, limit bool) (
-	search.Searcher, error) {
-	// build disjunction searcher of these ranges
-	searcher, err := newDisjunctionSearcher(indexReader, searchers, 0, similarity.NewCompositeSumScorer(), options,
-		limit)
-	if err != nil {
-		for _, s := range searchers {
-			_ = s.Close()
-		}
-		return nil, err
-	}
-
-	return searcher, nil
+	return qsearchers, nil
 }

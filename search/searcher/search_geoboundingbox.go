@@ -30,7 +30,8 @@ var GeoBitsShift1Minus1 = GeoBitsShift1 - 1
 
 func NewGeoBoundingBoxSearcher(indexReader search.Reader, minLon, minLat,
 	maxLon, maxLat float64, field string, boost float64, scorer search.Scorer,
-	options search.SearcherOptions, checkBoundaries bool, precisionStep uint) (
+	compScorer search.CompositeScorer, options search.SearcherOptions,
+	checkBoundaries bool, precisionStep uint) (
 	search.Searcher, error) {
 	// track list of opened searchers, for cleanup on early exit
 	var openedSearchers []search.Searcher
@@ -55,7 +56,7 @@ func NewGeoBoundingBoxSearcher(indexReader search.Reader, minLon, minLat,
 
 	if len(onBoundaryTerms) > 0 {
 		rawOnBoundarySearcher, err := NewMultiTermSearcherBytes(indexReader,
-			onBoundaryTerms, field, boost, scorer, options, false)
+			onBoundaryTerms, field, boost, scorer, compScorer, options, false)
 		if err != nil {
 			return nil, err
 		}
@@ -69,7 +70,7 @@ func NewGeoBoundingBoxSearcher(indexReader search.Reader, minLon, minLat,
 	if len(notOnBoundaryTerms) > 0 {
 		var err error
 		notOnBoundarySearcher, err = NewMultiTermSearcherBytes(indexReader,
-			notOnBoundaryTerms, field, boost, scorer, options, false)
+			notOnBoundaryTerms, field, boost, scorer, compScorer, options, false)
 		if err != nil {
 			cleanupOpenedSearchers()
 			return nil, err

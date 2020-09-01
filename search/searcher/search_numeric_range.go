@@ -26,7 +26,8 @@ import (
 
 func NewNumericRangeSearcher(indexReader search.Reader,
 	min, max float64, inclusiveMin, inclusiveMax bool, field string,
-	boost float64, scorer search.Scorer, options search.SearcherOptions) (search.Searcher, error) {
+	boost float64, scorer search.Scorer, compScorer search.CompositeScorer,
+	options search.SearcherOptions) (search.Searcher, error) {
 	var minInt64 int64
 	if math.IsInf(min, -1) {
 		minInt64 = math.MinInt64
@@ -75,16 +76,16 @@ func NewNumericRangeSearcher(indexReader search.Reader,
 	if len(terms) < 1 {
 		// cannot return MatchNoneSearcher because of interaction with
 		// commit f391b991c20f02681bacd197afc6d8aed444e132
-		return NewMultiTermSearcherBytes(indexReader, terms, field, boost, scorer, options,
-			true)
+		return NewMultiTermSearcherBytes(indexReader, terms, field, boost, scorer, compScorer,
+			options, true)
 	}
 
 	if tooManyClauses(len(terms)) {
 		return nil, tooManyClausesErr(field, len(terms))
 	}
 
-	return NewMultiTermSearcherBytes(indexReader, terms, field, boost, scorer, options,
-		true)
+	return NewMultiTermSearcherBytes(indexReader, terms, field, boost, scorer, compScorer,
+		options, true)
 }
 
 type termRange struct {

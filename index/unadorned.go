@@ -72,6 +72,19 @@ func (i *unadornedPostingsIteratorBitmap) Close() error {
 	return nil
 }
 
+func (i *unadornedPostingsIteratorBitmap) ActualBitmap() *roaring.Bitmap {
+	return i.actualBM
+}
+
+func (i *unadornedPostingsIteratorBitmap) DocNum1Hit() (uint64, bool) {
+	return 0, false
+}
+
+func (i *unadornedPostingsIteratorBitmap) ReplaceActual(actual *roaring.Bitmap) {
+	i.actualBM = actual
+	i.actual = actual.Iterator()
+}
+
 func newUnadornedPostingsIteratorFromBitmap(bm *roaring.Bitmap) segment.PostingsIterator {
 	return &unadornedPostingsIteratorBitmap{
 		actualBM: bm,

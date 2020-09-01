@@ -42,7 +42,7 @@ var MaxFuzziness = 2
 
 func NewFuzzySearcher(indexReader search.Reader, term string,
 	prefix, fuzziness int, field string, boost float64, scorer search.Scorer,
-	options search.SearcherOptions) (search.Searcher, error) {
+	compScorer search.CompositeScorer, options search.SearcherOptions) (search.Searcher, error) {
 	if fuzziness > MaxFuzziness {
 		return nil, fmt.Errorf("fuzziness exceeds max (%d)", MaxFuzziness)
 	}
@@ -67,7 +67,7 @@ func NewFuzzySearcher(indexReader search.Reader, term string,
 	}
 
 	return NewMultiTermSearcher(indexReader, candidateTerms, field,
-		boost, scorer, options, true)
+		boost, scorer, compScorer, options, true)
 }
 
 func findFuzzyCandidateTerms(indexReader search.Reader, term string,

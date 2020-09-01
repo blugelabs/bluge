@@ -16,6 +16,7 @@ package index
 
 import (
 	"fmt"
+	"sync/atomic"
 
 	"github.com/RoaringBitmap/roaring"
 	segment "github.com/blugelabs/bluge_segment_api"
@@ -259,6 +260,7 @@ OUTER:
 		oTFR.iterators[i] = newUnadornedPostingsIteratorFromBitmap(bm)
 	}
 
+	atomic.AddUint64(&o.snapshot.parent.stats.TotTermSearchersStarted, uint64(1))
 	return oTFR, nil
 }
 
@@ -325,13 +327,6 @@ func (o *optimizeDisjunctionUnadorned) Finish() (rv segment.PostingsIterator, er
 				}
 			}
 		}
-
-		// Heuristic to skip the optimization if all the constituent
-		// bitmaps are too small, where the processing & resource
-		// overhead to create the OR'ed bitmap outweighs the benefit.
-		if cMax < uint64(o.snapshot.parent.config.OptimizeDisjunctionUnadornedMinChildCardinality) {
-			return nil, nil
-		}
 	}
 
 	// We use an artificial term and field because the optimized
@@ -389,5 +384,6 @@ func (o *optimizeDisjunctionUnadorned) Finish() (rv segment.PostingsIterator, er
 		oTFR.iterators[i] = newUnadornedPostingsIteratorFromBitmap(bm)
 	}
 
+	atomic.AddUint64(&o.snapshot.parent.stats.TotTermSearchersStarted, uint64(1))
 	return oTFR, nil
 }

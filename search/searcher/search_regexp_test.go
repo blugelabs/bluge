@@ -17,18 +17,22 @@ package searcher
 import (
 	"testing"
 
+	"github.com/blugelabs/bluge/search/similarity"
+
 	"github.com/blugelabs/bluge/search"
 )
 
 func TestRegexpStringSearchScorch(t *testing.T) {
 	regexpSearcher, err := NewRegexpStringSearcher(baseTestIndexReader,
-		"ma.*", "name", 1.0, nil, testSearchOptions)
+		"ma.*", "name", 1.0, nil,
+		similarity.NewCompositeSumScorer(), testSearchOptions)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	regexpSearcherCo, err := NewRegexpStringSearcher(baseTestIndexReader,
-		"co.*", "desc", 1.0, nil, testSearchOptions)
+		"co.*", "desc", 1.0, nil,
+		similarity.NewCompositeSumScorer(), testSearchOptions)
 	if err != nil {
 		t.Fatal(err)
 	}

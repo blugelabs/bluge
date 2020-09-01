@@ -24,7 +24,8 @@ import (
 
 func NewGeoPointDistanceSearcher(indexReader search.Reader, centerLon,
 	centerLat, dist float64, field string, boost float64, scorer search.Scorer,
-	options search.SearcherOptions, precisionStep uint) (search.Searcher, error) {
+	compScorer search.CompositeScorer, options search.SearcherOptions,
+	precisionStep uint) (search.Searcher, error) {
 	// compute bounding box containing the circle
 	topLeftLon, topLeftLat, bottomRightLon, bottomRightLat, err :=
 		geo.RectFromPointDistance(centerLon, centerLat, dist)
@@ -35,7 +36,7 @@ func NewGeoPointDistanceSearcher(indexReader search.Reader, centerLon,
 	// build a searcher for the box
 	boxSearcher, err := boxSearcher(indexReader,
 		topLeftLon, topLeftLat, bottomRightLon, bottomRightLat,
-		field, boost, scorer, options, false, precisionStep)
+		field, boost, scorer, compScorer, options, false, precisionStep)
 	if err != nil {
 		return nil, err
 	}
@@ -55,19 +56,19 @@ func NewGeoPointDistanceSearcher(indexReader search.Reader, centerLon,
 // two boxes joined through a disjunction searcher
 func boxSearcher(indexReader search.Reader,
 	topLeftLon, topLeftLat, bottomRightLon, bottomRightLat float64,
-	field string, boost float64, scorer search.Scorer, options search.SearcherOptions, checkBoundaries bool,
-	precisionStep uint) (search.Searcher, error) {
+	field string, boost float64, scorer search.Scorer, compScorer search.CompositeScorer,
+	options search.SearcherOptions, checkBoundaries bool, precisionStep uint) (search.Searcher, error) {
 	if bottomRightLon < topLeftLon {
 		// cross date line, rewrite as two parts
 
 		leftSearcher, err := NewGeoBoundingBoxSearcher(indexReader,
 			-180, bottomRightLat, bottomRightLon, topLeftLat,
-			field, boost, scorer, options, checkBoundaries, precisionStep)
+			field, boost, scorer, compScorer, options, checkBoundaries, precisionStep)
 		if err != nil {
 			return nil, err
 		}
 		rightSearcher, err := NewGeoBoundingBoxSearcher(indexReader,
-			topLeftLon, bottomRightLat, 180, topLeftLat, field, boost, scorer, options,
+			topLeftLon, bottomRightLat, 180, topLeftLat, field, boost, scorer, compScorer, options,
 			checkBoundaries, precisionStep)
 		if err != nil {
 			_ = leftSearcher.Close()
@@ -87,7 +88,7 @@ func boxSearcher(indexReader search.Reader,
 	// build geoboundingbox searcher for that bounding box
 	boxSearcher, err := NewGeoBoundingBoxSearcher(indexReader,
 		topLeftLon, bottomRightLat, bottomRightLon, topLeftLat, field, boost, scorer,
-		options, checkBoundaries, precisionStep)
+		compScorer, options, checkBoundaries, precisionStep)
 	if err != nil {
 		return nil, err
 	}

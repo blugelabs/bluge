@@ -47,9 +47,6 @@ type Config struct {
 	OptimizeConjunctionUnadorned bool
 	OptimizeDisjunctionUnadorned bool
 
-	// Optimization Config
-	OptimizeDisjunctionUnadornedMinChildCardinality int
-
 	// MinSegmentsForInMemoryMerge represents the number of
 	// in-memory zap segments that persistSnapshotMaybeMerge() needs to
 	// see in an Snapshot before it decides to merge and persist
@@ -143,9 +140,6 @@ func defaultConfig() Config {
 		OptimizeConjunction:          true,
 		OptimizeConjunctionUnadorned: true,
 		OptimizeDisjunctionUnadorned: true,
-
-		// FIXME revisit based on Couchbase customer experience, possibly 0 or remove
-		OptimizeDisjunctionUnadornedMinChildCardinality: 256,
 
 		MinSegmentsForInMemoryMerge: 2,
 

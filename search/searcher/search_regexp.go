@@ -24,8 +24,8 @@ import (
 // NewRegexpStringSearcher is similar to NewRegexpSearcher, but
 // additionally optimizes for index readers that handle regexp's.
 func NewRegexpStringSearcher(indexReader search.Reader, pattern, field string,
-	boost float64, scorer search.Scorer, options search.SearcherOptions) (
-	search.Searcher, error) {
+	boost float64, scorer search.Scorer, compScorer search.CompositeScorer,
+	options search.SearcherOptions) (search.Searcher, error) {
 	a, prefixBeg, prefixEnd, err := parseRegexp(pattern)
 	if err != nil {
 		return nil, err
@@ -53,7 +53,7 @@ func NewRegexpStringSearcher(indexReader search.Reader, pattern, field string,
 	}
 
 	return NewMultiTermSearcher(indexReader, candidateTerms, field, boost, scorer,
-		options, true)
+		compScorer, options, true)
 }
 
 func parseRegexp(pattern string) (a *regexp.Regexp, prefixBeg, prefixEnd []byte, err error) {

@@ -364,7 +364,8 @@ func (q *DateRangeQuery) Searcher(i search.Reader, options search.SearcherOption
 		q.scorer = similarity.ConstantScorer(1)
 	}
 
-	return searcher.NewNumericRangeSearcher(i, min, max, q.inclusiveStart, q.inclusiveEnd, field, q.boost.Value(), q.scorer, options)
+	return searcher.NewNumericRangeSearcher(i, min, max, q.inclusiveStart, q.inclusiveEnd, field,
+		q.boost.Value(), q.scorer, similarity.NewCompositeSumScorer(), options)
 }
 
 func (q *DateRangeQuery) parseEndpoints() (min, max float64, err error) {
@@ -557,7 +558,8 @@ func (q *FuzzyQuery) Searcher(i search.Reader, options search.SearcherOptions) (
 	if q.field == "" {
 		field = options.DefaultSearchField
 	}
-	return searcher.NewFuzzySearcher(i, q.term, q.prefix, q.fuzziness, field, q.boost.Value(), q.scorer, options)
+	return searcher.NewFuzzySearcher(i, q.term, q.prefix, q.fuzziness, field, q.boost.Value(),
+		q.scorer, similarity.NewCompositeSumScorer(), options)
 }
 
 type GeoBoundingBoxQuery struct {
@@ -612,13 +614,15 @@ func (q *GeoBoundingBoxQuery) Searcher(i search.Reader, options search.SearcherO
 
 		leftSearcher, err := searcher.NewGeoBoundingBoxSearcher(i,
 			-180, q.bottomRight[1], q.bottomRight[0], q.topLeft[1],
-			field, q.boost.Value(), q.scorer, options, true, geoPrecisionStep)
+			field, q.boost.Value(), q.scorer, similarity.NewCompositeSumScorer(),
+			options, true, geoPrecisionStep)
 		if err != nil {
 			return nil, err
 		}
 		rightSearcher, err := searcher.NewGeoBoundingBoxSearcher(i,
 			q.topLeft[0], q.bottomRight[1], 180, q.topLeft[1],
-			field, q.boost.Value(), q.scorer, options, true, geoPrecisionStep)
+			field, q.boost.Value(), q.scorer, similarity.NewCompositeSumScorer(),
+			options, true, geoPrecisionStep)
 		if err != nil {
 			_ = leftSearcher.Close()
 			return nil, err
@@ -629,7 +633,8 @@ func (q *GeoBoundingBoxQuery) Searcher(i search.Reader, options search.SearcherO
 	}
 
 	return searcher.NewGeoBoundingBoxSearcher(i, q.topLeft[0], q.bottomRight[1], q.bottomRight[0], q.topLeft[1],
-		field, q.boost.Value(), q.scorer, options, true, geoPrecisionStep)
+		field, q.boost.Value(), q.scorer, similarity.NewCompositeSumScorer(),
+		options, true, geoPrecisionStep)
 }
 
 func (q *GeoBoundingBoxQuery) Validate() error {
@@ -686,8 +691,8 @@ func (q *GeoDistanceQuery) Searcher(i search.Reader,
 		return nil, err
 	}
 
-	return searcher.NewGeoPointDistanceSearcher(i, q.location[0], q.location[1],
-		dist, field, q.boost.Value(), q.scorer, options, geoPrecisionStep)
+	return searcher.NewGeoPointDistanceSearcher(i, q.location[0], q.location[1], dist,
+		field, q.boost.Value(), q.scorer, similarity.NewCompositeSumScorer(), options, geoPrecisionStep)
 }
 
 func (q *GeoDistanceQuery) Validate() error {
@@ -733,7 +738,8 @@ func (q *GeoBoundingPolygonQuery) Searcher(i search.Reader,
 		field = options.DefaultSearchField
 	}
 
-	return searcher.NewGeoBoundedPolygonSearcher(i, q.points, field, q.boost.Value(), q.scorer, options, geoPrecisionStep)
+	return searcher.NewGeoBoundedPolygonSearcher(i, q.points, field, q.boost.Value(),
+		q.scorer, similarity.NewCompositeSumScorer(), options, geoPrecisionStep)
 }
 
 func (q *GeoBoundingPolygonQuery) Validate() error {
@@ -1147,7 +1153,8 @@ func (q *NumericRangeQuery) Searcher(i search.Reader, options search.SearcherOpt
 	if q.scorer == nil {
 		q.scorer = similarity.ConstantScorer(1)
 	}
-	return searcher.NewNumericRangeSearcher(i, q.min, q.max, q.inclusiveMin, q.inclusiveMax, field, q.boost.Value(), q.scorer, options)
+	return searcher.NewNumericRangeSearcher(i, q.min, q.max, q.inclusiveMin, q.inclusiveMax, field,
+		q.boost.Value(), q.scorer, similarity.NewCompositeSumScorer(), options)
 }
 
 func (q *NumericRangeQuery) Validate() error {
@@ -1250,7 +1257,8 @@ func (q *PrefixQuery) Searcher(i search.Reader, options search.SearcherOptions) 
 	if q.field == "" {
 		field = options.DefaultSearchField
 	}
-	return searcher.NewTermPrefixSearcher(i, q.prefix, field, q.boost.Value(), q.scorer, options)
+	return searcher.NewTermPrefixSearcher(i, q.prefix, field, q.boost.Value(),
+		q.scorer, similarity.NewCompositeSumScorer(), options)
 }
 
 type RegexpQuery struct {
@@ -1302,7 +1310,7 @@ func (q *RegexpQuery) Searcher(i search.Reader, options search.SearcherOptions) 
 	actualRegexp = strings.TrimPrefix(actualRegexp, "^")
 
 	return searcher.NewRegexpStringSearcher(i, actualRegexp, field,
-		q.boost.Value(), q.scorer, options)
+		q.boost.Value(), q.scorer, similarity.NewCompositeSumScorer(), options)
 }
 
 func (q *RegexpQuery) Validate() error {
@@ -1415,7 +1423,8 @@ func (q *TermRangeQuery) Searcher(i search.Reader, options search.SearcherOption
 	if q.max != "" {
 		maxTerm = []byte(q.max)
 	}
-	return searcher.NewTermRangeSearcher(i, minTerm, maxTerm, q.inclusiveMin, q.inclusiveMax, field, q.boost.Value(), q.scorer, options)
+	return searcher.NewTermRangeSearcher(i, minTerm, maxTerm, q.inclusiveMin, q.inclusiveMax, field,
+		q.boost.Value(), q.scorer, similarity.NewCompositeSumScorer(), options)
 }
 
 func (q *TermRangeQuery) Validate() error {
@@ -1490,7 +1499,7 @@ func (q *WildcardQuery) Searcher(i search.Reader, options search.SearcherOptions
 	regexpString := wildcardRegexpReplacer.Replace(q.wildcard)
 
 	return searcher.NewRegexpStringSearcher(i, regexpString, field,
-		q.boost.Value(), q.scorer, options)
+		q.boost.Value(), q.scorer, similarity.NewCompositeSumScorer(), options)
 }
 
 func (q *WildcardQuery) Validate() error {

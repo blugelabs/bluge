@@ -77,7 +77,8 @@ func TestGeoPointDistanceSearcher(t *testing.T) {
 
 func testGeoPointDistanceSearch(i search.Reader, centerLon, centerLat, dist float64, field string) ([]int, error) {
 	var rv []int
-	gds, err := NewGeoPointDistanceSearcher(i, centerLon, centerLat, dist, field, 1.0, similarity.ConstantScorer(1.0),
+	gds, err := NewGeoPointDistanceSearcher(i, centerLon, centerLat, dist, field, 1.0,
+		similarity.ConstantScorer(1.0), similarity.NewCompositeSumScorer(),
 		search.SearcherOptions{}, testGeoPrecisionStep)
 	if err != nil {
 		return nil, err

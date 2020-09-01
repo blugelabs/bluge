@@ -40,6 +40,11 @@ func NewDisjunctionSearcher(indexReader search.Reader,
 	return newDisjunctionSearcher(indexReader, qsearchers, min, scorer, options, true)
 }
 
+func optionsDisjunctionOptimizable(options search.SearcherOptions) bool {
+	rv := options.Score == optionScoringNone && !options.IncludeTermVectors
+	return rv
+}
+
 func newDisjunctionSearcher(indexReader search.Reader,
 	qsearchers []search.Searcher, min int, scorer search.CompositeScorer, options search.SearcherOptions,
 	limit bool) (search.Searcher, error) {
@@ -47,7 +52,7 @@ func newDisjunctionSearcher(indexReader search.Reader,
 	// do not need extra information like freq-norm's or term vectors
 	// and the requested min is simple
 	if len(qsearchers) > 1 && min <= 1 &&
-		options.Score == optionScoringNone && !options.IncludeTermVectors {
+		optionsDisjunctionOptimizable(options) {
 		rv, err := optimizeCompositeSearcher("disjunction:unadorned",
 			indexReader, qsearchers, options)
 		if err != nil || rv != nil {

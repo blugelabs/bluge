@@ -85,7 +85,9 @@ func TestGeoBoundingBox(t *testing.T) {
 
 func testGeoBoundingBoxSearch(i search.Reader, minLon, minLat, maxLon, maxLat float64, field string) ([]int, error) {
 	var rv []int
-	gbs, err := NewGeoBoundingBoxSearcher(i, minLon, minLat, maxLon, maxLat, field, 1.0, similarity.ConstantScorer(1.0), search.SearcherOptions{}, true, testGeoPrecisionStep)
+	gbs, err := NewGeoBoundingBoxSearcher(i, minLon, minLat, maxLon, maxLat, field,
+		1.0, similarity.ConstantScorer(1.0), similarity.NewCompositeSumScorer(),
+		search.SearcherOptions{}, true, testGeoPrecisionStep)
 	if err != nil {
 		return nil, err
 	}
