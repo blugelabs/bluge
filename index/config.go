@@ -79,6 +79,16 @@ type Config struct {
 	virtualFields map[string][]segment.Field
 }
 
+func (config Config) WithSegmentType(typ string) Config {
+	config.SegmentType = typ
+	return config
+}
+
+func (config Config) WithSegmentVersion(ver uint32) Config {
+	config.SegmentVersion = ver
+	return config
+}
+
 func (config Config) WithPersisterNapTimeMSec(napTime int) Config {
 	config.PersisterNapTimeMSec = napTime
 	return config

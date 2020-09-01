@@ -49,6 +49,16 @@ func (config Config) WithVirtualField(field Field) Config {
 	return config
 }
 
+func (config Config) WithSegmentType(typ string) Config {
+	config.indexConfig = config.indexConfig.WithSegmentType(typ)
+	return config
+}
+
+func (config Config) WithSegmentVersion(ver uint32) Config {
+	config.indexConfig = config.indexConfig.WithSegmentVersion(ver)
+	return config
+}
+
 func (config Config) WithSearchStartFunc(f func(size uint64) error) Config {
 	config.SearchStartFunc = f
 	return config

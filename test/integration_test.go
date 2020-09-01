@@ -16,6 +16,7 @@ package test
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"math"
@@ -28,6 +29,9 @@ import (
 
 	"github.com/blugelabs/bluge"
 )
+
+var segType = flag.String("segType", "", "force scorch segment type")
+var segVer = flag.Int("segVer", 0, "force scorch segment version")
 
 func collectHits(dmi search.DocumentMatchIterator) (rv []*match, err error) {
 	var next *search.DocumentMatch
@@ -111,7 +115,16 @@ func TestIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 		t.Logf("testdir: %s", path)
-		idx, err := bluge.OpenWriter(bluge.DefaultConfig(path))
+		cfg := bluge.DefaultConfig(path)
+		if *segType != "" {
+			cfg = cfg.WithSegmentType(*segType)
+			t.Logf("forcing segment type: %s", *segType)
+		}
+		if *segVer != 0 {
+			cfg = cfg.WithSegmentVersion(uint32(*segVer))
+			t.Logf("forcing segment version: %d", *segVer)
+		}
+		idx, err := bluge.OpenWriter(cfg)
 		if err != nil {
 			t.Fatal(err)
 		}
