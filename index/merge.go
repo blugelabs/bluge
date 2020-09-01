@@ -176,8 +176,10 @@ func (s *Writer) executeMergeTask(merges chan *segmentMerge, task *mergeplan.Mer
 		old:           oldMap,
 		oldNewDocNums: oldNewDocNums,
 		new:           seg,
-		notify:        make(chan *Snapshot),
+		notifyCh:      make(chan *mergeTaskIntroStatus),
 	}
+
+	s.fireEvent(EventKindMergeTaskIntroductionStart, 0)
 
 	// give it to the introducer
 	select {
@@ -191,18 +193,24 @@ func (s *Writer) executeMergeTask(merges chan *segmentMerge, task *mergeplan.Mer
 	introStartTime := time.Now()
 	// it is safe to blockingly wait for the merge introduction
 	// here as the introducer is bound to handle the notify channel.
-	newSnapshot := <-sm.notify
+	mergeTaskIntroStatus := <-sm.notifyCh
 	introTime := uint64(time.Since(introStartTime))
 	atomic.AddUint64(&s.stats.TotFileMergeZapIntroductionTime, introTime)
 	if atomic.LoadUint64(&s.stats.MaxFileMergeZapIntroductionTime) < introTime {
 		atomic.StoreUint64(&s.stats.MaxFileMergeZapIntroductionTime, introTime)
 	}
 	atomic.AddUint64(&s.stats.TotFileMergeIntroductionsDone, 1)
-	if newSnapshot != nil {
-		_ = newSnapshot.Close()
+	if mergeTaskIntroStatus != nil && mergeTaskIntroStatus.snapshot != nil {
+		_ = mergeTaskIntroStatus.snapshot.Close()
+		if mergeTaskIntroStatus.skipped {
+			// decrement the ref counts on skipping introduction.
+			// FIXME stale file that won't get cleaned up
+			_ = seg.Close()
+		}
 	}
 
 	atomic.AddUint64(&s.stats.TotFileMergePlanTasksDone, 1)
+	s.fireEvent(EventKindMergeTaskIntroduction, 0)
 	return nil
 }
 
@@ -228,12 +236,17 @@ func (s *Writer) planSegmentsToMerge(task *mergeplan.MergeTask) (oldMap map[uint
 	return oldMap, segmentsToMerge, docsToDrop
 }
 
+type mergeTaskIntroStatus struct {
+	snapshot *Snapshot
+	skipped  bool
+}
+
 type segmentMerge struct {
 	id            uint64
 	old           map[uint64]*segmentSnapshot
 	oldNewDocNums map[uint64][]int
 	new           *segmentWrapper
-	notify        chan *Snapshot
+	notifyCh      chan *mergeTaskIntroStatus
 }
 
 // ProcessSegmentNow takes in a segmentID, the current version of that segment snapshot
@@ -315,7 +328,7 @@ func (s *Writer) mergeSegmentBases(merges chan *segmentMerge, snapshot *Snapshot
 		old:           make(map[uint64]*segmentSnapshot),
 		oldNewDocNums: make(map[uint64][]int),
 		new:           seg,
-		notify:        make(chan *Snapshot),
+		notifyCh:      make(chan *mergeTaskIntroStatus),
 	}
 
 	for i, idx := range sbsIndexes {
@@ -332,10 +345,18 @@ func (s *Writer) mergeSegmentBases(merges chan *segmentMerge, snapshot *Snapshot
 	}
 
 	// blockingly wait for the introduction to complete
-	newSnapshot := <-sm.notify
-	if newSnapshot != nil {
+	var newSnapshot *Snapshot
+	mergeTaskIntroStatus := <-sm.notifyCh
+	if mergeTaskIntroStatus != nil && mergeTaskIntroStatus.snapshot != nil {
+		newSnapshot = mergeTaskIntroStatus.snapshot
 		atomic.AddUint64(&s.stats.TotMemMergeSegments, uint64(len(sbs)))
 		atomic.AddUint64(&s.stats.TotMemMergeDone, 1)
+		if mergeTaskIntroStatus.skipped {
+			// decrement the ref counts on skipping introduction.
+			_ = newSnapshot.Close()
+			_ = seg.Close()
+			newSnapshot = nil
+		}
 	}
 	return newSnapshot, newSegmentID, nil
 }

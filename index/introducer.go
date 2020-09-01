@@ -294,6 +294,7 @@ func (s *Writer) introduceMerge(nextMerge *segmentMerge, introduceSnapshotEpoch 
 			}
 		}
 	}
+	var skipped bool
 	// In case where all the docs in the newly merged segment getting
 	// deleted by the time we reach here, can skip the introduction.
 	if nextMerge.new != nil &&
@@ -314,6 +315,9 @@ func (s *Writer) introduceMerge(nextMerge *segmentMerge, introduceSnapshotEpoch 
 			docsToPersistCount += nextMerge.new.Count() - int(newSegmentDeleted.GetCardinality())
 			memSegments++
 		}
+	} else {
+		skipped = true
+		atomic.AddUint64(&s.stats.TotFileMergeIntroductionsObsoleted, 1)
 	}
 
 	atomic.StoreUint64(&s.stats.TotItemsToPersist, uint64(docsToPersistCount))
@@ -327,8 +331,8 @@ func (s *Writer) introduceMerge(nextMerge *segmentMerge, introduceSnapshotEpoch 
 	s.replaceRoot(newSnapshot, nil, nil)
 
 	// notify requester that we incorporated this
-	nextMerge.notify <- newSnapshot
-	close(nextMerge.notify)
+	nextMerge.notifyCh <- &mergeTaskIntroStatus{snapshot: newSnapshot, skipped: skipped}
+	close(nextMerge.notifyCh)
 }
 
 func (s *Writer) replaceRoot(newSnapshot *Snapshot, persistedCh chan error, persistedCallback func(error)) {

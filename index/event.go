@@ -25,10 +25,13 @@ type Event struct {
 
 // Kinds of index events
 const (
-	EventKindCloseStart             = 1 // when the index has started to close
-	EventKindClose                  = 2 // when the index has been fully closed
-	EventKindMergerProgress         = 3 // when the index has completed a round of merge operations
-	EventKindPersisterProgress      = 4 // when the index has completed a round of persistence operations
-	EventKindBatchIntroductionStart = 5 // when the index has started to introduce a new batch
-	EventKindBatchIntroduction      = 6 // when index has finished introducing a batch
+	EventKindCloseStart                 = 1 // when the index has started to close
+	EventKindClose                      = 2 // when the index has been fully closed
+	EventKindMergerProgress             = 3 // when the index has completed a round of merge operations
+	EventKindPersisterProgress          = 4 // when the index has completed a round of persistence operations
+	EventKindBatchIntroductionStart     = 5 // when the index has started to introduce a new batch
+	EventKindBatchIntroduction          = 6 // when index has finished introducing a batch
+	EventKindMergeTaskIntroductionStart = 7 // when the index has started to introduce a merge
+	EventKindMergeTaskIntroduction      = 8 // when the index has finished introdocing a merge
+
 )
