@@ -16,6 +16,9 @@ package searcher
 
 import (
 	"fmt"
+	"unicode/utf8"
+
+	"github.com/blugelabs/vellum"
 
 	segment "github.com/blugelabs/bluge_segment_api"
 
@@ -60,23 +63,21 @@ func NewFuzzySearcher(indexReader search.Reader, term string,
 			break
 		}
 	}
-	candidateTerms, err := findFuzzyCandidateTerms(indexReader, term, fuzziness,
+	candidateTerms, termBoosts, err := findFuzzyCandidateTerms(indexReader, term, fuzziness,
 		field, prefixTerm)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewMultiTermSearcher(indexReader, candidateTerms, field,
+	return NewMultiTermSearcherIndividualBoost(indexReader, candidateTerms, termBoosts, field,
 		boost, scorer, compScorer, options, true)
 }
 
 func findFuzzyCandidateTerms(indexReader search.Reader, term string,
-	fuzziness int, field, prefixTerm string) (rv []string, err error) {
-	rv = make([]string, 0)
-
-	a, err := getLevAutomaton(term, fuzziness)
+	fuzziness int, field, prefixTerm string) (terms []string, boosts []float64, err error) {
+	automatons, err := getLevAutomatons(term, fuzziness)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	var prefixBeg, prefixEnd []byte
@@ -85,24 +86,48 @@ func findFuzzyCandidateTerms(indexReader search.Reader, term string,
 		prefixEnd = incrementBytes(prefixBeg)
 	}
 
-	fieldDict, err := indexReader.DictionaryIterator(field, a, prefixBeg, prefixEnd)
+	fieldDict, err := indexReader.DictionaryIterator(field, automatons[0], prefixBeg, prefixEnd)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer func() {
 		if cerr := fieldDict.Close(); cerr != nil && err == nil {
 			err = cerr
 		}
 	}()
+
+	termLen := utf8.RuneCountInString(term)
+
 	tfd, err := fieldDict.Next()
 	for err == nil && tfd != nil {
-		rv = append(rv, tfd.Term())
-		if tooManyClauses(len(rv)) {
-			return nil, tooManyClausesErr(field, len(rv))
+		terms = append(terms, tfd.Term())
+		if tooManyClauses(len(terms)) {
+			return nil, nil, tooManyClausesErr(field, len(terms))
 		}
+		// compute actual edit distance for this term
+		boost := 1.0
+		if tfd.Term() != term {
+			boost = boostFromDistance(fuzziness, automatons, tfd.Term(), termLen)
+		}
+		boosts = append(boosts, boost)
 		tfd, err = fieldDict.Next()
 	}
-	return rv, err
+	return terms, boosts, err
+}
+
+func boostFromDistance(fuzziness int, automatons []segment.Automaton, dictTerm string, searchTermLen int) float64 {
+	termEditDistance := fuzziness // start assuming it is fuzziness of automaton that found it
+	for i := 1; i < len(automatons); i++ {
+		if vellum.AutomatonContains(automatons[i], []byte(dictTerm)) {
+			termEditDistance--
+		}
+	}
+	minTermLen := searchTermLen
+	thisTermLen := utf8.RuneCountInString(dictTerm)
+	if thisTermLen < minTermLen {
+		minTermLen = thisTermLen
+	}
+	return 1.0 - (float64(termEditDistance) / float64(minTermLen))
 }
 
 func getLevAutomaton(term string, fuzziness int) (segment.Automaton, error) {
@@ -110,4 +135,16 @@ func getLevAutomaton(term string, fuzziness int) (segment.Automaton, error) {
 		return levAutomatonBuilder.BuildDfa(term, uint8(fuzziness))
 	}
 	return nil, fmt.Errorf("unsupported fuzziness: %d", fuzziness)
+}
+
+func getLevAutomatons(term string, maxFuzziness int) (rv []segment.Automaton, err error) {
+	for fuzziness := maxFuzziness; fuzziness > 0; fuzziness-- {
+		var levAutomaton segment.Automaton
+		levAutomaton, err = getLevAutomaton(term, fuzziness)
+		if err != nil {
+			return nil, err
+		}
+		rv = append(rv, levAutomaton)
+	}
+	return rv, nil
 }
