@@ -18,11 +18,10 @@ import (
 	"fmt"
 	"unicode/utf8"
 
-	"github.com/blugelabs/vellum"
-
 	segment "github.com/blugelabs/bluge_segment_api"
 
 	"github.com/blugelabs/bluge/search"
+	"github.com/couchbase/vellum"
 	"github.com/couchbase/vellum/levenshtein"
 )
 
