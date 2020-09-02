@@ -585,19 +585,21 @@ func (i *Snapshot) readFromVersion1(br *bufio.Reader) (int64, error) {
 
 func (i *Snapshot) readSegmentSnapshot(br *bufio.Reader) (bytesRead int64, ss *segmentSnapshot, err error) {
 	var sz int
-	// read type (not used for now)
-	sz, _, err = readVarLenString(br)
+	var segmentType string
+	// read type
+	sz, segmentType, err = readVarLenString(br)
 	if err != nil {
 		return bytesRead, nil, fmt.Errorf("error reading snapshot %d: %w", i.epoch, err)
 	}
 	bytesRead += int64(sz)
 
-	// read ver (not used for now)
+	// read ver
 	verBuf := make([]byte, 4)
 	sz, err = br.Read(verBuf)
 	if err != nil {
 		return bytesRead, nil, fmt.Errorf("error reading snapshot %d: %w", i.epoch, err)
 	}
+	segmentVersion := binary.BigEndian.Uint32(verBuf)
 	bytesRead += int64(sz)
 
 	// read segment id
@@ -613,7 +615,9 @@ func (i *Snapshot) readSegmentSnapshot(br *bufio.Reader) (bytesRead int64, ss *s
 	bytesRead += int64(sz)
 
 	ss = &segmentSnapshot{
-		id: segmentID,
+		id:             segmentID,
+		segmentType:    segmentType,
+		segmentVersion: segmentVersion,
 	}
 
 	// read size of deleted bitmap
