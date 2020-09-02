@@ -88,6 +88,16 @@ func (b *DateRangeCalculator) Consume(d *search.DocumentMatch) {
 	}
 }
 
+func (b *DateRangeCalculator) Merge(other search.Calculator) {
+	if other, ok := other.(*DateRangeCalculator); ok {
+		if len(b.bucketCalculators) == len(other.bucketCalculators) {
+			for i := range b.bucketCalculators {
+				b.bucketCalculators[i].Merge(other.bucketCalculators[i])
+			}
+		}
+	}
+}
+
 func (b *DateRangeCalculator) Finish() {
 	for _, rang := range b.bucketCalculators {
 		rang.Finish()

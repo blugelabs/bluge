@@ -29,3 +29,7 @@ func (*countingSource) Numbers(_ *search.DocumentMatch) []float64 {
 }
 
 var countSource = &countingSource{}
+
+func CountMatches() *SingleValueMetric {
+	return Sum(countSource)
+}

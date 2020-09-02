@@ -36,6 +36,7 @@ func (a Aggregations) Fields() []string {
 type Calculator interface {
 	Consume(*DocumentMatch)
 	Finish()
+	Merge(Calculator)
 }
 
 type MetricCalculator interface {
@@ -62,6 +63,16 @@ func NewBucket(name string, aggregations map[string]Aggregation) *Bucket {
 		rv.aggregations[name] = agg.Calculator()
 	}
 	return rv
+}
+
+func (b *Bucket) Merge(other *Bucket) {
+	for otherAggName, otherCalculator := range other.aggregations {
+		if thisCalculator, ok := b.aggregations[otherAggName]; ok {
+			thisCalculator.Merge(otherCalculator)
+		} else {
+			b.aggregations[otherAggName] = otherCalculator
+		}
+	}
 }
 
 func (b *Bucket) Name() string {

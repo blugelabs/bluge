@@ -71,6 +71,12 @@ func (c *PercentilesCalculator) Consume(d *search.DocumentMatch) {
 	}
 }
 
+func (c *PercentilesCalculator) Merge(other search.Calculator) {
+	if other, ok := other.(*PercentilesCalculator); ok {
+		_ = c.tdigest.Merge(other.tdigest)
+	}
+}
+
 func (c *PercentilesCalculator) Finish() {
 
 }

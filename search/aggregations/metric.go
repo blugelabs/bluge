@@ -26,10 +26,6 @@ type SingleValueMetric struct {
 	compute SingleValueCalculatorFunc
 }
 
-func CountMatches() *SingleValueMetric {
-	return Sum(countSource)
-}
-
 func Sum(src search.NumericValuesSource) *SingleValueMetric {
 	return &SingleValueMetric{
 		src: src,
@@ -91,6 +87,12 @@ type SingleValueCalculator struct {
 func (s *SingleValueCalculator) Consume(d *search.DocumentMatch) {
 	for _, val := range s.src.Numbers(d) {
 		s.compute(s, val)
+	}
+}
+
+func (s *SingleValueCalculator) Merge(other search.Calculator) {
+	if other, ok := other.(*SingleValueCalculator); ok {
+		s.compute(s, other.val)
 	}
 }
 
@@ -156,6 +158,13 @@ func (a *WeightedAvgCalculator) Consume(d *search.DocumentMatch) {
 	for _, val := range a.src.Numbers(d) {
 		a.val += val * weight
 		a.weights += weight
+	}
+}
+
+func (a *WeightedAvgCalculator) Merge(other search.Calculator) {
+	if other, ok := other.(*WeightedAvgCalculator); ok {
+		a.val += other.val
+		a.weights += other.weights
 	}
 }
 

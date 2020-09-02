@@ -24,6 +24,62 @@ import (
 	"github.com/blugelabs/bluge/search"
 )
 
+func TestAggregations(t *testing.T) {
+	global := buildTestAggregations()
+	fieldsNeeded := global.Fields()
+	assertFieldsSeen(t, []string{"age", "name", "type"}, fieldsNeeded)
+
+	bucket := search.NewBucket("global", global)
+	testDocs := buildTestDocs()
+	for _, doc := range testDocs {
+		err := doc.LoadDocumentValues(search.NewSearchContext(0, 0), global.Fields())
+		if err != nil {
+			t.Fatal(err)
+		}
+		bucket.Consume(doc)
+	}
+	bucket.Finish()
+
+	expect := buildTestBucketExpectations()
+	expect.Assert(t, bucket, "")
+}
+
+func TestAggregationMerge(t *testing.T) {
+	global := buildTestAggregations()
+	fieldsNeeded := global.Fields()
+	assertFieldsSeen(t, []string{"age", "name", "type"}, fieldsNeeded)
+
+	testDocs := buildTestDocs()
+
+	// process the first 5 docs in shard1
+	shard1 := search.NewBucket("shard1", global)
+	for _, doc := range testDocs[0:5] {
+		err := doc.LoadDocumentValues(search.NewSearchContext(0, 0), global.Fields())
+		if err != nil {
+			t.Fatal(err)
+		}
+		shard1.Consume(doc)
+	}
+	shard1.Finish()
+
+	// process the next 5 docs in shard2
+	shard2 := search.NewBucket("shard2", global)
+	for _, doc := range testDocs[5:] {
+		err := doc.LoadDocumentValues(search.NewSearchContext(0, 0), global.Fields())
+		if err != nil {
+			t.Fatal(err)
+		}
+		shard2.Consume(doc)
+	}
+	shard2.Finish()
+
+	// merge shard2 into shard1
+	shard1.Merge(shard2)
+
+	expect := buildTestBucketExpectations()
+	expect.Assert(t, shard1, "")
+}
+
 type matchReader struct {
 	docVals map[string][]byte
 }
@@ -52,76 +108,137 @@ func newDocumentMatch(number int, score float64, docVals map[string][]byte) *sea
 	return rv
 }
 
-var testDocs = []*search.DocumentMatch{
-	newDocumentMatch(0, 1.0,
-		map[string][]byte{
-			"name": []byte("barbara"),
-			"type": []byte("employee"),
-			"age":  numeric.MustNewPrefixCodedInt64(numeric.Float64ToInt64(1), 0),
-		}),
-	newDocumentMatch(1, 1.2,
-		map[string][]byte{
-			"name": []byte("john"),
-			"type": []byte("employee"),
-			"age":  numeric.MustNewPrefixCodedInt64(numeric.Float64ToInt64(25), 0),
-		}),
+func buildTestDocs() []*search.DocumentMatch {
+	return []*search.DocumentMatch{
+		newDocumentMatch(0, 1.0,
+			map[string][]byte{
+				"name": []byte("barbara"),
+				"type": []byte("employee"),
+				"age":  numeric.MustNewPrefixCodedInt64(numeric.Float64ToInt64(1), 0),
+			}),
+		newDocumentMatch(1, 1.2,
+			map[string][]byte{
+				"name": []byte("john"),
+				"type": []byte("employee"),
+				"age":  numeric.MustNewPrefixCodedInt64(numeric.Float64ToInt64(25), 0),
+			}),
 
-	newDocumentMatch(2, 1.01,
-		map[string][]byte{
-			"name": []byte("barbara"),
-			"type": []byte("employee"),
-			"age":  numeric.MustNewPrefixCodedInt64(numeric.Float64ToInt64(16), 0),
-		}),
+		newDocumentMatch(2, 1.01,
+			map[string][]byte{
+				"name": []byte("barbara"),
+				"type": []byte("employee"),
+				"age":  numeric.MustNewPrefixCodedInt64(numeric.Float64ToInt64(16), 0),
+			}),
 
-	newDocumentMatch(3, 1.5,
-		map[string][]byte{
-			"name": []byte("dale"),
-			"type": []byte("employee"),
-			"age":  numeric.MustNewPrefixCodedInt64(numeric.Float64ToInt64(32), 0),
-		}),
-	newDocumentMatch(4, 1.6,
-		map[string][]byte{
-			"name": []byte("judy"),
-			"type": []byte("contractor"),
-			"age":  numeric.MustNewPrefixCodedInt64(numeric.Float64ToInt64(48), 0),
-		}),
-	newDocumentMatch(5, 1.2,
-		map[string][]byte{
-			"name": []byte("donna"),
-			"type": []byte("employee"),
-			"age":  numeric.MustNewPrefixCodedInt64(numeric.Float64ToInt64(63), 0),
-		}),
+		newDocumentMatch(3, 1.5,
+			map[string][]byte{
+				"name": []byte("dale"),
+				"type": []byte("employee"),
+				"age":  numeric.MustNewPrefixCodedInt64(numeric.Float64ToInt64(32), 0),
+			}),
+		newDocumentMatch(4, 1.6,
+			map[string][]byte{
+				"name": []byte("judy"),
+				"type": []byte("contractor"),
+				"age":  numeric.MustNewPrefixCodedInt64(numeric.Float64ToInt64(48), 0),
+			}),
+		newDocumentMatch(5, 1.2,
+			map[string][]byte{
+				"name": []byte("donna"),
+				"type": []byte("employee"),
+				"age":  numeric.MustNewPrefixCodedInt64(numeric.Float64ToInt64(63), 0),
+			}),
 
-	newDocumentMatch(6, 1.2,
-		map[string][]byte{
-			"name": []byte("john"),
-			"type": []byte("employee"),
-			"age":  numeric.MustNewPrefixCodedInt64(numeric.Float64ToInt64(4), 0),
-		}),
+		newDocumentMatch(6, 1.2,
+			map[string][]byte{
+				"name": []byte("john"),
+				"type": []byte("employee"),
+				"age":  numeric.MustNewPrefixCodedInt64(numeric.Float64ToInt64(4), 0),
+			}),
 
-	newDocumentMatch(7, 1.14,
-		map[string][]byte{
-			"name": []byte("gary"),
-			"type": []byte("employee"),
-			"age":  numeric.MustNewPrefixCodedInt64(numeric.Float64ToInt64(95), 0),
-		}),
+		newDocumentMatch(7, 1.14,
+			map[string][]byte{
+				"name": []byte("gary"),
+				"type": []byte("employee"),
+				"age":  numeric.MustNewPrefixCodedInt64(numeric.Float64ToInt64(95), 0),
+			}),
 
-	newDocumentMatch(8, 1.1,
-		map[string][]byte{
-			"name": []byte("john"),
-			"type": []byte("contractor"),
-			"age":  numeric.MustNewPrefixCodedInt64(numeric.Float64ToInt64(39), 0),
-		}),
+		newDocumentMatch(8, 1.1,
+			map[string][]byte{
+				"name": []byte("john"),
+				"type": []byte("contractor"),
+				"age":  numeric.MustNewPrefixCodedInt64(numeric.Float64ToInt64(39), 0),
+			}),
 
-	newDocumentMatch(9, 1.22,
-		map[string][]byte{
-			"name": []byte("carol"),
-			"type": []byte("employee"),
-			"age":  numeric.MustNewPrefixCodedInt64(numeric.Float64ToInt64(11), 0),
-		}),
+		newDocumentMatch(9, 1.22,
+			map[string][]byte{
+				"name": []byte("carol"),
+				"type": []byte("employee"),
+				"age":  numeric.MustNewPrefixCodedInt64(numeric.Float64ToInt64(11), 0),
+			}),
+	}
 }
 
-func TestAggregations(t *testing.T) {
+func assertFieldsSeen(t *testing.T, expectedFields, actualFields []string) {
+	expectFields := map[string]bool{}
+	for _, expectField := range expectedFields {
+		expectFields[expectField] = false
+	}
+	for _, field := range actualFields {
+		expectFields[field] = true
+	}
+	for field, seen := range expectFields {
+		if !seen {
+			t.Errorf("expected to see field '%s', did not", field)
+		}
+	}
+}
+
+type bucketExpectation struct {
+	metrics  map[string]float64
+	children map[string]map[string]*bucketExpectation
+}
+
+func (b bucketExpectation) Assert(t *testing.T, bucket *search.Bucket, path string) {
+	for name, agg := range bucket.Aggregations() {
+		switch c := agg.(type) {
+		case search.MetricCalculator:
+			if expectMetricValue, ok := b.metrics[name]; ok {
+				if c.Value() != expectMetricValue {
+					t.Errorf("expected value %f got %f for '%s'", expectMetricValue, c.Value(), path+"."+name)
+				}
+			} else {
+				t.Errorf("unexpected metric %s in path '%s'", name, path)
+			}
+			delete(b.metrics, name)
+		case search.BucketCalculator:
+			if expectedBuckets, ok := b.children[name]; ok {
+				buckets := c.Buckets()
+				if len(expectedBuckets) != len(buckets) {
+					t.Errorf("expected %d buckets, got %d, at '%s'", len(expectedBuckets), len(buckets), path+"."+name)
+				}
+				for _, bucket := range buckets {
+					if expectedBucket, ok := expectedBuckets[bucket.Name()]; ok {
+						expectedBucket.Assert(t, bucket, path+name+"."+bucket.Name())
+					} else {
+						t.Errorf("unexpected bucket %s in path '%s'", bucket.Name(), path+"."+name)
+					}
+				}
+			} else {
+				t.Errorf("unexpected bucket aggregation %s in path '%s'", name, path)
+			}
+			delete(b.children, name)
+		}
+	}
+	for metricName := range b.metrics {
+		t.Errorf("expected a metric named %s at path '%s', was missing", metricName, path)
+	}
+	for aggName := range b.children {
+		t.Errorf("expected an aggregation named: %s at path '%s', was missing", aggName, path)
+	}
+}
+
+func buildTestAggregations() search.Aggregations {
 	global := make(search.Aggregations)
 
 	child := NamedRange("children", 0, 18)
@@ -149,33 +266,11 @@ func TestAggregations(t *testing.T) {
 	typesAgg := NewTermsAggregation(search.Field("type"), 2)
 	global.Add("byType", typesAgg)
 
-	// ensure that all fields needed by the aggregation are returned
-	seenFields := map[string]bool{
-		"age":  false,
-		"name": false,
-		"type": false,
-	}
-	fieldsNeeded := global.Fields()
-	for _, field := range fieldsNeeded {
-		seenFields[field] = true
-	}
-	for field, seen := range seenFields {
-		if !seen {
-			t.Errorf("expected to see field '%s', did not", field)
-		}
-	}
+	return global
+}
 
-	bucket := search.NewBucket("global", global)
-	for _, doc := range testDocs {
-		err := doc.LoadDocumentValues(search.NewSearchContext(0, 0), global.Fields())
-		if err != nil {
-			t.Fatal(err)
-		}
-		bucket.Consume(doc)
-	}
-	bucket.Finish()
-
-	expect := &bucketExpectation{
+func buildTestBucketExpectations() *bucketExpectation {
+	return &bucketExpectation{
 		metrics: map[string]float64{
 			"doc_count": 10.0,
 			"max_score": 1.6,
@@ -225,51 +320,5 @@ func TestAggregations(t *testing.T) {
 				},
 			},
 		},
-	}
-
-	expect.Assert(t, bucket, "")
-}
-
-type bucketExpectation struct {
-	metrics  map[string]float64
-	children map[string]map[string]*bucketExpectation
-}
-
-func (b bucketExpectation) Assert(t *testing.T, bucket *search.Bucket, path string) {
-	for name, agg := range bucket.Aggregations() {
-		switch c := agg.(type) {
-		case search.MetricCalculator:
-			if expectMetricValue, ok := b.metrics[name]; ok {
-				if c.Value() != expectMetricValue {
-					t.Errorf("expected value %f got %f for '%s'", expectMetricValue, c.Value(), path+"."+name)
-				}
-			} else {
-				t.Errorf("unexpected metric %s in path '%s'", name, path)
-			}
-			delete(b.metrics, name)
-		case search.BucketCalculator:
-			if expectedBuckets, ok := b.children[name]; ok {
-				buckets := c.Buckets()
-				if len(expectedBuckets) != len(buckets) {
-					t.Errorf("expected %d buckets, got %d, at '%s'", len(expectedBuckets), len(buckets), path+"."+name)
-				}
-				for _, bucket := range buckets {
-					if expectedBucket, ok := expectedBuckets[bucket.Name()]; ok {
-						expectedBucket.Assert(t, bucket, path+name+"."+bucket.Name())
-					} else {
-						t.Errorf("unexpected bucket %s in path '%s'", bucket.Name(), path+"."+name)
-					}
-				}
-			} else {
-				t.Errorf("unexpected bucket aggregation %s in path '%s'", name, path)
-			}
-			delete(b.children, name)
-		}
-	}
-	for metricName := range b.metrics {
-		t.Errorf("expected a metric named %s at path '%s', was missing", metricName, path)
-	}
-	for aggName := range b.children {
-		t.Errorf("expected an aggregation named: %s at path '%s', was missing", aggName, path)
 	}
 }

@@ -98,6 +98,30 @@ func (a *TermsCalculator) Consume(d *search.DocumentMatch) {
 	}
 }
 
+func (a *TermsCalculator) Merge(other search.Calculator) {
+	if other, ok := other.(*TermsCalculator); ok {
+		// first sum to the totals and others
+		a.total += other.total
+		// now, walk all of the other buckets
+		// if we have a local match, merge otherwise append
+		for i := range other.bucketsList {
+			var foundLocal bool
+			for j := range a.bucketsList {
+				if other.bucketsList[i].Name() == a.bucketsList[j].Name() {
+					a.bucketsList[j].Merge(other.bucketsList[i])
+					foundLocal = true
+				}
+			}
+			if !foundLocal {
+				a.bucketsList = append(a.bucketsList, other.bucketsList[i])
+			}
+		}
+		// now re-invoke finish, this should trim to correct size again
+		// and recalculate other
+		a.Finish()
+	}
+}
+
 func (a *TermsCalculator) Finish() {
 	// sort the buckets
 	if a.desc {

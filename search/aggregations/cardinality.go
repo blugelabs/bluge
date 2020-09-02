@@ -56,6 +56,12 @@ func (c *CardinalityCalculator) Consume(d *search.DocumentMatch) {
 	}
 }
 
+func (c *CardinalityCalculator) Merge(other search.Calculator) {
+	if other, ok := other.(*CardinalityCalculator); ok {
+		_ = c.sketch.Merge(other.sketch)
+	}
+}
+
 func (c *CardinalityCalculator) Finish() {
 
 }

@@ -83,6 +83,16 @@ func (b *RangeCalculator) Consume(d *search.DocumentMatch) {
 	}
 }
 
+func (b *RangeCalculator) Merge(other search.Calculator) {
+	if other, ok := other.(*RangeCalculator); ok {
+		if len(b.bucketCalculators) == len(other.bucketCalculators) {
+			for i := range b.bucketCalculators {
+				b.bucketCalculators[i].Merge(other.bucketCalculators[i])
+			}
+		}
+	}
+}
+
 func (b *RangeCalculator) Finish() {
 	for _, rang := range b.bucketCalculators {
 		rang.Finish()
