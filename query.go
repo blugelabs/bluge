@@ -37,6 +37,40 @@ type Query interface {
 		options search.SearcherOptions) (search.Searcher, error)
 }
 
+type querySlice []Query
+
+func (s querySlice) searchers(i search.Reader, options search.SearcherOptions) (rv []search.Searcher, err error) {
+	for _, q := range s {
+		var sr search.Searcher
+		sr, err = q.Searcher(i, options)
+		if err != nil {
+			// close all the already opened searchers
+			for _, rvs := range rv {
+				_ = rvs.Close()
+			}
+			return nil, err
+		}
+		rv = append(rv, sr)
+	}
+	return rv, nil
+}
+
+func (s querySlice) disjunction(i search.Reader, options search.SearcherOptions, min int) (search.Searcher, error) {
+	constituents, err := s.searchers(i, options)
+	if err != nil {
+		return nil, err
+	}
+	return searcher.NewDisjunctionSearcher(i, constituents, min, similarity.NewCompositeSumScorer(), options)
+}
+
+func (s querySlice) conjunction(i search.Reader, options search.SearcherOptions) (search.Searcher, error) {
+	constituents, err := s.searchers(i, options)
+	if err != nil {
+		return nil, err
+	}
+	return searcher.NewConjunctionSearcher(i, constituents, similarity.NewCompositeSumScorer(), options)
+}
+
 // A ValidatableQuery represents a Query which can be validated
 // prior to execution.
 type ValidatableQuery interface {
@@ -54,12 +88,12 @@ func (b *boost) Value() float64 {
 }
 
 type BooleanQuery struct {
-	must            Query
-	should          Query
-	mustNot         Query
-	boost           *boost
-	queryStringMode bool
-	scorer          search.CompositeScorer
+	musts     querySlice
+	shoulds   querySlice
+	mustNots  querySlice
+	boost     *boost
+	scorer    search.CompositeScorer
+	minShould int
 }
 
 // NewBooleanQuery creates a compound Query composed
@@ -79,42 +113,21 @@ func NewBooleanQuery() *BooleanQuery {
 // SetMinShould requires that at least minShould of the
 // should Queries must be satisfied.
 func (q *BooleanQuery) SetMinShould(minShould int) {
-	q.should.(*DisjunctionQuery).SetMin(minShould)
+	q.minShould = minShould
 }
 
 func (q *BooleanQuery) AddMust(m ...Query) *BooleanQuery {
-	if q.must == nil {
-		tmp := NewConjunctionQuery()
-		tmp.queryStringMode = q.queryStringMode
-		q.must = tmp
-	}
-	for _, mq := range m {
-		q.must.(*ConjunctionQuery).AddQuery(mq)
-	}
+	q.musts = append(q.musts, m...)
 	return q
 }
 
 func (q *BooleanQuery) AddShould(m ...Query) *BooleanQuery {
-	if q.should == nil {
-		tmp := NewDisjunctionQuery()
-		tmp.queryStringMode = q.queryStringMode
-		q.should = tmp
-	}
-	for _, mq := range m {
-		q.should.(*DisjunctionQuery).AddQuery(mq)
-	}
+	q.shoulds = append(q.shoulds, m...)
 	return q
 }
 
 func (q *BooleanQuery) AddMustNot(m ...Query) *BooleanQuery {
-	if q.mustNot == nil {
-		tmp := NewDisjunctionQuery()
-		tmp.queryStringMode = q.queryStringMode
-		q.mustNot = tmp
-	}
-	for _, mq := range m {
-		q.mustNot.(*DisjunctionQuery).AddQuery(mq)
-	}
+	q.mustNots = append(q.mustNots, m...)
 	return q
 }
 
@@ -128,39 +141,45 @@ func (q *BooleanQuery) Boost() float64 {
 	return q.boost.Value()
 }
 
-func (q *BooleanQuery) SetQueryStringMode(mode bool) *BooleanQuery {
-	q.queryStringMode = mode
-	return q
-}
-
-func (q *BooleanQuery) QueryStringMode() bool {
-	return q.queryStringMode
-}
-
-func (q *BooleanQuery) Searcher(i search.Reader, options search.SearcherOptions) (search.Searcher, error) {
-	var err error
-	var mustNotSearcher search.Searcher
-	if q.mustNot != nil {
-		mustNotSearcher, err = q.mustNot.Searcher(i, options)
+func (q *BooleanQuery) initPrimarySearchers(i search.Reader, options search.SearcherOptions) (
+	mustSearcher, shouldSearcher, mustNotSearcher search.Searcher, err error) {
+	if len(q.mustNots) > 0 {
+		mustNotSearcher, err = q.mustNots.disjunction(i, options, 1)
 		if err != nil {
-			return nil, err
+			return nil, nil, nil, err
 		}
 	}
 
-	var mustSearcher search.Searcher
-	if q.must != nil {
-		mustSearcher, err = q.must.Searcher(i, options)
+	if len(q.musts) > 0 {
+		mustSearcher, err = q.musts.conjunction(i, options)
 		if err != nil {
-			return nil, err
+			if mustNotSearcher != nil {
+				_ = mustNotSearcher.Close()
+			}
+			return nil, nil, nil, err
 		}
 	}
 
-	var shouldSearcher search.Searcher
-	if q.should != nil {
-		shouldSearcher, err = q.should.Searcher(i, options)
+	if len(q.shoulds) > 0 {
+		shouldSearcher, err = q.shoulds.disjunction(i, options, q.minShould)
 		if err != nil {
-			return nil, err
+			if mustNotSearcher != nil {
+				_ = mustNotSearcher.Close()
+			}
+			if mustSearcher != nil {
+				_ = mustSearcher.Close()
+			}
+			return nil, nil, nil, err
 		}
+	}
+
+	return mustSearcher, shouldSearcher, mustNotSearcher, nil
+}
+
+func (q *BooleanQuery) Searcher(i search.Reader, options search.SearcherOptions) (rv search.Searcher, err error) {
+	mustSearcher, shouldSearcher, mustNotSearcher, err := q.initPrimarySearchers(i, options)
+	if err != nil {
+		return nil, err
 	}
 
 	mustSearcher = replaceMatchNoneWithNil(mustSearcher)
@@ -175,6 +194,7 @@ func (q *BooleanQuery) Searcher(i search.Reader, options search.SearcherOptions)
 		return shouldSearcher, nil
 	} else if mustSearcher == nil && shouldSearcher == nil && mustNotSearcher != nil {
 		// if only mustNotSearcher, start with MatchAll
+		var err error
 		mustSearcher, err = searcher.NewMatchAllSearcher(i, 1, similarity.ConstantScorer(1), options)
 		if err != nil {
 			return nil, err
@@ -196,102 +216,38 @@ func replaceMatchNoneWithNil(s search.Searcher) search.Searcher {
 }
 
 func (q *BooleanQuery) Validate() error {
-	if qm, ok := q.must.(ValidatableQuery); ok {
-		err := qm.Validate()
-		if err != nil {
-			return err
-		}
-	}
-	if qs, ok := q.should.(ValidatableQuery); ok {
-		err := qs.Validate()
-		if err != nil {
-			return err
-		}
-	}
-	if qmn, ok := q.mustNot.(ValidatableQuery); ok {
-		err := qmn.Validate()
-		if err != nil {
-			return err
-		}
-	}
-	if q.must == nil && q.should == nil && q.mustNot == nil {
-		return fmt.Errorf("boolean query must contain at least one must or should or not must clause")
-	}
-	return nil
-}
-
-func (q *BooleanQuery) GoString() string {
-	return fmt.Sprintf("should: %#v", q.should.(*DisjunctionQuery).disjuncts[0])
-}
-
-type ConjunctionQuery struct {
-	conjuncts       []Query
-	boost           *boost
-	queryStringMode bool
-	scorer          search.CompositeScorer
-}
-
-// NewConjunctionQuery creates a new compound Query.
-// Result documents must satisfy all of the queries.
-func NewConjunctionQuery(conjuncts ...Query) *ConjunctionQuery {
-	return &ConjunctionQuery{
-		conjuncts: conjuncts,
-	}
-}
-
-func (q *ConjunctionQuery) AddQuery(aq ...Query) *ConjunctionQuery {
-	q.conjuncts = append(q.conjuncts, aq...)
-	return q
-}
-
-func (q *ConjunctionQuery) SetBoost(b float64) *ConjunctionQuery {
-	boostVal := boost(b)
-	q.boost = &boostVal
-	return q
-}
-
-func (q *ConjunctionQuery) Boost() float64 {
-	return q.boost.Value()
-}
-
-func (q *ConjunctionQuery) Searcher(i search.Reader, options search.SearcherOptions) (search.Searcher, error) {
-	ss := make([]search.Searcher, 0, len(q.conjuncts))
-	for _, conjunct := range q.conjuncts {
-		sr, err := conjunct.Searcher(i, options)
-		if err != nil {
-			for _, searcher := range ss {
-				if searcher != nil {
-					_ = searcher.Close()
+	if len(q.musts) > 0 {
+		for _, mq := range q.musts {
+			if mq, ok := mq.(ValidatableQuery); ok {
+				err := mq.Validate()
+				if err != nil {
+					return err
 				}
 			}
-			return nil, err
 		}
-		if _, ok := sr.(*searcher.MatchNoneSearcher); ok && q.queryStringMode {
-			// in query string mode, skip match none
-			continue
-		}
-		ss = append(ss, sr)
 	}
-
-	if len(ss) < 1 {
-		return searcher.NewMatchNoneSearcher(i, options)
-	}
-
-	if q.scorer == nil {
-		q.scorer = similarity.NewCompositeSumScorer()
-	}
-
-	return searcher.NewConjunctionSearcher(i, ss, q.scorer, options)
-}
-
-func (q *ConjunctionQuery) Validate() error {
-	for _, q := range q.conjuncts {
-		if q, ok := q.(ValidatableQuery); ok {
-			err := q.Validate()
-			if err != nil {
-				return err
+	if len(q.shoulds) > 0 {
+		for _, sq := range q.shoulds {
+			if sq, ok := sq.(ValidatableQuery); ok {
+				err := sq.Validate()
+				if err != nil {
+					return err
+				}
 			}
 		}
+	}
+	if len(q.mustNots) > 0 {
+		for _, mnq := range q.mustNots {
+			if mnq, ok := mnq.(ValidatableQuery); ok {
+				err := mnq.Validate()
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+	if len(q.musts) == 0 && len(q.shoulds) == 0 && len(q.mustNots) == 0 {
+		return fmt.Errorf("boolean query must contain at least one must or should or not must clause")
 	}
 	return nil
 }
@@ -408,97 +364,6 @@ func isDatetimeCompatible(t time.Time) bool {
 	}
 
 	return true
-}
-
-type DisjunctionQuery struct {
-	disjuncts       []Query
-	boost           *boost
-	min             int
-	queryStringMode bool
-	scorer          search.CompositeScorer
-}
-
-// NewDisjunctionQuery creates a new compound Query.
-// Result documents satisfy at least one Query.
-func NewDisjunctionQuery(disjuncts ...Query) *DisjunctionQuery {
-	return &DisjunctionQuery{
-		disjuncts: disjuncts,
-	}
-}
-
-func (q *DisjunctionQuery) AddQuery(aq ...Query) *DisjunctionQuery {
-	q.disjuncts = append(q.disjuncts, aq...)
-	return q
-}
-
-func (q *DisjunctionQuery) SetMin(m int) *DisjunctionQuery {
-	q.min = m
-	return q
-}
-
-func (q *DisjunctionQuery) SetBoost(b float64) *DisjunctionQuery {
-	boostVal := boost(b)
-	q.boost = &boostVal
-	return q
-}
-
-func (q *DisjunctionQuery) Boost() float64 {
-	return q.boost.Value()
-}
-
-func (q *DisjunctionQuery) SetQueryStringMode(mode bool) *DisjunctionQuery {
-	q.queryStringMode = mode
-	return q
-}
-
-func (q *DisjunctionQuery) QueryStringMode() bool {
-	return q.queryStringMode
-}
-
-func (q *DisjunctionQuery) Searcher(i search.Reader,
-	options search.SearcherOptions) (search.Searcher, error) {
-	ss := make([]search.Searcher, 0, len(q.disjuncts))
-	for _, disjunct := range q.disjuncts {
-		sr, err := disjunct.Searcher(i, options)
-		if err != nil {
-			for _, searcher := range ss {
-				if searcher != nil {
-					_ = searcher.Close()
-				}
-			}
-			return nil, err
-		}
-		if _, ok := sr.(*searcher.MatchNoneSearcher); ok && q.queryStringMode {
-			// in query string mode, skip match none
-			continue
-		}
-		ss = append(ss, sr)
-	}
-
-	if len(ss) < 1 {
-		return searcher.NewMatchNoneSearcher(i, options)
-	}
-
-	if q.scorer == nil {
-		q.scorer = similarity.NewCompositeSumScorer()
-	}
-
-	return searcher.NewDisjunctionSearcher(i, ss, q.min, q.scorer, options)
-}
-
-func (q *DisjunctionQuery) Validate() error {
-	if q.min > len(q.disjuncts) {
-		return fmt.Errorf("disjunction query has fewer than the minimum number of clauses to satisfy")
-	}
-	for _, q := range q.disjuncts {
-		if q, ok := q.(ValidatableQuery); ok {
-			err := q.Validate()
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
 }
 
 type FuzzyQuery struct {
@@ -1016,15 +881,17 @@ func (q *MatchQuery) Searcher(i search.Reader, options search.SearcherOptions) (
 
 		switch q.operator {
 		case MatchQueryOperatorOr:
-			shouldQuery := NewDisjunctionQuery(tqs...)
-			shouldQuery.SetMin(1)
-			shouldQuery.SetBoost(q.boost.Value())
-			return shouldQuery.Searcher(i, options)
+			booleanQuery := NewBooleanQuery()
+			booleanQuery.AddShould(tqs...)
+			booleanQuery.SetMinShould(1)
+			booleanQuery.SetBoost(q.boost.Value())
+			return booleanQuery.Searcher(i, options)
 
 		case MatchQueryOperatorAnd:
-			mustQuery := NewConjunctionQuery(tqs...)
-			mustQuery.SetBoost(q.boost.Value())
-			return mustQuery.Searcher(i, options)
+			booleanQuery := NewBooleanQuery()
+			booleanQuery.AddMust(tqs...)
+			booleanQuery.SetBoost(q.boost.Value())
+			return booleanQuery.Searcher(i, options)
 
 		default:
 			return nil, fmt.Errorf("unhandled operator %d", q.operator)
@@ -1160,59 +1027,6 @@ func (q *NumericRangeQuery) Searcher(i search.Reader, options search.SearcherOpt
 func (q *NumericRangeQuery) Validate() error {
 	if q.min == MinNumeric && q.max == MaxNumeric {
 		return fmt.Errorf("numeric range query must specify min or max")
-	}
-	return nil
-}
-
-type PhraseQuery struct {
-	terms  []string
-	field  string
-	boost  *boost
-	scorer search.Scorer
-}
-
-// NewPhraseQuery creates a new Query for finding
-// exact term phrases in the index.
-// The provided terms must exist in the correct
-// order, at the correct index offsets, in the
-// specified field. Queried field must have been indexed with
-// IncludeTermVectors set to true.
-func NewPhraseQuery(terms []string) *PhraseQuery {
-	return &PhraseQuery{
-		terms: terms,
-	}
-}
-
-func (q *PhraseQuery) SetBoost(b float64) *PhraseQuery {
-	boostVal := boost(b)
-	q.boost = &boostVal
-	return q
-}
-
-func (q *PhraseQuery) Boost() float64 {
-	return q.boost.Value()
-}
-
-func (q *PhraseQuery) SetField(f string) *PhraseQuery {
-	q.field = f
-	return q
-}
-
-func (q *PhraseQuery) Field() string {
-	return q.field
-}
-
-func (q *PhraseQuery) Searcher(i search.Reader, options search.SearcherOptions) (search.Searcher, error) {
-	field := q.field
-	if q.field == "" {
-		field = options.DefaultSearchField
-	}
-	return searcher.NewPhraseSearcher(i, q.terms, field, q.scorer, options)
-}
-
-func (q *PhraseQuery) Validate() error {
-	if len(q.terms) < 1 {
-		return fmt.Errorf("phrase query must contain at least one term")
 	}
 	return nil
 }

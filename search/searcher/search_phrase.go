@@ -53,16 +53,6 @@ func (s *PhraseSearcher) Size() int {
 	return sizeInBytes
 }
 
-func NewPhraseSearcher(indexReader search.Reader, terms []string, field string, scorer search.Scorer,
-	options search.SearcherOptions) (*PhraseSearcher, error) {
-	// turn flat terms []string into [][]string
-	mterms := make([][]string, len(terms))
-	for i, term := range terms {
-		mterms[i] = []string{term}
-	}
-	return NewMultiPhraseSearcher(indexReader, mterms, field, scorer, options)
-}
-
 func NewMultiPhraseSearcher(indexReader search.Reader, terms [][]string, field string, scorer search.Scorer,
 	options search.SearcherOptions) (*PhraseSearcher, error) {
 	options.IncludeTermVectors = true

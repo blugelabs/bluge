@@ -91,13 +91,16 @@ func TestNestedBooleanSearchers(t *testing.T) {
 		t.Fatalf("error getting reader: %v", err)
 	}
 
-	query := NewConjunctionQuery(
+	query := NewBooleanQuery()
+	query.AddMust(
 		NewBooleanQuery().
-			AddMust(NewDisjunctionQuery(
-				NewMatchQuery("planner_hostname_1").
-					SetField("hostname"),
-				NewMatchQuery("planner_hostname_2").
-					SetField("hostname"))),
+			AddMust(
+				NewBooleanQuery().
+					AddShould(
+						NewMatchQuery("planner_hostname_1").
+							SetField("hostname"),
+						NewMatchQuery("planner_hostname_2").
+							SetField("hostname"))),
 		NewBooleanQuery().
 			AddMust(NewMatchQuery("planner_us-east-1").
 				SetField("metadata.region").
@@ -241,7 +244,8 @@ func TestNestedBooleanMustNotSearcher(t *testing.T) {
 	oneRolesOrNoRoles.AddShould(noRole)
 	oneRolesOrNoRoles.SetMinShould(1)
 
-	q := NewConjunctionQuery(tq, oneRolesOrNoRoles)
+	q := NewBooleanQuery()
+	q.AddMust(tq, oneRolesOrNoRoles)
 
 	sr := NewTopNSearch(100, q).
 		WithStandardAggregations()
@@ -480,7 +484,7 @@ func TestBooleanMustNotSearcher(t *testing.T) {
 		}
 	}
 
-	lhs := NewDisjunctionQuery(
+	lhs := NewBooleanQuery().AddShould(
 		NewTermQuery("13965").SetField("_id"),
 		NewTermQuery("13966").SetField("_id"),
 		NewTermQuery("13967").SetField("_id"))
@@ -541,7 +545,8 @@ func TestBooleanMustNotSearcher(t *testing.T) {
 			t.Fatalf("error iterating results: %v", err2)
 		}
 		// conjunction
-		conj := NewConjunctionQuery(left, right)
+		conj := NewBooleanQuery()
+		conj.AddMust(left, right)
 		cr := NewTopNSearch(100, conj)
 		cres, err2 := idxReader.Search(context.Background(), cr)
 		if err2 != nil {
@@ -638,7 +643,8 @@ func TestDisjunctionQueryIncorrectMin(t *testing.T) {
 	}
 
 	tq := NewTermQuery("one")
-	dq := NewDisjunctionQuery(tq).SetMin(2)
+	dq := NewBooleanQuery().AddShould(tq)
+	dq.SetMinShould(2)
 	sr := NewTopNSearch(1, dq).WithStandardAggregations()
 	res, err := indexReader.Search(context.Background(), sr)
 	if err != nil {
@@ -767,9 +773,11 @@ func TestDisjunctionMinPropagation(t *testing.T) {
 
 	mq1 := NewMatchQuery("finance")
 	mq2 := NewMatchQuery("marketing")
-	dq := NewDisjunctionQuery(mq1, mq2).SetMin(3)
+	dq := NewBooleanQuery().AddShould(mq1, mq2)
+	dq.SetMinShould(3)
 
-	dq2 := NewDisjunctionQuery(dq).SetMin(1)
+	dq2 := NewBooleanQuery().AddShould(dq)
+	dq2.SetMinShould(1)
 
 	sr := NewTopNSearch(10, dq2).WithStandardAggregations()
 	res, err := indexReader.Search(context.Background(), sr)
@@ -816,7 +824,7 @@ func TestDuplicateLocationsIssue1168(t *testing.T) {
 
 	q1 := NewTermQuery("marty")
 	q2 := NewTermQuery("marty")
-	dq := NewDisjunctionQuery(q1, q2)
+	dq := NewBooleanQuery().AddShould(q1, q2)
 
 	sreq := NewTopNSearch(10, dq).IncludeLocations()
 
@@ -1067,9 +1075,9 @@ func TestBooleanSearchBug1185(t *testing.T) {
 	notNoOwner := NewBooleanQuery()
 	notNoOwner.AddMustNot(matchNoOwner)
 
-	matchTypeAndNoOwner := NewConjunctionQuery()
-	matchTypeAndNoOwner.AddQuery(matchTypeQ)
-	matchTypeAndNoOwner.AddQuery(notNoOwner)
+	matchTypeAndNoOwner := NewBooleanQuery()
+	matchTypeAndNoOwner.AddMust(matchTypeQ)
+	matchTypeAndNoOwner.AddMust(notNoOwner)
 
 	req := NewTopNSearch(10, matchTypeAndNoOwner)
 	res, err := indexReader.Search(context.Background(), req)

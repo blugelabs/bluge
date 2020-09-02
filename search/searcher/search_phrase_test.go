@@ -32,7 +32,7 @@ func TestPhraseSearch(t *testing.T) {
 		IncludeTermVectors: true,
 	}
 
-	phraseSearcher, err := NewPhraseSearcher(baseTestIndexReader, []string{"angst", "beer"}, "desc", nil, soptions)
+	phraseSearcher, err := NewMultiPhraseSearcher(baseTestIndexReader, [][]string{{"angst"}, {"beer"}}, "desc", nil, soptions)
 	if err != nil {
 		t.Fatal(err)
 	}

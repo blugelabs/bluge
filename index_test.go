@@ -980,7 +980,7 @@ func BenchmarkScorchSearchOverhead(b *testing.B) {
 
 	query1 := NewTermQuery("water")
 	query2 := NewTermQuery("fire")
-	query := NewDisjunctionQuery(query1, query2)
+	query := NewBooleanQuery().AddShould(query1, query2)
 	req := NewTopNSearch(10, query)
 
 	indexReader, err := indexWriter.Reader()
@@ -1304,18 +1304,19 @@ func TestOptimisedConjunctionSearchHits(t *testing.T) {
 	mq := NewMatchQuery("united")
 	mq.SetField("country")
 
-	cq := NewConjunctionQuery(mq)
+	bq := NewBooleanQuery()
+	bq.AddMust(mq)
 
 	mq1 := NewMatchQuery("hotel")
 	mq1.SetField("name")
-	cq.AddQuery(mq1)
+	bq.AddMust(mq1)
 
 	mq2 := NewMatchQuery("56")
 	mq2.SetField("directions")
 	mq2.SetFuzziness(1)
-	cq.AddQuery(mq2)
+	bq.AddMust(mq2)
 
-	req := NewTopNSearch(10, cq).WithStandardAggregations().SetScore("none")
+	req := NewTopNSearch(10, bq).WithStandardAggregations().SetScore("none")
 
 	res, err := indexReader.Search(context.Background(), req)
 	if err != nil {
@@ -1323,7 +1324,7 @@ func TestOptimisedConjunctionSearchHits(t *testing.T) {
 	}
 	hitsWithOutScore := res.Aggregations().Count()
 
-	req = NewTopNSearch(10, cq).WithStandardAggregations()
+	req = NewTopNSearch(10, bq).WithStandardAggregations()
 
 	res, err = indexReader.Search(context.Background(), req)
 	if err != nil {

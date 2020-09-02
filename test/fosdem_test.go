@@ -156,11 +156,12 @@ func fosdemTests() []*RequestVerify {
 		{
 			Comment: "fosdem 3",
 			Request: bluge.NewTopNSearch(10,
-				bluge.NewConjunctionQuery(
-					bluge.NewMatchQuery("lisp"),
-					bluge.NewMatchQuery("Perl").
-						SetField("category").
-						SetAnalyzer(keywordAnalyzer))).
+				bluge.NewBooleanQuery().
+					AddMust(
+						bluge.NewMatchQuery("lisp"),
+						bluge.NewMatchQuery("Perl").
+							SetField("category").
+							SetAnalyzer(keywordAnalyzer))).
 				SortBy([]string{"-_score", "_id"}),
 			Aggregations: standardAggs,
 			ExpectTotal:  1,
@@ -175,11 +176,12 @@ func fosdemTests() []*RequestVerify {
 		{
 			Comment: "fosdem 4",
 			Request: bluge.NewTopNSearch(10,
-				bluge.NewConjunctionQuery(
-					bluge.NewMatchQuery("lisp"),
-					bluge.NewMatchPhraseQuery("Perl").
-						SetField("category").
-						SetAnalyzer(keywordAnalyzer))).
+				bluge.NewBooleanQuery().
+					AddMust(
+						bluge.NewMatchQuery("lisp"),
+						bluge.NewMatchPhraseQuery("Perl").
+							SetField("category").
+							SetAnalyzer(keywordAnalyzer))).
 				SortBy([]string{"-_score", "_id"}),
 			Aggregations: standardAggs,
 			ExpectTotal:  1,

@@ -228,12 +228,12 @@ func basicTests() []*RequestVerify {
 		{
 			Comment: "test conjunction of numeric range, upper and lower bounds",
 			Request: bluge.NewTopNSearch(10,
-				bluge.NewConjunctionQuery(
-					bluge.NewNumericRangeInclusiveQuery(20, bluge.MaxNumeric, false, false).
-						SetField("age"),
-					bluge.NewNumericRangeInclusiveQuery(bluge.MinNumeric, 30, false, false).
-						SetField("age")),
-			).SortBy([]string{"-_score", "_id"}),
+				bluge.NewBooleanQuery().
+					AddMust(
+						bluge.NewNumericRangeInclusiveQuery(20, bluge.MaxNumeric, false, false).
+							SetField("age"),
+						bluge.NewNumericRangeInclusiveQuery(bluge.MinNumeric, 30, false, false).
+							SetField("age"))).SortBy([]string{"-_score", "_id"}),
 			Aggregations: standardAggs,
 			ExpectTotal:  1,
 			ExpectMatches: []*match{
@@ -490,9 +490,10 @@ func basicTests() []*RequestVerify {
 		{
 			Comment: "test search on _id",
 			Request: bluge.NewTopNSearch(10,
-				bluge.NewDisjunctionQuery(
-					bluge.NewTermQuery("b").SetField("_id"),
-					bluge.NewTermQuery("c").SetField("_id"))).
+				bluge.NewBooleanQuery().
+					AddShould(
+						bluge.NewTermQuery("b").SetField("_id"),
+						bluge.NewTermQuery("c").SetField("_id"))).
 				SortBy([]string{"-_score", "_id"}),
 			Aggregations: standardAggs,
 			ExpectTotal:  2,
@@ -551,12 +552,13 @@ func basicTests() []*RequestVerify {
 		{
 			Comment: "test boost - term query",
 			Request: bluge.NewTopNSearch(10,
-				bluge.NewDisjunctionQuery(
-					bluge.NewTermQuery("marti").
-						SetField("name"),
-					bluge.NewTermQuery("steve").
-						SetField("name").
-						SetBoost(5))),
+				bluge.NewBooleanQuery().
+					AddShould(
+						bluge.NewTermQuery("marti").
+							SetField("name"),
+						bluge.NewTermQuery("steve").
+							SetField("name").
+							SetBoost(5))),
 			Aggregations: standardAggs,
 			ExpectTotal:  2,
 			ExpectMatches: []*match{
@@ -575,12 +577,13 @@ func basicTests() []*RequestVerify {
 		{
 			Comment: "test boost - fuzzy query",
 			Request: bluge.NewTopNSearch(10,
-				bluge.NewDisjunctionQuery(
-					bluge.NewTermQuery("marti").
-						SetField("name"),
-					bluge.NewFuzzyQuery("steve").
-						SetField("name").
-						SetBoost(5))),
+				bluge.NewBooleanQuery().
+					AddShould(
+						bluge.NewTermQuery("marti").
+							SetField("name"),
+						bluge.NewFuzzyQuery("steve").
+							SetField("name").
+							SetBoost(5))),
 			Aggregations: standardAggs,
 			ExpectTotal:  2,
 			ExpectMatches: []*match{
@@ -599,12 +602,13 @@ func basicTests() []*RequestVerify {
 		{
 			Comment: "test boost - numeric range",
 			Request: bluge.NewTopNSearch(10,
-				bluge.NewDisjunctionQuery(
-					bluge.NewTermQuery("marti").
-						SetField("name"),
-					bluge.NewNumericRangeQuery(25, 29).
-						SetField("age").
-						SetBoost(5))),
+				bluge.NewBooleanQuery().
+					AddShould(
+						bluge.NewTermQuery("marti").
+							SetField("name"),
+						bluge.NewNumericRangeQuery(25, 29).
+							SetField("age").
+							SetBoost(5))),
 			Aggregations: standardAggs,
 			ExpectTotal:  2,
 			ExpectMatches: []*match{
@@ -623,12 +627,13 @@ func basicTests() []*RequestVerify {
 		{
 			Comment: "test boost - regexp range",
 			Request: bluge.NewTopNSearch(10,
-				bluge.NewDisjunctionQuery(
-					bluge.NewTermQuery("marti").
-						SetField("name"),
-					bluge.NewRegexpQuery("stev.*").
-						SetField("name").
-						SetBoost(5))),
+				bluge.NewBooleanQuery().
+					AddShould(
+						bluge.NewTermQuery("marti").
+							SetField("name"),
+						bluge.NewRegexpQuery("stev.*").
+							SetField("name").
+							SetBoost(5))),
 			Aggregations: standardAggs,
 			ExpectTotal:  2,
 			ExpectMatches: []*match{
