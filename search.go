@@ -80,6 +80,7 @@ func NewTopNSearch(n int, q Query) *TopNSearch {
 var standardAggs = search.Aggregations{
 	"count":     aggregations.CountMatches(),
 	"max_score": aggregations.Max(search.DocumentScore()),
+	"duration":  aggregations.Duration(),
 }
 
 func (s *TopNSearch) WithStandardAggregations() *TopNSearch {

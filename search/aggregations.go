@@ -14,6 +14,10 @@
 
 package search
 
+import (
+	"time"
+)
+
 type Aggregation interface {
 	Fields() []string
 	Calculator() Calculator
@@ -42,6 +46,11 @@ type Calculator interface {
 type MetricCalculator interface {
 	Calculator
 	Value() float64
+}
+
+type DurationCalculator interface {
+	Calculator
+	Duration() time.Duration
 }
 
 type BucketCalculator interface {
@@ -99,6 +108,15 @@ func (b *Bucket) Count() int {
 	if countAgg, ok := b.aggregations["count"]; ok {
 		if countCalc, ok := countAgg.(MetricCalculator); ok {
 			return int(countCalc.Value())
+		}
+	}
+	return 0
+}
+
+func (b *Bucket) Duration() time.Duration {
+	if durationAgg, ok := b.aggregations["duration"]; ok {
+		if durationCalc, ok := durationAgg.(DurationCalculator); ok {
+			return durationCalc.Duration()
 		}
 	}
 	return 0
