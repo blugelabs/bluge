@@ -38,7 +38,6 @@ func (c *CharacterTokenizer) Tokenize(input []byte) analysis.TokenStream {
 	offset := 0
 	start := 0
 	end := 0
-	count := 0
 	for currRune, size := utf8.DecodeRune(input[offset:]); currRune != utf8.RuneError; currRune, size = utf8.DecodeRune(input[offset:]) {
 		isToken := c.isTokenRun(currRune)
 		if isToken {
@@ -47,13 +46,12 @@ func (c *CharacterTokenizer) Tokenize(input []byte) analysis.TokenStream {
 			if end-start > 0 {
 				// build token
 				rv = append(rv, &analysis.Token{
-					Term:     input[start:end],
-					Start:    start,
-					End:      end,
-					Position: count + 1,
-					Type:     analysis.AlphaNumeric,
+					Term:         input[start:end],
+					Start:        start,
+					End:          end,
+					PositionIncr: 1,
+					Type:         analysis.AlphaNumeric,
 				})
-				count++
 			}
 			start = offset + size
 			end = start
@@ -64,11 +62,11 @@ func (c *CharacterTokenizer) Tokenize(input []byte) analysis.TokenStream {
 	if end-start > 0 {
 		// build token
 		rv = append(rv, &analysis.Token{
-			Term:     input[start:end],
-			Start:    start,
-			End:      end,
-			Position: count + 1,
-			Type:     analysis.AlphaNumeric,
+			Term:         input[start:end],
+			Start:        start,
+			End:          end,
+			PositionIncr: 1,
+			Type:         analysis.AlphaNumeric,
 		})
 	}
 	return rv

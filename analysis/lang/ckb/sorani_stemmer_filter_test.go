@@ -42,10 +42,10 @@ func TestSoraniStemmerFilter(t *testing.T) {
 			input: []byte("پیاوێک"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("پیاو"),
-					Position: 1,
-					Start:    0,
-					End:      12,
+					Term:         []byte("پیاو"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          12,
 				},
 			},
 		},
@@ -53,10 +53,10 @@ func TestSoraniStemmerFilter(t *testing.T) {
 			input: []byte("دەرگایەک"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("دەرگا"),
-					Position: 1,
-					Start:    0,
-					End:      16,
+					Term:         []byte("دەرگا"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          16,
 				},
 			},
 		},
@@ -64,10 +64,10 @@ func TestSoraniStemmerFilter(t *testing.T) {
 			input: []byte("پیاوەكە"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("پیاو"),
-					Position: 1,
-					Start:    0,
-					End:      14,
+					Term:         []byte("پیاو"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          14,
 				},
 			},
 		},
@@ -75,10 +75,10 @@ func TestSoraniStemmerFilter(t *testing.T) {
 			input: []byte("دەرگاكە"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("دەرگا"),
-					Position: 1,
-					Start:    0,
-					End:      14,
+					Term:         []byte("دەرگا"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          14,
 				},
 			},
 		},
@@ -86,10 +86,10 @@ func TestSoraniStemmerFilter(t *testing.T) {
 			input: []byte("کتاویە"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("کتاوی"),
-					Position: 1,
-					Start:    0,
-					End:      12,
+					Term:         []byte("کتاوی"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          12,
 				},
 			},
 		},
@@ -97,10 +97,10 @@ func TestSoraniStemmerFilter(t *testing.T) {
 			input: []byte("دەرگایە"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("دەرگا"),
-					Position: 1,
-					Start:    0,
-					End:      14,
+					Term:         []byte("دەرگا"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          14,
 				},
 			},
 		},
@@ -108,10 +108,10 @@ func TestSoraniStemmerFilter(t *testing.T) {
 			input: []byte("پیاوان"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("پیاو"),
-					Position: 1,
-					Start:    0,
-					End:      12,
+					Term:         []byte("پیاو"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          12,
 				},
 			},
 		},
@@ -119,10 +119,10 @@ func TestSoraniStemmerFilter(t *testing.T) {
 			input: []byte("دەرگایان"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("دەرگا"),
-					Position: 1,
-					Start:    0,
-					End:      16,
+					Term:         []byte("دەرگا"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          16,
 				},
 			},
 		},
@@ -130,10 +130,10 @@ func TestSoraniStemmerFilter(t *testing.T) {
 			input: []byte("پیاوەکان"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("پیاو"),
-					Position: 1,
-					Start:    0,
-					End:      16,
+					Term:         []byte("پیاو"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          16,
 				},
 			},
 		},
@@ -141,10 +141,10 @@ func TestSoraniStemmerFilter(t *testing.T) {
 			input: []byte("دەرگاکان"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("دەرگا"),
-					Position: 1,
-					Start:    0,
-					End:      16,
+					Term:         []byte("دەرگا"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          16,
 				},
 			},
 		},
@@ -152,10 +152,10 @@ func TestSoraniStemmerFilter(t *testing.T) {
 			input: []byte("پیاوانە"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("پیاو"),
-					Position: 1,
-					Start:    0,
-					End:      14,
+					Term:         []byte("پیاو"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          14,
 				},
 			},
 		},
@@ -163,10 +163,10 @@ func TestSoraniStemmerFilter(t *testing.T) {
 			input: []byte("دەرگایانە"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("دەرگا"),
-					Position: 1,
-					Start:    0,
-					End:      18,
+					Term:         []byte("دەرگا"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          18,
 				},
 			},
 		},
@@ -174,10 +174,10 @@ func TestSoraniStemmerFilter(t *testing.T) {
 			input: []byte("هۆتیلی"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("هۆتیل"),
-					Position: 1,
-					Start:    0,
-					End:      12,
+					Term:         []byte("هۆتیل"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          12,
 				},
 			},
 		},
@@ -185,10 +185,10 @@ func TestSoraniStemmerFilter(t *testing.T) {
 			input: []byte("هۆتیلێکی"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("هۆتیل"),
-					Position: 1,
-					Start:    0,
-					End:      16,
+					Term:         []byte("هۆتیل"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          16,
 				},
 			},
 		},
@@ -196,10 +196,10 @@ func TestSoraniStemmerFilter(t *testing.T) {
 			input: []byte("هۆتیلانی"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("هۆتیل"),
-					Position: 1,
-					Start:    0,
-					End:      16,
+					Term:         []byte("هۆتیل"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          16,
 				},
 			},
 		},
@@ -207,10 +207,10 @@ func TestSoraniStemmerFilter(t *testing.T) {
 			input: []byte("دوورەوە"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("دوور"),
-					Position: 1,
-					Start:    0,
-					End:      14,
+					Term:         []byte("دوور"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          14,
 				},
 			},
 		},
@@ -218,10 +218,10 @@ func TestSoraniStemmerFilter(t *testing.T) {
 			input: []byte("نیوەشەودا"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("نیوەشەو"),
-					Position: 1,
-					Start:    0,
-					End:      18,
+					Term:         []byte("نیوەشەو"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          18,
 				},
 			},
 		},
@@ -229,10 +229,10 @@ func TestSoraniStemmerFilter(t *testing.T) {
 			input: []byte("سۆرانا"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("سۆران"),
-					Position: 1,
-					Start:    0,
-					End:      12,
+					Term:         []byte("سۆران"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          12,
 				},
 			},
 		},
@@ -240,10 +240,10 @@ func TestSoraniStemmerFilter(t *testing.T) {
 			input: []byte("پارەمان"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("پارە"),
-					Position: 1,
-					Start:    0,
-					End:      14,
+					Term:         []byte("پارە"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          14,
 				},
 			},
 		},
@@ -251,10 +251,10 @@ func TestSoraniStemmerFilter(t *testing.T) {
 			input: []byte("پارەتان"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("پارە"),
-					Position: 1,
-					Start:    0,
-					End:      14,
+					Term:         []byte("پارە"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          14,
 				},
 			},
 		},
@@ -262,10 +262,10 @@ func TestSoraniStemmerFilter(t *testing.T) {
 			input: []byte("پارەیان"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("پارە"),
-					Position: 1,
-					Start:    0,
-					End:      14,
+					Term:         []byte("پارە"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          14,
 				},
 			},
 		},
@@ -273,10 +273,10 @@ func TestSoraniStemmerFilter(t *testing.T) {
 			input: []byte(""),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte(""),
-					Position: 1,
-					Start:    0,
-					End:      0,
+					Term:         []byte(""),
+					PositionIncr: 1,
+					Start:        0,
+					End:          0,
 				},
 			},
 		},

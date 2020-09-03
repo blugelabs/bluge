@@ -22,16 +22,16 @@ import (
 func TestTokenFrequency(t *testing.T) {
 	tokens := TokenStream{
 		&Token{
-			Term:     []byte("water"),
-			Position: 1,
-			Start:    0,
-			End:      5,
+			Term:         []byte("water"),
+			PositionIncr: 1,
+			Start:        0,
+			End:          5,
 		},
 		&Token{
-			Term:     []byte("water"),
-			Position: 2,
-			Start:    6,
-			End:      11,
+			Term:         []byte("water"),
+			PositionIncr: 1,
+			Start:        6,
+			End:          11,
 		},
 	}
 	expectedResult := TokenFrequencies{
@@ -52,7 +52,7 @@ func TestTokenFrequency(t *testing.T) {
 			frequency: 2,
 		},
 	}
-	result := TokenFrequency(tokens, true)
+	result, _ := TokenFrequency(tokens, true, 0)
 	if !reflect.DeepEqual(result, expectedResult) {
 		t.Errorf("expected %#v, got %#v", expectedResult, result)
 	}

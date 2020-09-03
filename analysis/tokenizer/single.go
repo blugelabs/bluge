@@ -30,11 +30,11 @@ func (t *SingleTokenTokenizer) Tokenize(input []byte) analysis.TokenStream {
 
 func MakeToken(input []byte) *analysis.Token {
 	return &analysis.Token{
-		Term:     input,
-		Position: 1,
-		Start:    0,
-		End:      len(input),
-		Type:     analysis.AlphaNumeric,
+		Term:         input,
+		PositionIncr: 1,
+		Start:        0,
+		End:          len(input),
+		Type:         analysis.AlphaNumeric,
 	}
 }
 

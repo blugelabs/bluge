@@ -31,12 +31,14 @@ func TestTruncateTokenFilter(t *testing.T) {
 			length: 5,
 			input: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("abcdefgh"),
+					Term:         []byte("abcdefgh"),
+					PositionIncr: 1,
 				},
 			},
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("abcde"),
+					Term:         []byte("abcde"),
+					PositionIncr: 1,
 				},
 			},
 		},
@@ -44,12 +46,14 @@ func TestTruncateTokenFilter(t *testing.T) {
 			length: 3,
 			input: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("こんにちは世界"),
+					Term:         []byte("こんにちは世界"),
+					PositionIncr: 1,
 				},
 			},
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("こんに"),
+					Term:         []byte("こんに"),
+					PositionIncr: 1,
 				},
 			},
 		},
@@ -57,12 +61,14 @@ func TestTruncateTokenFilter(t *testing.T) {
 			length: 10,
 			input: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("แยกคำภาษาไทยก็ทำได้นะจ้ะ"),
+					Term:         []byte("แยกคำภาษาไทยก็ทำได้นะจ้ะ"),
+					PositionIncr: 1,
 				},
 			},
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("แยกคำภาษาไ"),
+					Term:         []byte("แยกคำภาษาไ"),
+					PositionIncr: 1,
 				},
 			},
 		},

@@ -38,7 +38,6 @@ func (rt *UnicodeTokenizer) Tokenize(input []byte) analysis.TokenStream {
 
 	segmenter := segment.NewWordSegmenterDirect(input)
 	start := 0
-	pos := 1
 
 	guessRemaining := func(end int) int {
 		avgSegmentLen := end / (len(rv) + 1)
@@ -74,7 +73,7 @@ func (rt *UnicodeTokenizer) Tokenize(input []byte) analysis.TokenStream {
 			token.Term = segmentBytes
 			token.Start = start
 			token.End = end
-			token.Position = pos
+			token.PositionIncr = 1
 			token.Type = convertType(segmenter.Type())
 
 			if len(rv) >= cap(rv) { // When rv is full, save it into rvx.
@@ -89,7 +88,6 @@ func (rt *UnicodeTokenizer) Tokenize(input []byte) analysis.TokenStream {
 			}
 
 			rv = append(rv, token)
-			pos++
 		}
 		start = end
 	}

@@ -44,6 +44,7 @@ func (s *EdgeNgramFilter) Filter(input analysis.TokenStream) analysis.TokenStrea
 	rv := make(analysis.TokenStream, 0, len(input))
 
 	for _, token := range input {
+		first := true
 		runeCount := utf8.RuneCount(token.Term)
 		runes := bytes.Runes(token.Term)
 		if s.back {
@@ -54,11 +55,15 @@ func (s *EdgeNgramFilter) Filter(input analysis.TokenStream) analysis.TokenStrea
 				if i-ngramSize >= 0 {
 					ngramTerm := analysis.BuildTermFromRunes(runes[i-ngramSize : i])
 					token := analysis.Token{
-						Position: token.Position,
-						Start:    token.Start,
-						End:      token.End,
-						Type:     token.Type,
-						Term:     ngramTerm,
+						PositionIncr: 0,
+						Start:        token.Start,
+						End:          token.End,
+						Type:         token.Type,
+						Term:         ngramTerm,
+					}
+					if first {
+						token.PositionIncr = 1 // set first token to offset 1
+						first = false
 					}
 					rv = append(rv, &token)
 				}
@@ -71,11 +76,15 @@ func (s *EdgeNgramFilter) Filter(input analysis.TokenStream) analysis.TokenStrea
 				if i+ngramSize <= runeCount {
 					ngramTerm := analysis.BuildTermFromRunes(runes[i : i+ngramSize])
 					token := analysis.Token{
-						Position: token.Position,
-						Start:    token.Start,
-						End:      token.End,
-						Type:     token.Type,
-						Term:     ngramTerm,
+						PositionIncr: 0,
+						Start:        token.Start,
+						End:          token.End,
+						Type:         token.Type,
+						Term:         ngramTerm,
+					}
+					if first {
+						token.PositionIncr = 1 // set first token to offset 1
+						first = false
 					}
 					rv = append(rv, &token)
 				}

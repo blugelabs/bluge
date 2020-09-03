@@ -36,15 +36,15 @@ func NewRegexpTokenizer(r *regexp.Regexp) *RegexpTokenizer {
 func (rt *RegexpTokenizer) Tokenize(input []byte) analysis.TokenStream {
 	matches := rt.r.FindAllIndex(input, -1)
 	rv := make(analysis.TokenStream, 0, len(matches))
-	for i, match := range matches {
+	for _, match := range matches {
 		matchBytes := input[match[0]:match[1]]
 		if match[1]-match[0] > 0 {
 			token := analysis.Token{
-				Term:     matchBytes,
-				Start:    match[0],
-				End:      match[1],
-				Position: i + 1,
-				Type:     detectTokenType(matchBytes),
+				Term:         matchBytes,
+				Start:        match[0],
+				End:          match[1],
+				PositionIncr: 1,
+				Type:         detectTokenType(matchBytes),
 			}
 			rv = append(rv, &token)
 		}

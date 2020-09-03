@@ -35,8 +35,6 @@ func NewBigramFilter(outputUnigram bool) *BigramFilter {
 func (s *BigramFilter) Filter(input analysis.TokenStream) analysis.TokenStream {
 	r := ring.New(2)
 	itemsInRing := 0
-	pos := 1
-	outputPos := 1
 
 	rv := make(analysis.TokenStream, 0, len(input))
 
@@ -47,14 +45,13 @@ func (s *BigramFilter) Filter(input analysis.TokenStream) analysis.TokenStream {
 			for _, run := range runes {
 				rlen := utf8.RuneLen(run)
 				token := &analysis.Token{
-					Term:     tokout.Term[sofar : sofar+rlen],
-					Start:    tokout.Start + sofar,
-					End:      tokout.Start + sofar + rlen,
-					Position: pos,
-					Type:     tokout.Type,
-					KeyWord:  tokout.KeyWord,
+					Term:         tokout.Term[sofar : sofar+rlen],
+					Start:        tokout.Start + sofar,
+					End:          tokout.Start + sofar + rlen,
+					PositionIncr: 0,
+					Type:         tokout.Type,
+					KeyWord:      tokout.KeyWord,
 				}
-				pos++
 				sofar += rlen
 				if itemsInRing > 0 {
 					// if items already buffered
@@ -62,9 +59,9 @@ func (s *BigramFilter) Filter(input analysis.TokenStream) analysis.TokenStream {
 					curr := r.Value.(*analysis.Token)
 					if token.Start-curr.End != 0 {
 						// not aligned flush
-						flushToken := s.flush(r, &itemsInRing, outputPos)
+						flushToken := s.flush(r, &itemsInRing)
 						if flushToken != nil {
-							outputPos++
+							flushToken.PositionIncr = 1
 							rv = append(rv, flushToken)
 						}
 					}
@@ -76,28 +73,29 @@ func (s *BigramFilter) Filter(input analysis.TokenStream) analysis.TokenStream {
 					itemsInRing++
 				}
 				if itemsInRing > 1 && s.outputUnigram {
-					unigram := s.buildUnigram(r, &itemsInRing, outputPos)
+					unigram := s.buildUnigram(r, &itemsInRing)
 					if unigram != nil {
+						unigram.PositionIncr = 1
 						rv = append(rv, unigram)
 					}
 				}
-				bigramToken := s.outputBigram(r, &itemsInRing, outputPos)
+				bigramToken := s.outputBigram(r, &itemsInRing)
 				if bigramToken != nil {
+					if !s.outputUnigram {
+						bigramToken.PositionIncr = 1
+					}
 					rv = append(rv, bigramToken)
-					outputPos++
 				}
 			}
 		} else {
 			// flush anything already buffered
-			flushToken := s.flush(r, &itemsInRing, outputPos)
+			flushToken := s.flush(r, &itemsInRing)
 			if flushToken != nil {
+				flushToken.PositionIncr = 1
 				rv = append(rv, flushToken)
-				outputPos++
 			}
 			// output this token as is
-			tokout.Position = outputPos
 			rv = append(rv, tokout)
-			outputPos++
 		}
 	}
 
@@ -106,25 +104,26 @@ func (s *BigramFilter) Filter(input analysis.TokenStream) analysis.TokenStream {
 		if itemsInRing == 2 {
 			r = r.Next()
 		}
-		unigram := s.buildUnigram(r, &itemsInRing, outputPos)
+		unigram := s.buildUnigram(r, &itemsInRing)
 		if unigram != nil {
+			unigram.PositionIncr = 1
 			rv = append(rv, unigram)
 		}
 	}
 	return rv
 }
 
-func (s *BigramFilter) flush(r *ring.Ring, itemsInRing *int, pos int) *analysis.Token {
+func (s *BigramFilter) flush(r *ring.Ring, itemsInRing *int) *analysis.Token {
 	var rv *analysis.Token
 	if *itemsInRing == 1 {
-		rv = s.buildUnigram(r, itemsInRing, pos)
+		rv = s.buildUnigram(r, itemsInRing)
 	}
 	r.Value = nil
 	*itemsInRing = 0
 	return rv
 }
 
-func (s *BigramFilter) outputBigram(r *ring.Ring, itemsInRing *int, pos int) *analysis.Token {
+func (s *BigramFilter) outputBigram(r *ring.Ring, itemsInRing *int) *analysis.Token {
 	if *itemsInRing == 2 {
 		thisShingleRing := r.Move(-1)
 		shingledBytes := make([]byte, 0)
@@ -139,39 +138,39 @@ func (s *BigramFilter) outputBigram(r *ring.Ring, itemsInRing *int, pos int) *an
 		shingledBytes = append(shingledBytes, curr.Term...)
 
 		token := analysis.Token{
-			Type:     analysis.Double,
-			Term:     shingledBytes,
-			Position: pos,
-			Start:    prev.Start,
-			End:      curr.End,
+			Type:         analysis.Double,
+			Term:         shingledBytes,
+			PositionIncr: 0,
+			Start:        prev.Start,
+			End:          curr.End,
 		}
 		return &token
 	}
 	return nil
 }
 
-func (s *BigramFilter) buildUnigram(r *ring.Ring, itemsInRing *int, pos int) *analysis.Token {
+func (s *BigramFilter) buildUnigram(r *ring.Ring, itemsInRing *int) *analysis.Token {
 	if *itemsInRing == 2 {
 		thisShingleRing := r.Move(-1)
 		// do first token
 		prev := thisShingleRing.Value.(*analysis.Token)
 		token := analysis.Token{
-			Type:     analysis.Single,
-			Term:     prev.Term,
-			Position: pos,
-			Start:    prev.Start,
-			End:      prev.End,
+			Type:         analysis.Single,
+			Term:         prev.Term,
+			PositionIncr: 0,
+			Start:        prev.Start,
+			End:          prev.End,
 		}
 		return &token
 	} else if *itemsInRing == 1 {
 		// do first token
 		prev := r.Value.(*analysis.Token)
 		token := analysis.Token{
-			Type:     analysis.Single,
-			Term:     prev.Term,
-			Position: pos,
-			Start:    prev.Start,
-			End:      prev.End,
+			Type:         analysis.Single,
+			Term:         prev.Term,
+			PositionIncr: 0,
+			Start:        prev.Start,
+			End:          prev.End,
 		}
 		return &token
 	}

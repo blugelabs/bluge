@@ -56,20 +56,32 @@ func (o FieldOptions) IndexDocValues() bool {
 type Field interface {
 	segment.Field
 
-	Analyze()
+	Analyze(int) int
 	AnalyzedTokenFrequencies() analysis.TokenFrequencies
+
+	PositionIncrementGap() int
 
 	Size() int
 }
 
 type TermField struct {
 	FieldOptions
-	name               string
-	value              []byte
-	numPlainTextBytes  int
-	analyzedLength     int
-	analyzedTokenFreqs analysis.TokenFrequencies
-	analyzer           Analyzer
+	name                 string
+	value                []byte
+	numPlainTextBytes    int
+	analyzedLength       int
+	analyzedTokenFreqs   analysis.TokenFrequencies
+	analyzer             Analyzer
+	positionIncrementGap int
+}
+
+func (b *TermField) PositionIncrementGap() int {
+	return b.positionIncrementGap
+}
+
+func (b *TermField) SetPositionIncrementGap(positionIncrementGap int) *TermField {
+	b.positionIncrementGap = positionIncrementGap
+	return b
 }
 
 func (b *TermField) Name() string {
@@ -136,11 +148,11 @@ func (b *TermField) Length() int {
 func (b *TermField) baseAnalayze(typ analysis.TokenType) analysis.TokenStream {
 	var tokens analysis.TokenStream
 	tokens = append(tokens, &analysis.Token{
-		Start:    0,
-		End:      len(b.value),
-		Term:     b.value,
-		Position: 1,
-		Type:     typ,
+		Start:        0,
+		End:          len(b.value),
+		Term:         b.value,
+		PositionIncr: 1,
+		Type:         typ,
 	})
 	return tokens
 }
@@ -150,7 +162,7 @@ func (b *TermField) WithAnalyzer(fieldAnalyzer Analyzer) *TermField {
 	return b
 }
 
-func (b *TermField) Analyze() {
+func (b *TermField) Analyze(startOffset int) (lastPos int) {
 	var tokens analysis.TokenStream
 	if b.analyzer != nil {
 		bytesToAnalyze := b.Value()
@@ -165,7 +177,8 @@ func (b *TermField) Analyze() {
 		tokens = b.baseAnalayze(analysis.AlphaNumeric)
 	}
 	b.analyzedLength = len(tokens) // number of tokens in this doc field
-	b.analyzedTokenFreqs = analysis.TokenFrequency(tokens, b.IncludeLocations())
+	b.analyzedTokenFreqs, lastPos = analysis.TokenFrequency(tokens, b.IncludeLocations(), startOffset)
+	return lastPos
 }
 
 const defaultTextIndexingOptions = Index
@@ -194,11 +207,12 @@ func NewTextFieldBytes(name string, value []byte) *TermField {
 
 func newTextField(name string, value []byte, fieldAnalyzer Analyzer) *TermField {
 	return &TermField{
-		FieldOptions:      defaultTextIndexingOptions,
-		name:              name,
-		value:             value,
-		numPlainTextBytes: len(value),
-		analyzer:          fieldAnalyzer,
+		FieldOptions:         defaultTextIndexingOptions,
+		name:                 name,
+		value:                value,
+		numPlainTextBytes:    len(value),
+		analyzer:             fieldAnalyzer,
+		positionIncrementGap: 100,
 	}
 }
 
@@ -214,11 +228,11 @@ func addShiftTokens(tokens analysis.TokenStream, original int64, shiftBy uint, t
 			break
 		}
 		token := analysis.Token{
-			Start:    0,
-			End:      len(shiftEncoded),
-			Term:     shiftEncoded,
-			Position: 1,
-			Type:     typ,
+			Start:        0,
+			End:          len(shiftEncoded),
+			Term:         shiftEncoded,
+			PositionIncr: 0,
+			Type:         typ,
 		}
 		tokens = append(tokens, &token)
 		shift += shiftBy
@@ -234,11 +248,11 @@ type numericAnalyzer struct {
 func (n *numericAnalyzer) Analyze(input []byte) analysis.TokenStream {
 	tokens := analysis.TokenStream{
 		&analysis.Token{
-			Start:    0,
-			End:      len(input),
-			Term:     input,
-			Position: 1,
-			Type:     n.tokenType,
+			Start:        0,
+			End:          len(input),
+			Term:         input,
+			PositionIncr: 1,
+			Type:         n.tokenType,
 		},
 	}
 	original, err := numeric.PrefixCoded(input).Int64()
@@ -264,6 +278,7 @@ func newNumericFieldWithIndexingOptions(name string, number float64, options Fie
 			tokenType: analysis.Numeric,
 			shiftBy:   defaultNumericPrecisionStep,
 		},
+		positionIncrementGap: 100,
 	}
 }
 
@@ -291,6 +306,7 @@ func NewDateTimeField(name string, dt time.Time) *TermField {
 			tokenType: analysis.DateTime,
 			shiftBy:   defaultDateTimePrecisionStep,
 		},
+		positionIncrementGap: 100,
 	}
 }
 
@@ -316,6 +332,7 @@ func NewGeoPointField(name string, lon, lat float64) *TermField {
 			tokenType: analysis.Numeric,
 			shiftBy:   geoPrecisionStep,
 		},
+		positionIncrementGap: 100,
 	}
 }
 
@@ -387,7 +404,12 @@ func (c *CompositeField) Size() int {
 	return sizeInBytes
 }
 
-func (c *CompositeField) Analyze() {
+func (c *CompositeField) Analyze(int) int {
+	return 0
+}
+
+func (c *CompositeField) PositionIncrementGap() int {
+	return 0
 }
 
 func (c *CompositeField) includesField(field string) bool {

@@ -737,19 +737,23 @@ func (q *MatchPhraseQuery) Searcher(i search.Reader, options search.SearcherOpti
 func tokenStreamToPhrase(tokens analysis.TokenStream) [][]string {
 	firstPosition := int(^uint(0) >> 1)
 	lastPosition := 0
+	var currPosition int
 	for _, token := range tokens {
-		if token.Position < firstPosition {
-			firstPosition = token.Position
+		currPosition += token.PositionIncr
+		if currPosition < firstPosition {
+			firstPosition = currPosition
 		}
-		if token.Position > lastPosition {
-			lastPosition = token.Position
+		if currPosition > lastPosition {
+			lastPosition = currPosition
 		}
 	}
 	phraseLen := lastPosition - firstPosition + 1
 	if phraseLen > 0 {
 		rv := make([][]string, phraseLen)
+		currPosition = 0
 		for _, token := range tokens {
-			pos := token.Position - firstPosition
+			currPosition += token.PositionIncr
+			pos := currPosition - firstPosition
 			rv[pos] = append(rv[pos], string(token.Term))
 		}
 		return rv

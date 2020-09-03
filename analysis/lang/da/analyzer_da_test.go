@@ -31,10 +31,10 @@ func TestDanishAnalyzer(t *testing.T) {
 			input: []byte("undersøg"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("undersøg"),
-					Position: 1,
-					Start:    0,
-					End:      9,
+					Term:         []byte("undersøg"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          9,
 				},
 			},
 		},
@@ -42,10 +42,10 @@ func TestDanishAnalyzer(t *testing.T) {
 			input: []byte("undersøgelse"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("undersøg"),
-					Position: 1,
-					Start:    0,
-					End:      13,
+					Term:         []byte("undersøg"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          13,
 				},
 			},
 		},

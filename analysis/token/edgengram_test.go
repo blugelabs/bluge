@@ -35,12 +35,14 @@ func TestEdgeNgramFilter(t *testing.T) {
 			max:  1,
 			input: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("abcde"),
+					Term:         []byte("abcde"),
+					PositionIncr: 1,
 				},
 			},
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("a"),
+					Term:         []byte("a"),
+					PositionIncr: 1,
 				},
 			},
 		},
@@ -50,12 +52,14 @@ func TestEdgeNgramFilter(t *testing.T) {
 			max:  1,
 			input: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("abcde"),
+					Term:         []byte("abcde"),
+					PositionIncr: 1,
 				},
 			},
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("e"),
+					Term:         []byte("e"),
+					PositionIncr: 1,
 				},
 			},
 		},
@@ -65,18 +69,22 @@ func TestEdgeNgramFilter(t *testing.T) {
 			max:  3,
 			input: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("abcde"),
+					Term:         []byte("abcde"),
+					PositionIncr: 1,
 				},
 			},
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("a"),
+					Term:         []byte("a"),
+					PositionIncr: 1,
 				},
 				&analysis.Token{
-					Term: []byte("ab"),
+					Term:         []byte("ab"),
+					PositionIncr: 0,
 				},
 				&analysis.Token{
-					Term: []byte("abc"),
+					Term:         []byte("abc"),
+					PositionIncr: 0,
 				},
 			},
 		},
@@ -86,18 +94,22 @@ func TestEdgeNgramFilter(t *testing.T) {
 			max:  3,
 			input: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("abcde"),
+					Term:         []byte("abcde"),
+					PositionIncr: 1,
 				},
 			},
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("e"),
+					Term:         []byte("e"),
+					PositionIncr: 1,
 				},
 				&analysis.Token{
-					Term: []byte("de"),
+					Term:         []byte("de"),
+					PositionIncr: 0,
 				},
 				&analysis.Token{
-					Term: []byte("cde"),
+					Term:         []byte("cde"),
+					PositionIncr: 0,
 				},
 			},
 		},
@@ -107,30 +119,38 @@ func TestEdgeNgramFilter(t *testing.T) {
 			max:  3,
 			input: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("abcde"),
+					Term:         []byte("abcde"),
+					PositionIncr: 1,
 				},
 				&analysis.Token{
-					Term: []byte("vwxyz"),
+					Term:         []byte("vwxyz"),
+					PositionIncr: 1,
 				},
 			},
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("a"),
+					Term:         []byte("a"),
+					PositionIncr: 1,
 				},
 				&analysis.Token{
-					Term: []byte("ab"),
+					Term:         []byte("ab"),
+					PositionIncr: 0,
 				},
 				&analysis.Token{
-					Term: []byte("abc"),
+					Term:         []byte("abc"),
+					PositionIncr: 0,
 				},
 				&analysis.Token{
-					Term: []byte("v"),
+					Term:         []byte("v"),
+					PositionIncr: 1,
 				},
 				&analysis.Token{
-					Term: []byte("vw"),
+					Term:         []byte("vw"),
+					PositionIncr: 0,
 				},
 				&analysis.Token{
-					Term: []byte("vwx"),
+					Term:         []byte("vwx"),
+					PositionIncr: 0,
 				},
 			},
 		},
@@ -140,18 +160,22 @@ func TestEdgeNgramFilter(t *testing.T) {
 			max:  5,
 			input: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("Beryl"),
+					Term:         []byte("Beryl"),
+					PositionIncr: 1,
 				},
 			},
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("ryl"),
+					Term:         []byte("ryl"),
+					PositionIncr: 1,
 				},
 				&analysis.Token{
-					Term: []byte("eryl"),
+					Term:         []byte("eryl"),
+					PositionIncr: 0,
 				},
 				&analysis.Token{
-					Term: []byte("Beryl"),
+					Term:         []byte("Beryl"),
+					PositionIncr: 0,
 				},
 			},
 		},
@@ -161,18 +185,22 @@ func TestEdgeNgramFilter(t *testing.T) {
 			max:  5,
 			input: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("Beryl"),
+					Term:         []byte("Beryl"),
+					PositionIncr: 1,
 				},
 			},
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("Ber"),
+					Term:         []byte("Ber"),
+					PositionIncr: 1,
 				},
 				&analysis.Token{
-					Term: []byte("Bery"),
+					Term:         []byte("Bery"),
+					PositionIncr: 0,
 				},
 				&analysis.Token{
-					Term: []byte("Beryl"),
+					Term:         []byte("Beryl"),
+					PositionIncr: 0,
 				},
 			},
 		},

@@ -23,39 +23,85 @@ import (
 
 func TestUniqueTermFilter(t *testing.T) {
 	var tests = []struct {
-		input analysis.TokenStream
-		// expected indices of input which should be included in the output. We
-		// use indices instead of another TokenStream, since position/start/end
-		// should be preserved.
-		expectedIndices []int
+		input  analysis.TokenStream
+		output analysis.TokenStream
 	}{
 		{
-			input:           tokenStream(),
-			expectedIndices: []int{},
+			input:  tokenStream(),
+			output: tokenStream(),
 		},
 		{
-			input:           tokenStream("a"),
-			expectedIndices: []int{0},
+			input:  tokenStream("a"),
+			output: tokenStream("a"),
 		},
 		{
-			input:           tokenStream("each", "term", "in", "this", "sentence", "is", "unique"),
-			expectedIndices: []int{0, 1, 2, 3, 4, 5, 6},
+			input:  tokenStream("each", "term", "in", "this", "sentence", "is", "unique"),
+			output: tokenStream("each", "term", "in", "this", "sentence", "is", "unique"),
 		},
 		{
-			input:           tokenStream("Lui", "è", "alto", "e", "lei", "è", "bassa"),
-			expectedIndices: []int{0, 1, 2, 3, 4, 6},
+			input: tokenStream("Lui", "è", "alto", "e", "lei", "è", "bassa"),
+			output: analysis.TokenStream{
+				&analysis.Token{
+					Term:         []byte("Lui"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          3,
+				},
+				&analysis.Token{
+					Term:         []byte("è"),
+					PositionIncr: 1,
+					Start:        3,
+					End:          5,
+				},
+				&analysis.Token{
+					Term:         []byte("alto"),
+					PositionIncr: 1,
+					Start:        5,
+					End:          9,
+				},
+				&analysis.Token{
+					Term:         []byte("e"),
+					PositionIncr: 1,
+					Start:        9,
+					End:          10,
+				},
+				&analysis.Token{
+					Term:         []byte("lei"),
+					PositionIncr: 1,
+					Start:        10,
+					End:          13,
+				},
+				&analysis.Token{
+					Term:         []byte("bassa"),
+					PositionIncr: 2,
+					Start:        15,
+					End:          20,
+				},
+			},
 		},
 		{
-			input:           tokenStream("a", "a", "A", "a", "a", "A"),
-			expectedIndices: []int{0, 2},
+			input: tokenStream("a", "a", "A", "a", "a", "A"),
+			output: analysis.TokenStream{
+				&analysis.Token{
+					Term:         []byte("a"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          1,
+				},
+				&analysis.Token{
+					Term:         []byte("A"),
+					PositionIncr: 2,
+					Start:        2,
+					End:          3,
+				},
+			},
 		},
 	}
 	uniqueTermFilter := NewUniqueTermFilter()
 	for _, test := range tests {
-		expected := subStream(test.input, test.expectedIndices)
 		actual := uniqueTermFilter.Filter(test.input)
-		if !reflect.DeepEqual(actual, expected) {
-			t.Errorf("expected %s \n\n got %s", expected, actual)
+		if !reflect.DeepEqual(actual, test.output) {
+			t.Errorf("expected %s \n\n got %s", actual, test.output)
 		}
 	}
 }
@@ -65,20 +111,12 @@ func tokenStream(termStrs ...string) analysis.TokenStream {
 	index := 0
 	for i, termStr := range termStrs {
 		tokenStream[i] = &analysis.Token{
-			Term:     []byte(termStr),
-			Position: i + 1,
-			Start:    index,
-			End:      index + len(termStr),
+			Term:         []byte(termStr),
+			PositionIncr: 1,
+			Start:        index,
+			End:          index + len(termStr),
 		}
 		index += len(termStr)
 	}
-	return analysis.TokenStream(tokenStream)
-}
-
-func subStream(stream analysis.TokenStream, indices []int) analysis.TokenStream {
-	result := make(analysis.TokenStream, len(indices))
-	for i, index := range indices {
-		result[i] = stream[index]
-	}
-	return result
+	return tokenStream
 }

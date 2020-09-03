@@ -30,10 +30,10 @@ func TestGermanAnalyzer(t *testing.T) {
 			input: []byte("Tisch"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("tisch"),
-					Position: 1,
-					Start:    0,
-					End:      5,
+					Term:         []byte("tisch"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          5,
 				},
 			},
 		},
@@ -41,10 +41,10 @@ func TestGermanAnalyzer(t *testing.T) {
 			input: []byte("Tische"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("tisch"),
-					Position: 1,
-					Start:    0,
-					End:      6,
+					Term:         []byte("tisch"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          6,
 				},
 			},
 		},
@@ -52,10 +52,10 @@ func TestGermanAnalyzer(t *testing.T) {
 			input: []byte("Tischen"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("tisch"),
-					Position: 1,
-					Start:    0,
-					End:      7,
+					Term:         []byte("tisch"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          7,
 				},
 			},
 		},
@@ -64,10 +64,10 @@ func TestGermanAnalyzer(t *testing.T) {
 			input: []byte("Schaltflächen"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("schaltflach"),
-					Position: 1,
-					Start:    0,
-					End:      14,
+					Term:         []byte("schaltflach"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          14,
 				},
 			},
 		},
@@ -75,10 +75,10 @@ func TestGermanAnalyzer(t *testing.T) {
 			input: []byte("Schaltflaechen"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("schaltflach"),
-					Position: 1,
-					Start:    0,
-					End:      14,
+					Term:         []byte("schaltflach"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          14,
 				},
 			},
 		},
@@ -87,10 +87,10 @@ func TestGermanAnalyzer(t *testing.T) {
 			input: []byte("Blechern"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("blech"),
-					Position: 1,
-					Start:    0,
-					End:      8,
+					Term:         []byte("blech"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          8,
 				},
 			},
 		},
@@ -98,10 +98,10 @@ func TestGermanAnalyzer(t *testing.T) {
 			input: []byte("Klecks"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("kleck"),
-					Position: 1,
-					Start:    0,
-					End:      6,
+					Term:         []byte("kleck"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          6,
 				},
 			},
 		},
@@ -109,10 +109,10 @@ func TestGermanAnalyzer(t *testing.T) {
 			input: []byte("Mindestens"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("mindest"),
-					Position: 1,
-					Start:    0,
-					End:      10,
+					Term:         []byte("mindest"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          10,
 				},
 			},
 		},
@@ -120,10 +120,10 @@ func TestGermanAnalyzer(t *testing.T) {
 			input: []byte("Kugelfest"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("kugelf"),
-					Position: 1,
-					Start:    0,
-					End:      9,
+					Term:         []byte("kugelf"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          9,
 				},
 			},
 		},
@@ -131,10 +131,10 @@ func TestGermanAnalyzer(t *testing.T) {
 			input: []byte("Baldigst"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("baldig"),
-					Position: 1,
-					Start:    0,
-					End:      8,
+					Term:         []byte("baldig"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          8,
 				},
 			},
 		},

@@ -99,7 +99,7 @@ func defaultConfig(indexConfig index.Config) Config {
 	}
 
 	allDocsFields := NewKeywordField("", "")
-	allDocsFields.Analyze()
+	_ = allDocsFields.Analyze(0)
 	indexConfig = indexConfig.WithVirtualField(allDocsFields)
 	indexConfig = indexConfig.WithNormCalc(func(field string, length int) float32 {
 		if pfs, ok := rv.PerFieldSimilarity[field]; ok {

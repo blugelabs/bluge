@@ -24,16 +24,20 @@ import (
 func TestLowerCaseFilter(t *testing.T) {
 	inputTokenStream := analysis.TokenStream{
 		&analysis.Token{
-			Term: []byte("ONE"),
+			Term:         []byte("ONE"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("two"),
+			Term:         []byte("two"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("ThReE"),
+			Term:         []byte("ThReE"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("steven's"),
+			Term:         []byte("steven's"),
+			PositionIncr: 1,
 		},
 		// these characters are chosen in particular
 		// because the utf-8 encoding of the lower-case
@@ -42,37 +46,47 @@ func TestLowerCaseFilter(t *testing.T) {
 		// Rune Ⱥ(570) width 2 - Lower ⱥ(11365) width 3
 		// Rune Ⱦ(574) width 2 - Lower ⱦ(11366) width 3
 		&analysis.Token{
-			Term: []byte("İȺȾCAT"),
+			Term:         []byte("İȺȾCAT"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("ȺȾCAT"),
+			Term:         []byte("ȺȾCAT"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("ὈΔΥΣΣ"),
+			Term:         []byte("ὈΔΥΣΣ"),
+			PositionIncr: 1,
 		},
 	}
 
 	expectedTokenStream := analysis.TokenStream{
 		&analysis.Token{
-			Term: []byte("one"),
+			Term:         []byte("one"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("two"),
+			Term:         []byte("two"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("three"),
+			Term:         []byte("three"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("steven's"),
+			Term:         []byte("steven's"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("iⱥⱦcat"),
+			Term:         []byte("iⱥⱦcat"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("ⱥⱦcat"),
+			Term:         []byte("ⱥⱦcat"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("ὀδυσς"),
+			Term:         []byte("ὀδυσς"),
+			PositionIncr: 1,
 		},
 	}
 

@@ -30,12 +30,15 @@ func NewUniqueTermFilter() *UniqueTermFilter {
 
 func (f *UniqueTermFilter) Filter(input analysis.TokenStream) analysis.TokenStream {
 	encounteredTerms := make(map[string]struct{}, len(input)/initialMapFactor)
-	j := 0
+	var j, skipped int
 	for _, token := range input {
 		term := string(token.Term)
 		if _, ok := encounteredTerms[term]; ok {
+			skipped += token.PositionIncr
 			continue
 		}
+		token.PositionIncr += skipped
+		skipped = 0
 		encounteredTerms[term] = struct{}{}
 		input[j] = token
 		j++

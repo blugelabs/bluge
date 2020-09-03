@@ -15,82 +15,113 @@
 package token
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/blugelabs/bluge/analysis"
 )
 
 func TestLengthFilter(t *testing.T) {
-	inputTokenStream := analysis.TokenStream{
-		&analysis.Token{
-			Term: []byte("1"),
+	tests := []struct {
+		name   string
+		min    int
+		max    int
+		input  analysis.TokenStream
+		output analysis.TokenStream
+	}{
+		{
+			name: "min 3 max 4",
+			min:  3,
+			max:  4,
+			input: analysis.TokenStream{
+				&analysis.Token{
+					Term:         []byte("1"),
+					PositionIncr: 1,
+				},
+				&analysis.Token{
+					Term:         []byte("two"),
+					PositionIncr: 1,
+				},
+				&analysis.Token{
+					Term:         []byte("three"),
+					PositionIncr: 1,
+				},
+			},
+			output: analysis.TokenStream{
+				&analysis.Token{
+					Term:         []byte("two"),
+					PositionIncr: 2,
+				},
+			},
 		},
-		&analysis.Token{
-			Term: []byte("two"),
+		{
+			name: "min 3, no max",
+			min:  3,
+			max:  -1,
+			input: analysis.TokenStream{
+				&analysis.Token{
+					Term:         []byte("1"),
+					PositionIncr: 1,
+				},
+				&analysis.Token{
+					Term:         []byte("two"),
+					PositionIncr: 1,
+				},
+				&analysis.Token{
+					Term:         []byte("three"),
+					PositionIncr: 1,
+				},
+			},
+			output: analysis.TokenStream{
+				&analysis.Token{
+					Term:         []byte("two"),
+					PositionIncr: 2,
+				},
+				&analysis.Token{
+					Term:         []byte("three"),
+					PositionIncr: 1,
+				},
+			},
 		},
-		&analysis.Token{
-			Term: []byte("three"),
+		{
+			name: "no min, max 4",
+			min:  -1,
+			max:  4,
+			input: analysis.TokenStream{
+				&analysis.Token{
+					Term:         []byte("1"),
+					PositionIncr: 1,
+				},
+				&analysis.Token{
+					Term:         []byte("two"),
+					PositionIncr: 1,
+				},
+				&analysis.Token{
+					Term:         []byte("three"),
+					PositionIncr: 1,
+				},
+			},
+			output: analysis.TokenStream{
+				&analysis.Token{
+					Term:         []byte("1"),
+					PositionIncr: 1,
+				},
+				&analysis.Token{
+					Term:         []byte("two"),
+					PositionIncr: 1,
+				},
+			},
 		},
 	}
 
-	lengthFilter := NewLengthFilter(3, 4)
-	outputTokenStream := lengthFilter.Filter(inputTokenStream)
-	if len(outputTokenStream) != 1 {
-		t.Fatalf("expected 1 output token")
-	}
-	if string(outputTokenStream[0].Term) != "two" {
-		t.Errorf("expected term `two`, got `%s`", outputTokenStream[0].Term)
-	}
-}
-
-func TestLengthFilterNoMax(t *testing.T) {
-	inputTokenStream := analysis.TokenStream{
-		&analysis.Token{
-			Term: []byte("1"),
-		},
-		&analysis.Token{
-			Term: []byte("two"),
-		},
-		&analysis.Token{
-			Term: []byte("three"),
-		},
-	}
-
-	lengthFilter := NewLengthFilter(3, -1)
-	outputTokenStream := lengthFilter.Filter(inputTokenStream)
-	if len(outputTokenStream) != 2 {
-		t.Fatalf("expected 2 output token")
-	}
-	if string(outputTokenStream[0].Term) != "two" {
-		t.Errorf("expected term `two`, got `%s`", outputTokenStream[0].Term)
-	}
-	if string(outputTokenStream[1].Term) != "three" {
-		t.Errorf("expected term `three`, got `%s`", outputTokenStream[0].Term)
-	}
-}
-
-func TestLengthFilterNoMin(t *testing.T) {
-	inputTokenStream := analysis.TokenStream{
-		&analysis.Token{
-			Term: []byte("1"),
-		},
-		&analysis.Token{
-			Term: []byte("two"),
-		},
-		&analysis.Token{
-			Term: []byte("three"),
-		},
-	}
-
-	lengthFilter := NewLengthFilter(-1, 4)
-	outputTokenStream := lengthFilter.Filter(inputTokenStream)
-	if len(outputTokenStream) != 2 {
-		t.Fatalf("expected 2 output token")
-	}
-	if string(outputTokenStream[0].Term) != "1" {
-		t.Errorf("expected term `1`, got `%s`", outputTokenStream[0].Term)
-	}
-	if string(outputTokenStream[1].Term) != "two" {
-		t.Errorf("expected term `two`, got `%s`", outputTokenStream[0].Term)
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			lengthFilter := NewLengthFilter(test.min, test.max)
+			actual := lengthFilter.Filter(test.output)
+			if !reflect.DeepEqual(actual, test.output) {
+				t.Errorf("expected %s, got %s", test.output[0].Term, actual[0].Term)
+			}
+		})
 	}
 }

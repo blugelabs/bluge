@@ -31,10 +31,10 @@ func TestEnglishAnalyzer(t *testing.T) {
 			input: []byte("books"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("book"),
-					Position: 1,
-					Start:    0,
-					End:      5,
+					Term:         []byte("book"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          5,
 				},
 			},
 		},
@@ -42,10 +42,10 @@ func TestEnglishAnalyzer(t *testing.T) {
 			input: []byte("book"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("book"),
-					Position: 1,
-					Start:    0,
-					End:      4,
+					Term:         []byte("book"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          4,
 				},
 			},
 		},
@@ -59,10 +59,10 @@ func TestEnglishAnalyzer(t *testing.T) {
 			input: []byte("steven's"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("steven"),
-					Position: 1,
-					Start:    0,
-					End:      8,
+					Term:         []byte("steven"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          8,
 				},
 			},
 		},
@@ -70,10 +70,10 @@ func TestEnglishAnalyzer(t *testing.T) {
 			input: []byte("steven\u2019s"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("steven"),
-					Position: 1,
-					Start:    0,
-					End:      10,
+					Term:         []byte("steven"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          10,
 				},
 			},
 		},
@@ -81,10 +81,10 @@ func TestEnglishAnalyzer(t *testing.T) {
 			input: []byte("steven\uFF07s"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("steven"),
-					Position: 1,
-					Start:    0,
-					End:      10,
+					Term:         []byte("steven"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          10,
 				},
 			},
 		},

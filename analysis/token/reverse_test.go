@@ -25,74 +25,96 @@ func TestReverseFilter(t *testing.T) {
 	inputTokenStream := analysis.TokenStream{
 		&analysis.Token{},
 		&analysis.Token{
-			Term: []byte("one"),
+			Term:         []byte("one"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("TWo"),
+			Term:         []byte("TWo"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("thRee"),
+			Term:         []byte("thRee"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("four's"),
+			Term:         []byte("four's"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("what's this in reverse"),
+			Term:         []byte("what's this in reverse"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("œ∑´®†"),
+			Term:         []byte("œ∑´®†"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("İȺȾCAT÷≥≤µ123"),
+			Term:         []byte("İȺȾCAT÷≥≤µ123"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("!@#$%^&*()"),
+			Term:         []byte("!@#$%^&*()"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("cafés"),
+			Term:         []byte("cafés"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("¿Dónde estás?"),
+			Term:         []byte("¿Dónde estás?"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("Me gustaría una cerveza."),
+			Term:         []byte("Me gustaría una cerveza."),
+			PositionIncr: 1,
 		},
 	}
 
 	expectedTokenStream := analysis.TokenStream{
 		&analysis.Token{},
 		&analysis.Token{
-			Term: []byte("eno"),
+			Term:         []byte("eno"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("oWT"),
+			Term:         []byte("oWT"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("eeRht"),
+			Term:         []byte("eeRht"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("s'ruof"),
+			Term:         []byte("s'ruof"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("esrever ni siht s'tahw"),
+			Term:         []byte("esrever ni siht s'tahw"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("†®´∑œ"),
+			Term:         []byte("†®´∑œ"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("321µ≤≥÷TACȾȺİ"),
+			Term:         []byte("321µ≤≥÷TACȾȺİ"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte(")(*&^%$#@!"),
+			Term:         []byte(")(*&^%$#@!"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("séfac"),
+			Term:         []byte("séfac"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("?sátse ednóD¿"),
+			Term:         []byte("?sátse ednóD¿"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte(".azevrec anu aíratsug eM"),
+			Term:         []byte(".azevrec anu aíratsug eM"),
+			PositionIncr: 1,
 		},
 	}
 

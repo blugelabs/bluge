@@ -29,60 +29,70 @@ func TestApostropheFilter(t *testing.T) {
 		{
 			input: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("Türkiye'de"),
+					Term:         []byte("Türkiye'de"),
+					PositionIncr: 1,
 				},
 			},
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("Türkiye"),
+					Term:         []byte("Türkiye"),
+					PositionIncr: 1,
 				},
 			},
 		},
 		{
 			input: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("2003'te"),
+					Term:         []byte("2003'te"),
+					PositionIncr: 1,
 				},
 			},
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("2003"),
+					Term:         []byte("2003"),
+					PositionIncr: 1,
 				},
 			},
 		},
 		{
 			input: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("Van"),
+					Term:         []byte("Van"),
+					PositionIncr: 1,
 				},
 			},
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("Van"),
+					Term:         []byte("Van"),
+					PositionIncr: 1,
 				},
 			},
 		},
 		{
 			input: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("Gölü'nü"),
+					Term:         []byte("Gölü'nü"),
+					PositionIncr: 1,
 				},
 			},
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("Gölü"),
+					Term:         []byte("Gölü"),
+					PositionIncr: 1,
 				},
 			},
 		},
 		{
 			input: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("gördüm"),
+					Term:         []byte("gördüm"),
+					PositionIncr: 1,
 				},
 			},
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("gördüm"),
+					Term:         []byte("gördüm"),
+					PositionIncr: 1,
 				},
 			},
 		},

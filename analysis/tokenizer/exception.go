@@ -48,7 +48,6 @@ func (t *ExceptionsTokenizer) Tokenize(input []byte) analysis.TokenStream {
 	rv := make(analysis.TokenStream, 0)
 	matches := t.exception.FindAllIndex(input, -1)
 	currInput := 0
-	lastPos := 0
 	for _, match := range matches {
 		start := match[0]
 		end := match[1]
@@ -58,23 +57,20 @@ func (t *ExceptionsTokenizer) Tokenize(input []byte) analysis.TokenStream {
 			// add intermediate tokens to our result stream
 			for _, token := range intermediate {
 				// adjust token offsets
-				token.Position += lastPos
 				token.Start += currInput
 				token.End += currInput
 				rv = append(rv, token)
 			}
-			lastPos += len(intermediate)
 		}
 
 		// create single token with this regexp match
 		token := &analysis.Token{
-			Term:     input[start:end],
-			Start:    start,
-			End:      end,
-			Position: lastPos + 1,
+			Term:         input[start:end],
+			Start:        start,
+			End:          end,
+			PositionIncr: 1,
 		}
 		rv = append(rv, token)
-		lastPos++
 		currInput = end
 	}
 
@@ -84,7 +80,6 @@ func (t *ExceptionsTokenizer) Tokenize(input []byte) analysis.TokenStream {
 		// add intermediate tokens to our result stream
 		for _, token := range intermediate {
 			// adjust token offsets
-			token.Position += lastPos
 			token.Start += currInput
 			token.End += currInput
 			rv = append(rv, token)

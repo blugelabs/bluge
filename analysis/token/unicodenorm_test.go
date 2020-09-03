@@ -37,12 +37,14 @@ func TestUnicodeNormalization(t *testing.T) {
 			norm: norm.NFKD,
 			input: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("Ｔｅｓｔ"),
+					Term:         []byte("Ｔｅｓｔ"),
+					PositionIncr: 1,
 				},
 			},
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("Test"),
+					Term:         []byte("Test"),
+					PositionIncr: 1,
 				},
 			},
 		},
@@ -50,12 +52,14 @@ func TestUnicodeNormalization(t *testing.T) {
 			norm: norm.NFKD,
 			input: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("１２３４"),
+					Term:         []byte("１２３４"),
+					PositionIncr: 1,
 				},
 			},
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("1234"),
+					Term:         []byte("1234"),
+					PositionIncr: 1,
 				},
 			},
 		},
@@ -63,12 +67,14 @@ func TestUnicodeNormalization(t *testing.T) {
 			norm: norm.NFKD,
 			input: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("ｶﾀｶﾅ"),
+					Term:         []byte("ｶﾀｶﾅ"),
+					PositionIncr: 1,
 				},
 			},
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("カタカナ"),
+					Term:         []byte("カタカナ"),
+					PositionIncr: 1,
 				},
 			},
 		},
@@ -76,12 +82,14 @@ func TestUnicodeNormalization(t *testing.T) {
 			norm: norm.NFKC,
 			input: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("ｳﾞｨｯﾂ"),
+					Term:         []byte("ｳﾞｨｯﾂ"),
+					PositionIncr: 1,
 				},
 			},
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("ヴィッツ"),
+					Term:         []byte("ヴィッツ"),
+					PositionIncr: 1,
 				},
 			},
 		},
@@ -89,12 +97,14 @@ func TestUnicodeNormalization(t *testing.T) {
 			norm: norm.NFKC,
 			input: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("ﾊﾟﾅｿﾆｯｸ"),
+					Term:         []byte("ﾊﾟﾅｿﾆｯｸ"),
+					PositionIncr: 1,
 				},
 			},
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("パナソニック"),
+					Term:         []byte("パナソニック"),
+					PositionIncr: 1,
 				},
 			},
 		},
@@ -102,12 +112,14 @@ func TestUnicodeNormalization(t *testing.T) {
 			norm: norm.NFD,
 			input: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("\u212B"),
+					Term:         []byte("\u212B"),
+					PositionIncr: 1,
 				},
 			},
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("\u0041\u030A"),
+					Term:         []byte("\u0041\u030A"),
+					PositionIncr: 1,
 				},
 			},
 		},
@@ -115,12 +127,14 @@ func TestUnicodeNormalization(t *testing.T) {
 			norm: norm.NFC,
 			input: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("\u212B"),
+					Term:         []byte("\u212B"),
+					PositionIncr: 1,
 				},
 			},
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("\u00C5"),
+					Term:         []byte("\u00C5"),
+					PositionIncr: 1,
 				},
 			},
 		},
@@ -128,12 +142,14 @@ func TestUnicodeNormalization(t *testing.T) {
 			norm: norm.NFKD,
 			input: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("\uFB01"),
+					Term:         []byte("\uFB01"),
+					PositionIncr: 1,
 				},
 			},
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("\u0066\u0069"),
+					Term:         []byte("\u0066\u0069"),
+					PositionIncr: 1,
 				},
 			},
 		},
@@ -141,12 +157,14 @@ func TestUnicodeNormalization(t *testing.T) {
 			norm: norm.NFKC,
 			input: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("\uFB01"),
+					Term:         []byte("\uFB01"),
+					PositionIncr: 1,
 				},
 			},
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("\u0066\u0069"),
+					Term:         []byte("\u0066\u0069"),
+					PositionIncr: 1,
 				},
 			},
 		},

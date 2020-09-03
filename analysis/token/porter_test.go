@@ -24,52 +24,66 @@ import (
 func TestPorterStemmer(t *testing.T) {
 	inputTokenStream := analysis.TokenStream{
 		&analysis.Token{
-			Term: []byte("walking"),
+			Term:         []byte("walking"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("talked"),
+			Term:         []byte("talked"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("business"),
+			Term:         []byte("business"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term:    []byte("protected"),
-			KeyWord: true,
+			Term:         []byte("protected"),
+			KeyWord:      true,
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("cat"),
+			Term:         []byte("cat"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("done"),
+			Term:         []byte("done"),
+			PositionIncr: 1,
 		},
 		// a term which does stem, but does not change length
 		&analysis.Token{
-			Term: []byte("marty"),
+			Term:         []byte("marty"),
+			PositionIncr: 1,
 		},
 	}
 
 	expectedTokenStream := analysis.TokenStream{
 		&analysis.Token{
-			Term: []byte("walk"),
+			Term:         []byte("walk"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("talk"),
+			Term:         []byte("talk"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("busi"),
+			Term:         []byte("busi"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term:    []byte("protected"),
-			KeyWord: true,
+			Term:         []byte("protected"),
+			KeyWord:      true,
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("cat"),
+			Term:         []byte("cat"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("done"),
+			Term:         []byte("done"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("marti"),
+			Term:         []byte("marti"),
+			PositionIncr: 1,
 		},
 	}
 

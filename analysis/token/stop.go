@@ -36,12 +36,16 @@ func NewStopTokensFilter(stopTokens analysis.TokenMap) *StopTokensFilter {
 }
 
 func (f *StopTokensFilter) Filter(input analysis.TokenStream) analysis.TokenStream {
-	j := 0
+	var j, skipped int
 	for _, token := range input {
 		_, isStopToken := f.stopTokens[string(token.Term)]
 		if !isStopToken {
+			token.PositionIncr += skipped
+			skipped = 0
 			input[j] = token
 			j++
+		} else {
+			skipped += token.PositionIncr
 		}
 	}
 

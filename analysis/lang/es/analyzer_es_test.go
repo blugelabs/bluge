@@ -31,10 +31,10 @@ func TestSpanishAnalyzer(t *testing.T) {
 			input: []byte("chicana"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("chican"),
-					Position: 1,
-					Start:    0,
-					End:      7,
+					Term:         []byte("chican"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          7,
 				},
 			},
 		},
@@ -42,10 +42,10 @@ func TestSpanishAnalyzer(t *testing.T) {
 			input: []byte("chicano"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("chican"),
-					Position: 1,
-					Start:    0,
-					End:      7,
+					Term:         []byte("chican"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          7,
 				},
 			},
 		},
@@ -54,10 +54,10 @@ func TestSpanishAnalyzer(t *testing.T) {
 			input: []byte("yeses"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("yes"),
-					Position: 1,
-					Start:    0,
-					End:      5,
+					Term:         []byte("yes"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          5,
 				},
 			},
 		},
@@ -65,10 +65,10 @@ func TestSpanishAnalyzer(t *testing.T) {
 			input: []byte("jaeces"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("jaez"),
-					Position: 1,
-					Start:    0,
-					End:      6,
+					Term:         []byte("jaez"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          6,
 				},
 			},
 		},
@@ -76,10 +76,10 @@ func TestSpanishAnalyzer(t *testing.T) {
 			input: []byte("arcos"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("arc"),
-					Position: 1,
-					Start:    0,
-					End:      5,
+					Term:         []byte("arc"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          5,
 				},
 			},
 		},
@@ -87,10 +87,10 @@ func TestSpanishAnalyzer(t *testing.T) {
 			input: []byte("caos"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("caos"),
-					Position: 1,
-					Start:    0,
-					End:      4,
+					Term:         []byte("caos"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          4,
 				},
 			},
 		},
@@ -98,10 +98,10 @@ func TestSpanishAnalyzer(t *testing.T) {
 			input: []byte("parecer"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("parecer"),
-					Position: 1,
-					Start:    0,
-					End:      7,
+					Term:         []byte("parecer"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          7,
 				},
 			},
 		},

@@ -352,16 +352,15 @@ func phraseTests() []*RequestVerify {
 				},
 			},
 		},
-		// fixme phrase with array, position increment gap
-		// {
-		//	Comment: "phrase 21",
-		//	Request: bluge.NewTopNSearch(10,
-		//		bluge.NewMatchPhraseQuery("bad receiver").
-		//			SetAnalyzer(enAnalyzer)),
-		//	Aggregations:  standardAggs,
-		//	ExpectTotal:   0,
-		//	ExpectMatches: []*match{},
-		// },
+		{
+			Comment: "phrase 21",
+			Request: bluge.NewTopNSearch(10,
+				bluge.NewMatchPhraseQuery("bad receiver").
+					SetAnalyzer(enAnalyzer)),
+			Aggregations:  standardAggs,
+			ExpectTotal:   0,
+			ExpectMatches: []*match{},
+		},
 		{
 			Comment: "phrase 22",
 			Request: bluge.NewTopNSearch(10,
@@ -375,6 +374,15 @@ func phraseTests() []*RequestVerify {
 					},
 				},
 			},
+		},
+		{
+			Comment: "phrase 23",
+			Request: bluge.NewTopNSearch(10,
+				bluge.NewMatchPhraseQuery("call defenseless").
+					SetAnalyzer(enAnalyzer)),
+			Aggregations:  standardAggs,
+			ExpectTotal:   0,
+			ExpectMatches: []*match{},
 		},
 	}
 }

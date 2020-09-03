@@ -31,10 +31,10 @@ func TestSoraniAnalyzer(t *testing.T) {
 			input: []byte("ئەم پیاوە"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("پیاو"),
-					Position: 2,
-					Start:    7,
-					End:      17,
+					Term:         []byte("پیاو"),
+					PositionIncr: 2,
+					Start:        7,
+					End:          17,
 				},
 			},
 		},
@@ -42,10 +42,10 @@ func TestSoraniAnalyzer(t *testing.T) {
 			input: []byte("پیاوە"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("پیاو"),
-					Position: 1,
-					Start:    0,
-					End:      10,
+					Term:         []byte("پیاو"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          10,
 				},
 			},
 		},
@@ -53,10 +53,10 @@ func TestSoraniAnalyzer(t *testing.T) {
 			input: []byte("پیاو"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("پیاو"),
-					Position: 1,
-					Start:    0,
-					End:      8,
+					Term:         []byte("پیاو"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          8,
 				},
 			},
 		},

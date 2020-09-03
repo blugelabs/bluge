@@ -31,10 +31,10 @@ func TestHindiAnalyzer(t *testing.T) {
 			input: []byte("हिन्दी"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("हिंद"),
-					Position: 1,
-					Start:    0,
-					End:      18,
+					Term:         []byte("हिंद"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          18,
 				},
 			},
 		},
@@ -42,10 +42,10 @@ func TestHindiAnalyzer(t *testing.T) {
 			input: []byte("हिंदी"),
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term:     []byte("हिंद"),
-					Position: 1,
-					Start:    0,
-					End:      15,
+					Term:         []byte("हिंद"),
+					PositionIncr: 1,
+					Start:        0,
+					End:          15,
 				},
 			},
 		},

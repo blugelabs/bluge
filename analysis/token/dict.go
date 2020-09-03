@@ -70,12 +70,12 @@ func (f *DictionaryCompoundFilter) decompose(token *analysis.Token) []*analysis.
 			_, inDict := f.dict[string(runes[i:i+j])]
 			if inDict {
 				newtoken := analysis.Token{
-					Term:     []byte(string(runes[i : i+j])),
-					Position: token.Position,
-					Start:    token.Start + i,
-					End:      token.Start + i + j,
-					Type:     token.Type,
-					KeyWord:  token.KeyWord,
+					Term:         []byte(string(runes[i : i+j])),
+					PositionIncr: 0,
+					Start:        token.Start + i,
+					End:          token.Start + i + j,
+					Type:         token.Type,
+					KeyWord:      token.KeyWord,
 				}
 				if f.onlyLongestMatch {
 					if longestMatchToken == nil || utf8.RuneCount(longestMatchToken.Term) < j {

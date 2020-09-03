@@ -40,21 +40,20 @@ const (
 type Token struct {
 	// Start specifies the byte offset of the beginning of the term in the
 	// field.
-	Start int `json:"start"`
+	Start int
 
 	// End specifies the byte offset of the end of the term in the field.
-	End  int    `json:"end"`
-	Term []byte `json:"term"`
+	End  int
+	Term []byte
 
-	// Position specifies the 1-based index of the token in the sequence of
-	// occurrences of its term in the field.
-	Position int       `json:"position"`
-	Type     TokenType `json:"type"`
-	KeyWord  bool      `json:"keyword"`
+	// PositionIncr specifies the position of this token relative to the previous.
+	PositionIncr int
+	Type         TokenType
+	KeyWord      bool
 }
 
 func (t *Token) String() string {
-	return fmt.Sprintf("Start: %d  End: %d  Position: %d  Token: %s  Type: %d", t.Start, t.End, t.Position, string(t.Term), t.Type)
+	return fmt.Sprintf("Start: %d  End: %d  PositionIncr: %d  Token: %s  Type: %d", t.Start, t.End, t.PositionIncr, string(t.Term), t.Type)
 }
 
 type TokenStream []*Token

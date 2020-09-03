@@ -43,21 +43,20 @@ func (s *ShingleFilter) Filter(input analysis.TokenStream) analysis.TokenStream 
 
 	aRing := ring.New(s.max)
 	itemsInRing := 0
-	currentPosition := 0
 	for _, token := range input {
 		if s.outputOriginal {
 			rv = append(rv, token)
 		}
 
 		// if there are gaps, insert filler tokens
-		offset := token.Position - currentPosition
-		for offset > 1 {
+		offset := token.PositionIncr - 1
+		for offset > 0 {
 			fillerToken := analysis.Token{
-				Position: 0,
-				Start:    -1,
-				End:      -1,
-				Type:     analysis.AlphaNumeric,
-				Term:     []byte(s.fill),
+				PositionIncr: 1,
+				Start:        -1,
+				End:          -1,
+				Type:         analysis.AlphaNumeric,
+				Term:         []byte(s.fill),
 			}
 			aRing.Value = &fillerToken
 			if itemsInRing < s.max {
@@ -67,7 +66,6 @@ func (s *ShingleFilter) Filter(input analysis.TokenStream) analysis.TokenStream 
 			aRing = aRing.Next()
 			offset--
 		}
-		currentPosition = token.Position
 
 		aRing.Value = token
 		if itemsInRing < s.max {
@@ -90,7 +88,6 @@ func (s *ShingleFilter) shingleCurrentRingState(aRing *ring.Ring, itemsInRing in
 		// to produce a shingle of this size
 		thisShingleRing := aRing.Move(-(shingleN - 1))
 		shingledBytes := make([]byte, 0)
-		pos := 0
 		start := -1
 		end := 0
 		for i := 0; i < shingleN; i++ {
@@ -98,9 +95,6 @@ func (s *ShingleFilter) shingleCurrentRingState(aRing *ring.Ring, itemsInRing in
 				shingledBytes = append(shingledBytes, []byte(s.tokenSeparator)...)
 			}
 			curr := thisShingleRing.Value.(*analysis.Token)
-			if pos == 0 && curr.Position != 0 {
-				pos = curr.Position
-			}
 			if start == -1 && curr.Start != -1 {
 				start = curr.Start
 			}
@@ -111,17 +105,18 @@ func (s *ShingleFilter) shingleCurrentRingState(aRing *ring.Ring, itemsInRing in
 			thisShingleRing = thisShingleRing.Next()
 		}
 		token := analysis.Token{
-			Type: analysis.Shingle,
-			Term: shingledBytes,
-		}
-		if pos != 0 {
-			token.Position = pos
+			Type:         analysis.Shingle,
+			Term:         shingledBytes,
+			PositionIncr: 1,
 		}
 		if start != -1 {
 			token.Start = start
 		}
 		if end != -1 {
 			token.End = end
+		}
+		if len(rv) > 0 || s.outputOriginal {
+			token.PositionIncr = 0
 		}
 		rv = append(rv, &token)
 	}

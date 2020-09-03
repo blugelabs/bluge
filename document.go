@@ -61,19 +61,26 @@ type FieldConsumer interface {
 }
 
 func (d Document) Analyze() {
+	fieldOffsets := map[string]int{}
 	for _, field := range d {
-		if field.Index() {
-			field.Analyze()
+		if !field.Index() {
+			continue
+		}
+		fieldOffset := fieldOffsets[field.Name()]
+		if fieldOffset > 0 {
+			fieldOffset += field.PositionIncrementGap()
+		}
+		lastPos := field.Analyze(fieldOffset)
+		fieldOffsets[field.Name()] = lastPos
 
-			// see if any of the composite fields need this
-			for _, otherField := range d {
-				if otherField == field {
-					// never include yourself
-					continue
-				}
-				if fieldConsumer, ok := otherField.(FieldConsumer); ok {
-					fieldConsumer.Consume(field)
-				}
+		// see if any of the composite fields need this
+		for _, otherField := range d {
+			if otherField == field {
+				// never include yourself
+				continue
+			}
+			if fieldConsumer, ok := otherField.(FieldConsumer); ok {
+				fieldConsumer.Consume(field)
 			}
 		}
 	}

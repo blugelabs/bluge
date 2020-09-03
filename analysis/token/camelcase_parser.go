@@ -21,12 +21,11 @@ import (
 func (p *Parser) buildTokenFromTerm(buffer []rune) *analysis.Token {
 	term := analysis.BuildTermFromRunes(buffer)
 	token := &analysis.Token{
-		Term:     term,
-		Position: p.position,
-		Start:    p.index,
-		End:      p.index + len(term),
+		Term:         term,
+		PositionIncr: 1,
+		Start:        p.index,
+		End:          p.index + len(term),
 	}
-	p.position++
 	p.index += len(term)
 	return token
 }
@@ -42,16 +41,14 @@ type Parser struct {
 	buffer    []rune
 	current   State
 	tokens    []*analysis.Token
-	position  int
 	index     int
 }
 
-func NewParser(length, position, index int) *Parser {
+func NewParser(length, index int) *Parser {
 	return &Parser{
 		bufferLen: length,
 		buffer:    make([]rune, 0, length),
 		tokens:    make([]*analysis.Token, 0, length),
-		position:  position,
 		index:     index,
 	}
 }
@@ -100,8 +97,4 @@ func (p *Parser) NewState(sym rune) State {
 func (p *Parser) FlushTokens() []*analysis.Token {
 	p.tokens = append(p.tokens, p.buildTokenFromTerm(p.buffer))
 	return p.tokens
-}
-
-func (p *Parser) NextPosition() int {
-	return p.position
 }

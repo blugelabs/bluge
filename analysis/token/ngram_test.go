@@ -33,24 +33,30 @@ func TestNgramFilter(t *testing.T) {
 			max: 1,
 			input: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("abcde"),
+					Term:         []byte("abcde"),
+					PositionIncr: 1,
 				},
 			},
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("a"),
+					Term:         []byte("a"),
+					PositionIncr: 1,
 				},
 				&analysis.Token{
-					Term: []byte("b"),
+					Term:         []byte("b"),
+					PositionIncr: 0,
 				},
 				&analysis.Token{
-					Term: []byte("c"),
+					Term:         []byte("c"),
+					PositionIncr: 0,
 				},
 				&analysis.Token{
-					Term: []byte("d"),
+					Term:         []byte("d"),
+					PositionIncr: 0,
 				},
 				&analysis.Token{
-					Term: []byte("e"),
+					Term:         []byte("e"),
+					PositionIncr: 0,
 				},
 			},
 		},
@@ -59,21 +65,26 @@ func TestNgramFilter(t *testing.T) {
 			max: 2,
 			input: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("abcde"),
+					Term:         []byte("abcde"),
+					PositionIncr: 1,
 				},
 			},
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("ab"),
+					Term:         []byte("ab"),
+					PositionIncr: 1,
 				},
 				&analysis.Token{
-					Term: []byte("bc"),
+					Term:         []byte("bc"),
+					PositionIncr: 0,
 				},
 				&analysis.Token{
-					Term: []byte("cd"),
+					Term:         []byte("cd"),
+					PositionIncr: 0,
 				},
 				&analysis.Token{
-					Term: []byte("de"),
+					Term:         []byte("de"),
+					PositionIncr: 0,
 				},
 			},
 		},
@@ -82,45 +93,58 @@ func TestNgramFilter(t *testing.T) {
 			max: 3,
 			input: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("abcde"),
+					Term:         []byte("abcde"),
+					PositionIncr: 1,
 				},
 			},
 			output: analysis.TokenStream{
 				&analysis.Token{
-					Term: []byte("a"),
+					Term:         []byte("a"),
+					PositionIncr: 1,
 				},
 				&analysis.Token{
-					Term: []byte("ab"),
+					Term:         []byte("ab"),
+					PositionIncr: 0,
 				},
 				&analysis.Token{
-					Term: []byte("abc"),
+					Term:         []byte("abc"),
+					PositionIncr: 0,
 				},
 				&analysis.Token{
-					Term: []byte("b"),
+					Term:         []byte("b"),
+					PositionIncr: 0,
 				},
 				&analysis.Token{
-					Term: []byte("bc"),
+					Term:         []byte("bc"),
+					PositionIncr: 0,
 				},
 				&analysis.Token{
-					Term: []byte("bcd"),
+					Term:         []byte("bcd"),
+					PositionIncr: 0,
 				},
 				&analysis.Token{
-					Term: []byte("c"),
+					Term:         []byte("c"),
+					PositionIncr: 0,
 				},
 				&analysis.Token{
-					Term: []byte("cd"),
+					Term:         []byte("cd"),
+					PositionIncr: 0,
 				},
 				&analysis.Token{
-					Term: []byte("cde"),
+					Term:         []byte("cde"),
+					PositionIncr: 0,
 				},
 				&analysis.Token{
-					Term: []byte("d"),
+					Term:         []byte("d"),
+					PositionIncr: 0,
 				},
 				&analysis.Token{
-					Term: []byte("de"),
+					Term:         []byte("de"),
+					PositionIncr: 0,
 				},
 				&analysis.Token{
-					Term: []byte("e"),
+					Term:         []byte("e"),
+					PositionIncr: 0,
 				},
 			},
 		},

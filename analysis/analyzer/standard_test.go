@@ -25,7 +25,7 @@ func BenchmarkStandardAnalyzer(b *testing.B) {
 		analyzer := NewStandardAnalyzer()
 
 		ts := analyzer.Analyze(wikiArticle)
-		freqs := analysis.TokenFrequency(ts, true)
+		freqs, _ := analysis.TokenFrequency(ts, true, 0)
 		if len(freqs) != 511 {
 			b.Errorf("expected %d freqs, got %d", 511, len(freqs))
 		}

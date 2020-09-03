@@ -211,7 +211,7 @@ func TestIndexingOptions(t *testing.T) {
 
 func TestNumericField(t *testing.T) {
 	nf := NewNumericField("age", 3.4)
-	nf.Analyze()
+	_ = nf.Analyze(0)
 	numTokens := nf.AnalyzedLength()
 	if numTokens != 16 {
 		t.Errorf("expected 16 tokens, got %d ", numTokens)
@@ -224,7 +224,7 @@ func TestNumericField(t *testing.T) {
 
 func TestGeoPointField(t *testing.T) {
 	gf := NewGeoPointField("loc", 0.0015, 0.0015)
-	gf.Analyze()
+	_ = gf.Analyze(0)
 	numTokens := gf.analyzedLength
 	if numTokens != 8 {
 		t.Errorf("expected 8 tokens, got %d", numTokens)

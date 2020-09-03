@@ -24,28 +24,35 @@ import (
 func TestStopWordsFilter(t *testing.T) {
 	inputTokenStream := analysis.TokenStream{
 		&analysis.Token{
-			Term: []byte("a"),
+			Term:         []byte("a"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("walk"),
+			Term:         []byte("walk"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("in"),
+			Term:         []byte("in"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("the"),
+			Term:         []byte("the"),
+			PositionIncr: 1,
 		},
 		&analysis.Token{
-			Term: []byte("park"),
+			Term:         []byte("park"),
+			PositionIncr: 1,
 		},
 	}
 
 	expectedTokenStream := analysis.TokenStream{
 		&analysis.Token{
-			Term: []byte("walk"),
+			Term:         []byte("walk"),
+			PositionIncr: 2,
 		},
 		&analysis.Token{
-			Term: []byte("park"),
+			Term:         []byte("park"),
+			PositionIncr: 3,
 		},
 	}
 
