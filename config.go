@@ -45,6 +45,7 @@ type Config struct {
 // indexed with these field/terms, even though nothing is
 // physically persisted about them in the index.
 func (config Config) WithVirtualField(field Field) Config {
+	_ = field.Analyze(0)
 	config.indexConfig = config.indexConfig.WithVirtualField(field)
 	return config
 }

@@ -186,7 +186,45 @@ func (i *Snapshot) Fields() ([]string, error) {
 	return rv, nil
 }
 
+type collectionStats struct {
+	totalDocCount    int
+	docCount         int
+	sumTotalTermFreq int
+}
+
+func (c *collectionStats) TotalDocumentCount() int {
+	return c.totalDocCount
+}
+
+func (c *collectionStats) DocumentCount() int {
+	return c.docCount
+}
+
+func (c *collectionStats) SumTotalTermFrequency() int {
+	return c.sumTotalTermFreq
+}
+
+func (c *collectionStats) Merge(other segment.CollectionStats) {
+	c.totalDocCount += other.TotalDocumentCount()
+	c.docCount += other.DocumentCount()
+	c.sumTotalTermFreq += other.SumTotalTermFrequency()
+}
+
 func (i *Snapshot) CollectionStats(field string) (segment.CollectionStats, error) {
+	// first handle case where this is a virtual field
+	if vFields, ok := i.parent.config.virtualFields[field]; ok {
+		for _, vField := range vFields {
+			if field == vField.Name() {
+				totalDocCount, _ := i.Count()
+				return &collectionStats{
+					totalDocCount:    totalDocCount,
+					docCount:         totalDocCount,
+					sumTotalTermFreq: totalDocCount,
+				}, nil
+			}
+		}
+	}
+
 	// FIXME just making this work for now, possibly should be async
 	var rv segment.CollectionStats
 	for _, seg := range i.segment {
