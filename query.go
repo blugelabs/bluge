@@ -71,9 +71,7 @@ func (s querySlice) conjunction(i search.Reader, options search.SearcherOptions)
 	return searcher.NewConjunctionSearcher(i, constituents, similarity.NewCompositeSumScorer(), options)
 }
 
-// A ValidatableQuery represents a Query which can be validated
-// prior to execution.
-type ValidatableQuery interface {
+type validatableQuery interface {
 	Query
 	Validate() error
 }
@@ -218,7 +216,7 @@ func replaceMatchNoneWithNil(s search.Searcher) search.Searcher {
 func (q *BooleanQuery) Validate() error {
 	if len(q.musts) > 0 {
 		for _, mq := range q.musts {
-			if mq, ok := mq.(ValidatableQuery); ok {
+			if mq, ok := mq.(validatableQuery); ok {
 				err := mq.Validate()
 				if err != nil {
 					return err
@@ -228,7 +226,7 @@ func (q *BooleanQuery) Validate() error {
 	}
 	if len(q.shoulds) > 0 {
 		for _, sq := range q.shoulds {
-			if sq, ok := sq.(ValidatableQuery); ok {
+			if sq, ok := sq.(validatableQuery); ok {
 				err := sq.Validate()
 				if err != nil {
 					return err
@@ -238,7 +236,7 @@ func (q *BooleanQuery) Validate() error {
 	}
 	if len(q.mustNots) > 0 {
 		for _, mnq := range q.mustNots {
-			if mnq, ok := mnq.(ValidatableQuery); ok {
+			if mnq, ok := mnq.(validatableQuery); ok {
 				err := mnq.Validate()
 				if err != nil {
 					return err
