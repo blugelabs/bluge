@@ -73,7 +73,7 @@ func OpenWriter(config Config) (*Writer, error) {
 	var err error
 	rv.segPlugin, err = loadSegmentPlugin(config.supportedSegmentPlugins, config.SegmentType, config.SegmentVersion)
 	if err != nil {
-		return nil, fmt.Errorf("error loadign segment plugin: %v", err)
+		return nil, fmt.Errorf("error loading segment plugin: %v", err)
 	}
 
 	rv.root = &Snapshot{
