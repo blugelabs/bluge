@@ -26,7 +26,7 @@ import (
 	"github.com/blugelabs/bluge"
 )
 
-func aggregationsLoad(writer *bluge.IndexWriter) error {
+func aggregationsLoad(writer *bluge.Writer) error {
 	updated, err := time.Parse(time.RFC3339, "2014-11-25T00:00:00Z")
 	if err != nil {
 		return err

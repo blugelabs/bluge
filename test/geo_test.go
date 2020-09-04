@@ -20,7 +20,7 @@ import (
 	"github.com/blugelabs/bluge/search"
 )
 
-func geoLoad(writer *bluge.IndexWriter) error {
+func geoLoad(writer *bluge.Writer) error {
 	err := writer.Insert(bluge.NewDocument("amoeba_brewery").
 		AddField(bluge.NewKeywordField("name", "amoeba brewery")).
 		AddField(bluge.NewGeoPointField("geo", 77.60490, 12.97467)).

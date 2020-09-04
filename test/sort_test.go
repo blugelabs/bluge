@@ -24,7 +24,7 @@ import (
 	"github.com/blugelabs/bluge"
 )
 
-func sortLoad(writer *bluge.IndexWriter) error {
+func sortLoad(writer *bluge.Writer) error {
 	martyBorn, err := time.Parse(time.RFC3339, "2014-11-25T00:00:00Z")
 	if err != nil {
 		return err

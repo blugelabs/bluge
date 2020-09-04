@@ -19,7 +19,7 @@ import (
 	"github.com/blugelabs/bluge/analysis/lang/en"
 )
 
-func phraseLoad(writer *bluge.IndexWriter) error {
+func phraseLoad(writer *bluge.Writer) error {
 	enAnalyzer := en.NewAnalyzer()
 
 	err := writer.Insert(bluge.NewDocument("a").

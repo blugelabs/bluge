@@ -49,6 +49,6 @@ type RequestVerify struct {
 
 type IntegrationTest struct {
 	Name     string
-	DataLoad func(writer *bluge.IndexWriter) error
+	DataLoad func(writer *bluge.Writer) error
 	Tests    func() []*RequestVerify
 }

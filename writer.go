@@ -22,13 +22,13 @@ import (
 	"github.com/blugelabs/bluge/index"
 )
 
-type IndexWriter struct {
+type Writer struct {
 	config Config
 	chill  *index.Writer
 }
 
-func OpenWriter(config Config) (*IndexWriter, error) {
-	rv := &IndexWriter{
+func OpenWriter(config Config) (*Writer, error) {
+	rv := &Writer{
 		config: config,
 	}
 
@@ -41,33 +41,33 @@ func OpenWriter(config Config) (*IndexWriter, error) {
 	return rv, nil
 }
 
-func (w *IndexWriter) Insert(doc segment.Document) error {
+func (w *Writer) Insert(doc segment.Document) error {
 	b := NewBatch()
 	b.Insert(doc)
 	return w.Batch(b)
 }
 
-func (w *IndexWriter) Update(id segment.Term, doc segment.Document) error {
+func (w *Writer) Update(id segment.Term, doc segment.Document) error {
 	b := NewBatch()
 	b.Update(id, doc)
 	return w.Batch(b)
 }
 
-func (w *IndexWriter) Delete(id segment.Term) error {
+func (w *Writer) Delete(id segment.Term) error {
 	b := NewBatch()
 	b.Delete(id)
 	return w.Batch(b)
 }
 
-func (w *IndexWriter) Batch(batch *index.Batch) error {
+func (w *Writer) Batch(batch *index.Batch) error {
 	return w.chill.Batch(batch)
 }
 
-func (w *IndexWriter) Close() error {
+func (w *Writer) Close() error {
 	return w.chill.Close()
 }
 
-func (w *IndexWriter) Reader() (*Reader, error) {
+func (w *Writer) Reader() (*Reader, error) {
 	r, err := w.chill.Reader()
 	if err != nil {
 		return nil, fmt.Errorf("error getting nreal time reader: %w", err)

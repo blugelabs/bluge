@@ -21,7 +21,7 @@ import (
 	"github.com/blugelabs/bluge/analysis/lang/en"
 )
 
-func fosdemLoad(writer *bluge.IndexWriter) error {
+func fosdemLoad(writer *bluge.Writer) error {
 	enAnalyzer := en.NewAnalyzer()
 
 	err := writer.Insert(bluge.NewDocument("3311@FOSDEM15@fosdem.org").

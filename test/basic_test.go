@@ -33,7 +33,7 @@ func init() {
 	}
 }
 
-func basicLoad(writer *bluge.IndexWriter) error {
+func basicLoad(writer *bluge.Writer) error {
 	enAnalyzer := en.NewAnalyzer()
 
 	err := writer.Insert(bluge.NewDocument("a").
