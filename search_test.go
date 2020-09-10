@@ -79,7 +79,7 @@ func TestNestedBooleanSearchers(t *testing.T) {
 			AddField(NewTextField("metadata.region", metadataRegion).WithAnalyzer(customAnalyzer)).
 			AddField(NewCompositeFieldExcluding("_all", []string{"_id"}))
 
-		batch.Update(Identifier(strconv.Itoa(i)), doc)
+		batch.Update(doc.ID(), doc)
 	}
 
 	if err = indexWriter.Batch(batch); err != nil {

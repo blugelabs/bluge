@@ -67,7 +67,7 @@ func TestCrud(t *testing.T) {
 		AddField(NewTextField("name", "marty").StoreValue()).
 		AddField(NewTextField("desc", "gophercon india")).
 		AddField(NewCompositeFieldExcluding("_all", nil))
-	err = indexWriter.Update(Identifier("a"), docA)
+	err = indexWriter.Update(docA.ID(), docA)
 	if err != nil {
 		t.Error(err)
 	}
@@ -75,7 +75,7 @@ func TestCrud(t *testing.T) {
 	docY := NewDocument("y").
 		AddField(NewTextField("name", "jasper")).
 		AddField(NewTextField("desc", "clojure"))
-	err = indexWriter.Update(Identifier("y"), docY)
+	err = indexWriter.Update(docY.ID(), docY)
 	if err != nil {
 		t.Error(err)
 	}
@@ -88,7 +88,7 @@ func TestCrud(t *testing.T) {
 	docX := NewDocument("x").
 		AddField(NewTextField("name", "rose")).
 		AddField(NewTextField("desc", "googler"))
-	err = indexWriter.Update(Identifier("x"), docX)
+	err = indexWriter.Update(docX.ID(), docX)
 	if err != nil {
 		t.Error(err)
 	}
@@ -97,7 +97,7 @@ func TestCrud(t *testing.T) {
 		AddField(NewTextField("name", "steve")).
 		AddField(NewTextField("desc", "cbft master"))
 	batch := NewBatch()
-	batch.Update(Identifier("b"), docB)
+	batch.Update(docB.ID(), docB)
 
 	batch.Delete(Identifier("x"))
 	err = indexWriter.Batch(batch)
@@ -241,7 +241,7 @@ func TestStoredFieldPreserved(t *testing.T) {
 		AddField(NewNumericField("num", 1.0).StoreValue()).
 		AddField(NewCompositeFieldExcluding("_all", []string{"_id"}))
 
-	err = indexWriter.Update(Identifier("a"), docA)
+	err = indexWriter.Update(docA.ID(), docA)
 	if err != nil {
 		t.Error(err)
 	}
@@ -322,7 +322,7 @@ func TestDict(t *testing.T) {
 	docA := NewDocument("a").
 		AddField(NewTextField("name", "marty")).
 		AddField(NewTextField("desc", "gophercon india"))
-	err = indexWriter.Update(Identifier("a"), docA)
+	err = indexWriter.Update(docA.ID(), docA)
 	if err != nil {
 		t.Error(err)
 	}
@@ -330,7 +330,7 @@ func TestDict(t *testing.T) {
 	docY := NewDocument("y").
 		AddField(NewTextField("name", "jasper")).
 		AddField(NewTextField("desc", "clojure"))
-	err = indexWriter.Update(Identifier("y"), docY)
+	err = indexWriter.Update(docY.ID(), docY)
 	if err != nil {
 		t.Error(err)
 	}
@@ -338,7 +338,7 @@ func TestDict(t *testing.T) {
 	docX := NewDocument("x").
 		AddField(NewTextField("name", "rose")).
 		AddField(NewTextField("desc", "googler"))
-	err = indexWriter.Update(Identifier("x"), docX)
+	err = indexWriter.Update(docX.ID(), docX)
 	if err != nil {
 		t.Error(err)
 	}
@@ -401,7 +401,7 @@ func TestDict(t *testing.T) {
 	docZ := NewDocument("z").
 		AddField(NewTextField("name", "prefix")).
 		AddField(NewTextField("desc", "bob cat cats catting dog doggy zoo"))
-	err = indexWriter.Update(Identifier("z"), docZ)
+	err = indexWriter.Update(docZ.ID(), docZ)
 	if err != nil {
 		t.Error(err)
 	}
@@ -484,7 +484,8 @@ func TestIndexMetadataRaceBug198(t *testing.T) {
 
 	for i := 0; i < 100; i++ {
 		batch := index.NewBatch()
-		batch.Update(Identifier("a"), NewDocument("a"))
+		doc := NewDocument("a")
+		batch.Update(doc.ID(), doc)
 		err = indexWriter.Batch(batch)
 		if err != nil {
 			t.Fatal(err)
@@ -517,7 +518,7 @@ func TestSortMatchSearch(t *testing.T) {
 			AddField(NewKeywordField("Name", names[i%len(names)]).StoreValue()).
 			AddField(NewKeywordField("day", days[i%len(days)]).StoreValue()).
 			AddField(NewKeywordField("number", numbers[i%len(numbers)]).StoreValue())
-		b.Update(Identifier(fmt.Sprintf("%d", i)), doc)
+		b.Update(doc.ID(), doc)
 	}
 	err = indexWriter.Batch(b)
 	if err != nil {
@@ -587,7 +588,7 @@ func TestIndexCountMatchSearch(t *testing.T) {
 				doc := NewDocument(id).
 					AddField(NewTextField("Body", "match")).
 					AddField(NewCompositeFieldExcluding("_all", []string{"_id"}))
-				b.Update(Identifier(id), doc)
+				b.Update(doc.ID(), doc)
 			}
 			err2 := indexWriter.Batch(b)
 			if err != nil {
@@ -740,9 +741,9 @@ func BenchmarkBatchOverhead(b *testing.B) {
 		// put 1000 items in a batch
 		batch := NewBatch()
 		for i := 0; i < 1000; i++ {
-			batch.Update(Identifier(fmt.Sprintf("%d", i)),
-				NewDocument(fmt.Sprintf("%d", i)).
-					AddField(NewKeywordField("name", "bluge")))
+			doc := NewDocument(fmt.Sprintf("%d", i)).
+				AddField(NewKeywordField("name", "bluge"))
+			batch.Update(doc.ID(), doc)
 		}
 		err = indexWriter.Batch(batch)
 		if err != nil {
@@ -765,7 +766,7 @@ func TestOpenMultipleReaders(t *testing.T) {
 	docA := NewDocument("a").
 		AddField(NewKeywordField("name", "marty")).
 		AddField(NewKeywordField("desc", "gophercon india"))
-	err = indexWriter.Update(Identifier("a"), docA)
+	err = indexWriter.Update(docA.ID(), docA)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -824,7 +825,7 @@ func TestBug408(t *testing.T) {
 			doc.AddField(NewKeywordField("user_id", matchUserID))
 			matchingDocIds[id] = struct{}{}
 		}
-		err = indexWriter.Update(Identifier(id), doc)
+		err = indexWriter.Update(doc.ID(), doc)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -901,7 +902,7 @@ func TestIndexAdvancedCountMatchSearch(t *testing.T) {
 					AddField(NewKeywordField("body", "match")).
 					AddField(NewCompositeFieldExcluding("_all", []string{"_id"}))
 
-				b.Update(Identifier(id), doc)
+				b.Update(doc.ID(), doc)
 			}
 			err2 := indexWriter.Batch(b)
 			if err2 != nil {
@@ -1071,10 +1072,10 @@ func TestBug1096(t *testing.T) {
 			// this could duplicate something already in the index
 			//   this too should be OK and update the item in the index
 			id := fmt.Sprintf("%d", j)
-
-			batch.Update(Identifier(id), NewDocument(id).
+			doc := NewDocument(id).
 				AddField(NewKeywordField("name", id)).
-				AddField(NewKeywordField("batch", fmt.Sprintf("%d", i))))
+				AddField(NewKeywordField("batch", fmt.Sprintf("%d", i)))
+			batch.Update(doc.ID(), doc)
 		}
 
 		// execute the batch
@@ -1200,7 +1201,7 @@ func TestBackup(t *testing.T) {
 		AddField(NewTextField("name", "marty").StoreValue()).
 		AddField(NewTextField("desc", "gophercon india")).
 		AddField(NewCompositeFieldExcluding("_all", nil))
-	err = indexWriter.Update(Identifier("a"), docA)
+	err = indexWriter.Update(docA.ID(), docA)
 	if err != nil {
 		t.Error(err)
 	}
