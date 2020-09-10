@@ -124,6 +124,11 @@ func (config Config) DisableOptimizeDisjunctionUnadorned() Config {
 	return config
 }
 
+func (config Config) WithUnsafeBatches() Config {
+	config.UnsafeBatch = true
+	return config
+}
+
 func DefaultConfig(path string) Config {
 	rv := defaultConfig()
 	rv.DirectoryFunc = func() Directory {
