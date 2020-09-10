@@ -759,5 +759,17 @@ func (dvr *documentValueReader) VisitDocumentValues(number int,
 		dvr.sdvr = sdvr
 	}
 
+	// handle virtual fields first
+	for _, field := range dvr.fields {
+		if vFields, ok := dvr.i.parent.config.virtualFields[field]; ok {
+			for _, vField := range vFields {
+				vField := vField
+				vField.EachTerm(func(term segment.FieldTerm) {
+					visitor(vField.Name(), term.Term())
+				})
+			}
+		}
+	}
+
 	return dvr.sdvr.VisitDocumentValues(localDocNum, visitor)
 }
