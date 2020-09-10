@@ -258,7 +258,7 @@ func buildTestAggregations() search.Aggregations {
 	global.Add("max_age", Max(search.Field("age")))
 	global.Add("avg_age", Avg(search.Field("age")))
 
-	global.Add("percentiles", Percentiles(search.Field("age")))
+	global.Add("quantiles", Quantiles(search.Field("age")))
 
 	termsAgg := NewTermsAggregation(search.Field("name"), 2)
 	global.Add("byName", termsAgg)

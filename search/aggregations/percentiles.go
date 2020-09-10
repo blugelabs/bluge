@@ -21,19 +21,19 @@ import (
 	"github.com/caio/go-tdigest"
 )
 
-type PercentilesMetric struct {
+type QuantilesMetric struct {
 	src         search.NumericValuesSource
 	compression float64
 }
 
-func Percentiles(src search.NumericValuesSource) *PercentilesMetric {
-	return &PercentilesMetric{
+func Quantiles(src search.NumericValuesSource) *QuantilesMetric {
+	return &QuantilesMetric{
 		src:         src,
 		compression: 100,
 	}
 }
 
-func (c *PercentilesMetric) SetCompression(compression float64) error {
+func (c *QuantilesMetric) SetCompression(compression float64) error {
 	if compression < 1 {
 		return fmt.Errorf("compression must be > 1")
 	}
@@ -41,42 +41,42 @@ func (c *PercentilesMetric) SetCompression(compression float64) error {
 	return nil
 }
 
-func (c *PercentilesMetric) Fields() []string {
+func (c *QuantilesMetric) Fields() []string {
 	return c.src.Fields()
 }
 
-func (c *PercentilesMetric) Calculator() search.Calculator {
-	rv := &PercentilesCalculator{
+func (c *QuantilesMetric) Calculator() search.Calculator {
+	rv := &QuantilesCalculator{
 		src: c.src,
 	}
 	rv.tdigest, _ = tdigest.New(tdigest.Compression(c.compression))
 	return rv
 }
 
-type PercentilesCalculator struct {
+type QuantilesCalculator struct {
 	src     search.NumericValuesSource
 	tdigest *tdigest.TDigest
 }
 
-func (c *PercentilesCalculator) Quantile(percent float64) (float64, error) {
+func (c *QuantilesCalculator) Quantile(percent float64) (float64, error) {
 	if percent < 0 || percent > 1 {
 		return 0, fmt.Errorf("percent must be between 0 and 1")
 	}
 	return c.tdigest.Quantile(percent), nil
 }
 
-func (c *PercentilesCalculator) Consume(d *search.DocumentMatch) {
+func (c *QuantilesCalculator) Consume(d *search.DocumentMatch) {
 	for _, val := range c.src.Numbers(d) {
 		_ = c.tdigest.Add(val)
 	}
 }
 
-func (c *PercentilesCalculator) Merge(other search.Calculator) {
-	if other, ok := other.(*PercentilesCalculator); ok {
+func (c *QuantilesCalculator) Merge(other search.Calculator) {
+	if other, ok := other.(*QuantilesCalculator); ok {
 		_ = c.tdigest.Merge(other.tdigest)
 	}
 }
 
-func (c *PercentilesCalculator) Finish() {
+func (c *QuantilesCalculator) Finish() {
 
 }
