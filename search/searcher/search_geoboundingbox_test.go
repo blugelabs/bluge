@@ -399,8 +399,6 @@ func origRelateAndRecurse(start, end uint64, res uint,
 	return nil, nil
 }
 
-// ***
-
 // original, non-optimized implementation of ComputeGeoRange
 func origComputeGeoRange2(term uint64, shift uint,
 	sminLon, sminLat, smaxLon, smaxLat float64,

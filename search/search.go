@@ -311,8 +311,6 @@ func (sc *Context) Size() int {
 	return sizeInBytes
 }
 
-// ****
-
 type DocumentValueReadable interface {
 	// DocumentValueReader provides a way to find all of the document
 	// values stored in the specified fields.  The returned

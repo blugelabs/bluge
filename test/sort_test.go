@@ -96,8 +96,6 @@ func sortLoad(writer *bluge.Writer) error {
 		return err
 	}
 
-	// ***
-
 	namelessBorn, err := time.Parse(time.RFC3339, "1978-12-02T00:00:00Z")
 	if err != nil {
 		return err
