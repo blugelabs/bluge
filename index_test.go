@@ -778,13 +778,13 @@ func TestOpenMultipleReaders(t *testing.T) {
 	}
 
 	// now open a reader
-	indexReader, err := OpenSnapshotReader(config)
+	indexReader, err := OpenReader(config)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// now open it again
-	indexReader2, err := OpenSnapshotReader(config)
+	indexReader2, err := OpenReader(config)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1211,7 +1211,7 @@ func TestBackup(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	snapshotReader, err := OpenSnapshotReader(config)
+	snapshotReader, err := OpenReader(config)
 	if err != nil {
 		t.Fatalf("error opening snapshot reader: %v", err)
 	}
@@ -1231,7 +1231,7 @@ func TestBackup(t *testing.T) {
 
 	// open up the backup
 	config = DefaultConfig(tmpBackupPath)
-	snapshotReader, err = OpenSnapshotReader(config)
+	snapshotReader, err = OpenReader(config)
 	if err != nil {
 		t.Fatal(err)
 	}

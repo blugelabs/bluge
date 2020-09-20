@@ -44,7 +44,7 @@ func TestOfflineWriter(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	indexReader, err := OpenSnapshotReader(config)
+	indexReader, err := OpenReader(config)
 	if err != nil {
 		t.Fatalf("error opening index: %v", err)
 	}

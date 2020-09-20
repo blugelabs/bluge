@@ -30,7 +30,7 @@ type Reader struct {
 	reader *index.Snapshot
 }
 
-func OpenSnapshotReader(config Config) (*Reader, error) {
+func OpenReader(config Config) (*Reader, error) {
 	rv := &Reader{
 		config: config,
 	}
