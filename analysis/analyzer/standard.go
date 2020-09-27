@@ -16,7 +16,6 @@ package analyzer
 
 import (
 	"github.com/blugelabs/bluge/analysis"
-	"github.com/blugelabs/bluge/analysis/lang/en"
 	"github.com/blugelabs/bluge/analysis/token"
 	"github.com/blugelabs/bluge/analysis/tokenizer"
 )
@@ -26,7 +25,6 @@ func NewStandardAnalyzer() *analysis.Analyzer {
 		Tokenizer: tokenizer.NewUnicodeTokenizer(),
 		TokenFilters: []analysis.TokenFilter{
 			token.NewLowerCaseFilter(),
-			en.StopWordsFilter(),
 		},
 	}
 }
