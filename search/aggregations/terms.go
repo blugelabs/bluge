@@ -54,6 +54,10 @@ func (t *TermsAggregation) Fields() []string {
 	return rv
 }
 
+func (t *TermsAggregation) AddAggregation(name string, aggregation search.Aggregation) {
+	t.aggregations[name] = aggregation
+}
+
 func (t *TermsAggregation) Calculator() search.Calculator {
 	return &TermsCalculator{
 		src:          t.src,
