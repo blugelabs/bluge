@@ -42,7 +42,7 @@ var distanceUnits = []*DistanceUnit{
 
 // ParseDistance attempts to parse a distance string and return distance in
 // meters.  Example formats supported:
-// "5in" "5inch" "7yd" "7yards" "9ft" "9feet" "11km" "11kilometers"
+// "5in" "5inches" "7yd" "7yards" "9ft" "9feet" "11km" "11kilometers"
 // "3nm" "3nauticalmiles" "13mm" "13millimeters" "15cm" "15centimeters"
 // "17mi" "17miles" "19m" "19meters"
 // If the unit cannot be determined, the entire string is parsed and the
