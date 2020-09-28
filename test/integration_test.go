@@ -185,7 +185,7 @@ func TestIntegration(t *testing.T) {
 	}
 }
 
-func compareFieldVals(t *testing.T, index int, field string, a, b [][]byte, number int, score float64, sortV [][]byte) {
+func compareFieldVals(t *testing.T, index int, field string, a, b [][]byte, number uint64, score float64, sortV [][]byte) {
 	var aStrs, bStrs []string
 	for _, aVal := range a {
 		aStrs = append(aStrs, string(aVal))

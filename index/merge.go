@@ -135,7 +135,7 @@ func (s *Writer) executeMergeTask(merges chan *segmentMerge, task *mergeplan.Mer
 	oldMap, segmentsToMerge, docsToDrop := s.planSegmentsToMerge(task)
 
 	newSegmentID := atomic.AddUint64(&s.nextSegmentID, 1)
-	var oldNewDocNums map[uint64][]int
+	var oldNewDocNums map[uint64][]uint64
 	var seg *segmentWrapper
 	if len(segmentsToMerge) > 0 {
 		fileMergeZapStartTime := time.Now()
@@ -163,7 +163,7 @@ func (s *Writer) executeMergeTask(merges chan *segmentMerge, task *mergeplan.Mer
 			atomic.AddUint64(&s.stats.TotFileMergePlanTasksErr, 1)
 			return err
 		}
-		oldNewDocNums = make(map[uint64][]int)
+		oldNewDocNums = make(map[uint64][]uint64)
 		for i, segNewDocNums := range newDocNums {
 			oldNewDocNums[task.Segments[i].ID()] = segNewDocNums
 		}
@@ -244,7 +244,7 @@ type mergeTaskIntroStatus struct {
 type segmentMerge struct {
 	id            uint64
 	old           map[uint64]*segmentSnapshot
-	oldNewDocNums map[uint64][]int
+	oldNewDocNums map[uint64][]uint64
 	new           *segmentWrapper
 	notifyCh      chan *mergeTaskIntroStatus
 }
@@ -320,13 +320,13 @@ func (s *Writer) mergeSegmentBases(merges chan *segmentMerge, snapshot *Snapshot
 	}
 
 	// update persisted stats
-	atomic.AddUint64(&s.stats.TotPersistedItems, uint64(seg.Count()))
+	atomic.AddUint64(&s.stats.TotPersistedItems, seg.Count())
 	atomic.AddUint64(&s.stats.TotPersistedSegments, 1)
 
 	sm := &segmentMerge{
 		id:            newSegmentID,
 		old:           make(map[uint64]*segmentSnapshot),
-		oldNewDocNums: make(map[uint64][]int),
+		oldNewDocNums: make(map[uint64][]uint64),
 		new:           seg,
 		notifyCh:      make(chan *mergeTaskIntroStatus),
 	}
@@ -362,7 +362,7 @@ func (s *Writer) mergeSegmentBases(merges chan *segmentMerge, snapshot *Snapshot
 }
 
 func (s *Writer) merge(segments []segment.Segment, drops []*roaring.Bitmap, id uint64) (
-	[][]int, error) {
+	[][]uint64, error) {
 	merger := s.segPlugin.Merge(segments, drops, s.config.MergeBufferSize)
 
 	err := s.directory.Persist(ItemKindSegment, id, merger, s.closeCh)

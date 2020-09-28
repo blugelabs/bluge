@@ -43,13 +43,13 @@ func (i *postingsIteratorAll) Next() (segment.Posting, error) {
 		next := i.iterators[i.segmentOffset].Next()
 		// make segment number into global number by adding offset
 		globalOffset := i.snapshot.offsets[i.segmentOffset]
-		i.preAlloc.number = int(next) + globalOffset
+		i.preAlloc.number = uint64(next) + globalOffset
 		return &i.preAlloc, nil
 	}
 	return nil, nil
 }
 
-func (i *postingsIteratorAll) Advance(number int) (segment.Posting, error) {
+func (i *postingsIteratorAll) Advance(number uint64) (segment.Posting, error) {
 	segIndex, localDocNum := i.snapshot.segmentIndexAndLocalDocNumFromGlobal(number)
 	if segIndex >= len(i.snapshot.segment) {
 		return nil, fmt.Errorf("computed segment index %d out of bounds %d",
@@ -65,7 +65,7 @@ func (i *postingsIteratorAll) Advance(number int) (segment.Posting, error) {
 	return i.Next()
 }
 
-func (i *postingsIteratorAll) Count() int {
+func (i *postingsIteratorAll) Count() uint64 {
 	rv, _ := i.snapshot.Count()
 	return rv
 }
@@ -80,18 +80,18 @@ func (i *postingsIteratorAll) Empty() bool {
 
 type virtualPosting struct {
 	term   string
-	number int
+	number uint64
 }
 
 func (v *virtualPosting) Term() string {
 	return v.term
 }
 
-func (v *virtualPosting) Number() int {
+func (v *virtualPosting) Number() uint64 {
 	return v.number
 }
 
-func (v *virtualPosting) SetNumber(n int) {
+func (v *virtualPosting) SetNumber(n uint64) {
 	v.number = n
 }
 

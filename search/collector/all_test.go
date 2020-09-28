@@ -37,7 +37,7 @@ func TestAllCollector(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var count int
+	var count uint64
 	next, err := dmi.Next()
 	for err == nil && next != nil {
 		count++

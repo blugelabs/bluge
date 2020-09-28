@@ -88,18 +88,18 @@ func (mr *matchReader) DocumentValueReader(fields []string) (segment.DocumentVal
 	return mr, nil
 }
 
-func (mr *matchReader) VisitDocumentValues(number int, visitor segment.DocumentValueVisitor) error {
+func (mr *matchReader) VisitDocumentValues(number uint64, visitor segment.DocumentValueVisitor) error {
 	for k, v := range mr.docVals {
 		visitor(k, v)
 	}
 	return nil
 }
 
-func (mr *matchReader) VisitStoredFields(number int, visitor segment.StoredFieldVisitor) error {
+func (mr *matchReader) VisitStoredFields(number uint64, visitor segment.StoredFieldVisitor) error {
 	return nil
 }
 
-func newDocumentMatch(number int, score float64, docVals map[string][]byte) *search.DocumentMatch {
+func newDocumentMatch(number uint64, score float64, docVals map[string][]byte) *search.DocumentMatch {
 	rv := &search.DocumentMatch{
 		Number: number,
 		Score:  score,

@@ -95,13 +95,13 @@ func (s *Writer) introduceSegment(next *segmentIntroduction, introduceSnapshotEp
 		parent:  s,
 		epoch:   introduceSnapshotEpoch,
 		segment: make([]*segmentSnapshot, 0, nsegs+1),
-		offsets: make([]int, 0, nsegs+1),
+		offsets: make([]uint64, 0, nsegs+1),
 		refs:    1,
 		creator: "introduceSegment",
 	}
 
 	// iterate through current segments
-	var running, docsToPersistCount int
+	var running, docsToPersistCount uint64
 	var memSegments, fileSegments uint64
 	for i := range root.segment {
 		// see if optimistic work included this segment
@@ -149,7 +149,7 @@ func (s *Writer) introduceSegment(next *segmentIntroduction, introduceSnapshotEp
 		}
 	}
 
-	atomic.StoreUint64(&s.stats.TotItemsToPersist, uint64(docsToPersistCount))
+	atomic.StoreUint64(&s.stats.TotItemsToPersist, docsToPersistCount)
 	atomic.StoreUint64(&s.stats.TotMemorySegmentsAtRoot, memSegments)
 	atomic.StoreUint64(&s.stats.TotFileSegmentsAtRoot, fileSegments)
 
@@ -165,7 +165,7 @@ func (s *Writer) introduceSegment(next *segmentIntroduction, introduceSnapshotEp
 
 		// increment numItemsIntroduced which tracks the number of items
 		// queued for persistence.
-		atomic.AddUint64(&s.stats.TotIntroducedItems, uint64(newSegmentSnapshot.Count()))
+		atomic.AddUint64(&s.stats.TotIntroducedItems, newSegmentSnapshot.Count())
 		atomic.AddUint64(&s.stats.TotIntroducedSegmentsBatch, 1)
 	}
 
@@ -189,12 +189,12 @@ func (s *Writer) introducePersist(persist *persistIntroduction, introduceSnapsho
 		parent:  s,
 		epoch:   introduceSnapshotEpoch,
 		segment: make([]*segmentSnapshot, len(root.segment)),
-		offsets: make([]int, len(root.offsets)),
+		offsets: make([]uint64, len(root.offsets)),
 		refs:    1,
 		creator: "introducePersist",
 	}
 
-	var docsToPersistCount int
+	var docsToPersistCount uint64
 	var memSegments, fileSegments uint64
 	for i, segSnapshot := range root.segment {
 		// see if this segment has been replaced
@@ -209,7 +209,7 @@ func (s *Writer) introducePersist(persist *persistIntroduction, introduceSnapsho
 			delete(persist.persisted, segSnapshot.id)
 
 			// update items persisted incase of a new segment snapshot
-			atomic.AddUint64(&s.stats.TotPersistedItems, uint64(newSegmentSnapshot.Count()))
+			atomic.AddUint64(&s.stats.TotPersistedItems, newSegmentSnapshot.Count())
 			atomic.AddUint64(&s.stats.TotPersistedSegments, 1)
 			fileSegments++
 		} else {
@@ -226,7 +226,7 @@ func (s *Writer) introducePersist(persist *persistIntroduction, introduceSnapsho
 		newIndexSnapshot.offsets[i] = root.offsets[i]
 	}
 
-	atomic.StoreUint64(&s.stats.TotItemsToPersist, uint64(docsToPersistCount))
+	atomic.StoreUint64(&s.stats.TotItemsToPersist, docsToPersistCount)
 	atomic.StoreUint64(&s.stats.TotMemorySegmentsAtRoot, memSegments)
 	atomic.StoreUint64(&s.stats.TotFileSegmentsAtRoot, fileSegments)
 	newIndexSnapshot.updateSize()
@@ -254,7 +254,7 @@ func (s *Writer) introduceMerge(nextMerge *segmentMerge, introduceSnapshotEpoch 
 
 	// iterate through current segments
 	newSegmentDeleted := roaring.NewBitmap()
-	var running, docsToPersistCount int
+	var running, docsToPersistCount uint64
 	var memSegments, fileSegments uint64
 	for i := range root.segment {
 		segmentID := root.segment[i].id
@@ -298,7 +298,7 @@ func (s *Writer) introduceMerge(nextMerge *segmentMerge, introduceSnapshotEpoch 
 	// In case where all the docs in the newly merged segment getting
 	// deleted by the time we reach here, can skip the introduction.
 	if nextMerge.new != nil &&
-		nextMerge.new.Count() > int(newSegmentDeleted.GetCardinality()) {
+		nextMerge.new.Count() > newSegmentDeleted.GetCardinality() {
 		// put new segment at end
 		newSnapshot.segment = append(newSnapshot.segment, &segmentSnapshot{
 			id:      nextMerge.id,
@@ -312,7 +312,7 @@ func (s *Writer) introduceMerge(nextMerge *segmentMerge, introduceSnapshotEpoch 
 		if nextMerge.new.Persisted() {
 			fileSegments++
 		} else {
-			docsToPersistCount += nextMerge.new.Count() - int(newSegmentDeleted.GetCardinality())
+			docsToPersistCount += nextMerge.new.Count() - newSegmentDeleted.GetCardinality()
 			memSegments++
 		}
 	} else {
@@ -320,7 +320,7 @@ func (s *Writer) introduceMerge(nextMerge *segmentMerge, introduceSnapshotEpoch 
 		atomic.AddUint64(&s.stats.TotFileMergeIntroductionsObsoleted, 1)
 	}
 
-	atomic.StoreUint64(&s.stats.TotItemsToPersist, uint64(docsToPersistCount))
+	atomic.StoreUint64(&s.stats.TotItemsToPersist, docsToPersistCount)
 	atomic.StoreUint64(&s.stats.TotMemorySegmentsAtRoot, memSegments)
 	atomic.StoreUint64(&s.stats.TotFileSegmentsAtRoot, fileSegments)
 

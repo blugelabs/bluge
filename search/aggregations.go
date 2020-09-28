@@ -104,10 +104,10 @@ func (b *Bucket) Aggregations() map[string]Calculator {
 	return b.aggregations
 }
 
-func (b *Bucket) Count() int {
+func (b *Bucket) Count() uint64 {
 	if countAgg, ok := b.aggregations["count"]; ok {
 		if countCalc, ok := countAgg.(MetricCalculator); ok {
-			return int(countCalc.Value())
+			return uint64(countCalc.Value())
 		}
 	}
 	return 0

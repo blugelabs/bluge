@@ -22,7 +22,7 @@ func (e *emptyPostingsIterator) Next() (segment.Posting, error) {
 	return nil, nil
 }
 
-func (e *emptyPostingsIterator) Advance(int) (segment.Posting, error) {
+func (e *emptyPostingsIterator) Advance(uint64) (segment.Posting, error) {
 	return nil, nil
 }
 
@@ -34,7 +34,7 @@ func (e *emptyPostingsIterator) Empty() bool {
 	return true
 }
 
-func (e *emptyPostingsIterator) Count() int {
+func (e *emptyPostingsIterator) Count() uint64 {
 	return 0
 }
 

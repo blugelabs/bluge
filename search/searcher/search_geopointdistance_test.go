@@ -32,24 +32,24 @@ func TestGeoPointDistanceSearcher(t *testing.T) {
 		centerLat float64
 		dist      float64
 		field     string
-		want      []int
+		want      []uint64
 	}{
 		// approx 110567m per degree at equator
 		{0.0, 0.0, 0, "loc", nil},
 		{0.0, 0.0, 110567, "loc",
-			[]int{
+			[]uint64{
 				indexReader.docNumByID("a"),
 			},
 		},
 		{0.0, 0.0, 2 * 110567, "loc",
-			[]int{
+			[]uint64{
 				indexReader.docNumByID("a"),
 				indexReader.docNumByID("b"),
 			},
 		},
 		// stretching our approximation here
 		{0.0, 0.0, 15 * 110567, "loc",
-			[]int{
+			[]uint64{
 				indexReader.docNumByID("a"),
 				indexReader.docNumByID("b"),
 				indexReader.docNumByID("c"),
@@ -75,8 +75,8 @@ func TestGeoPointDistanceSearcher(t *testing.T) {
 	}
 }
 
-func testGeoPointDistanceSearch(i search.Reader, centerLon, centerLat, dist float64, field string) ([]int, error) {
-	var rv []int
+func testGeoPointDistanceSearch(i search.Reader, centerLon, centerLat, dist float64, field string) ([]uint64, error) {
+	var rv []uint64
 	gds, err := NewGeoPointDistanceSearcher(i, centerLon, centerLat, dist, field, 1.0,
 		similarity.ConstantScorer(1.0), similarity.NewCompositeSumScorer(),
 		search.SearcherOptions{}, testGeoPrecisionStep)

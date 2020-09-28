@@ -42,7 +42,7 @@ func (s *MatchNoneSearcher) Next(ctx *search.Context) (*search.DocumentMatch, er
 	return nil, nil
 }
 
-func (s *MatchNoneSearcher) Advance(ctx *search.Context, number int) (*search.DocumentMatch, error) {
+func (s *MatchNoneSearcher) Advance(ctx *search.Context, number uint64) (*search.DocumentMatch, error) {
 	return nil, nil
 }
 

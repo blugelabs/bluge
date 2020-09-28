@@ -42,7 +42,7 @@ type asyncSegmentResult struct {
 type Snapshot struct {
 	parent  *Writer
 	segment []*segmentSnapshot
-	offsets []int
+	offsets []uint64
 	epoch   uint64
 	size    uint64
 	creator string
@@ -187,20 +187,20 @@ func (i *Snapshot) Fields() ([]string, error) {
 }
 
 type collectionStats struct {
-	totalDocCount    int
-	docCount         int
-	sumTotalTermFreq int
+	totalDocCount    uint64
+	docCount         uint64
+	sumTotalTermFreq uint64
 }
 
-func (c *collectionStats) TotalDocumentCount() int {
+func (c *collectionStats) TotalDocumentCount() uint64 {
 	return c.totalDocCount
 }
 
-func (c *collectionStats) DocumentCount() int {
+func (c *collectionStats) DocumentCount() uint64 {
 	return c.docCount
 }
 
-func (c *collectionStats) SumTotalTermFrequency() int {
+func (c *collectionStats) SumTotalTermFrequency() uint64 {
 	return c.sumTotalTermFreq
 }
 
@@ -241,8 +241,8 @@ func (i *Snapshot) CollectionStats(field string) (segment.CollectionStats, error
 	return rv, nil
 }
 
-func (i *Snapshot) Count() (int, error) {
-	var rv int
+func (i *Snapshot) Count() (uint64, error) {
+	var rv uint64
 	for _, seg := range i.segment {
 		rv += seg.Count()
 	}
@@ -291,7 +291,7 @@ func (i *Snapshot) newPostingsIteratorAll(term string, results chan *asyncSegmen
 	return rv, nil
 }
 
-func (i *Snapshot) VisitStoredFields(number int, visitor segment.StoredFieldVisitor) error {
+func (i *Snapshot) VisitStoredFields(number uint64, visitor segment.StoredFieldVisitor) error {
 	segmentIndex, localDocNum := i.segmentIndexAndLocalDocNumFromGlobal(number)
 
 	for _, vFields := range i.parent.config.virtualFields {
@@ -313,7 +313,7 @@ func (i *Snapshot) VisitStoredFields(number int, visitor segment.StoredFieldVisi
 	return nil
 }
 
-func (i *Snapshot) segmentIndexAndLocalDocNumFromGlobal(docNum int) (segmentIndex, localDocNum int) {
+func (i *Snapshot) segmentIndexAndLocalDocNumFromGlobal(docNum uint64) (segmentIndex int, localDocNum uint64) {
 	segmentIndex = sort.Search(len(i.offsets),
 		func(x int) bool {
 			return i.offsets[x] > docNum
@@ -357,7 +357,7 @@ func (i *Snapshot) PostingsIterator(term []byte, field string, includeFreq,
 	rv.includeNorm = includeNorm
 	rv.includeTermVectors = includeTermVectors
 	rv.currPosting = nil
-	rv.currID = -1
+	rv.currID = 0
 
 	if rv.dicts == nil {
 		rv.dicts = make([]segment.Dictionary, len(i.segment))
@@ -743,7 +743,7 @@ type documentValueReader struct {
 	currSegmentIndex int
 }
 
-func (dvr *documentValueReader) VisitDocumentValues(number int,
+func (dvr *documentValueReader) VisitDocumentValues(number uint64,
 	visitor segment.DocumentValueVisitor) (err error) {
 	segmentIndex, localDocNum := dvr.i.segmentIndexAndLocalDocNumFromGlobal(number)
 	if segmentIndex >= len(dvr.i.segment) {

@@ -33,7 +33,7 @@ type postingsIterator struct {
 	includeNorm        bool
 	includeTermVectors bool
 	currPosting        segment.Posting
-	currID             int
+	currID             uint64
 	recycle            bool
 }
 
@@ -77,7 +77,7 @@ func (i *postingsIterator) Next() (segment.Posting, error) {
 	return nil, nil
 }
 
-func (i *postingsIterator) Advance(number int) (segment.Posting, error) {
+func (i *postingsIterator) Advance(number uint64) (segment.Posting, error) {
 	// FIXME do something better
 	// for now, if we need to seek backwards, then restart from the beginning
 	if i.currPosting != nil && i.currID >= number {
@@ -115,8 +115,8 @@ func (i *postingsIterator) Advance(number int) (segment.Posting, error) {
 	return next, nil
 }
 
-func (i *postingsIterator) Count() int {
-	var rv int
+func (i *postingsIterator) Count() uint64 {
+	var rv uint64
 	for _, posting := range i.postings {
 		rv += posting.Count()
 	}

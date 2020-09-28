@@ -25,7 +25,7 @@ type BooleanSearcher struct {
 	currMust        *search.DocumentMatch
 	currShould      *search.DocumentMatch
 	currMustNot     *search.DocumentMatch
-	currentID       int
+	currentMatch    *search.DocumentMatch
 	scorer          search.CompositeScorer
 	matches         []*search.DocumentMatch
 	initialized     bool
@@ -105,11 +105,11 @@ func (s *BooleanSearcher) initSearchers(ctx *search.Context) error {
 	}
 
 	if s.mustSearcher != nil && s.currMust != nil {
-		s.currentID = s.currMust.Number
+		s.currentMatch = s.currMust
 	} else if s.mustSearcher == nil && s.currShould != nil {
-		s.currentID = s.currShould.Number
+		s.currentMatch = s.currShould
 	} else {
-		s.currentID = -1
+		s.currentMatch = nil
 	}
 
 	s.initialized = true
@@ -138,11 +138,11 @@ func (s *BooleanSearcher) advanceNextMust(ctx *search.Context, skipReturn *searc
 	}
 
 	if s.mustSearcher != nil && s.currMust != nil {
-		s.currentID = s.currMust.Number
+		s.currentMatch = s.currMust
 	} else if s.mustSearcher == nil && s.currShould != nil {
-		s.currentID = s.currShould.Number
+		s.currentMatch = s.currShould
 	} else {
-		s.currentID = -1
+		s.currentMatch = nil
 	}
 	return nil
 }
@@ -172,7 +172,7 @@ func (s *BooleanSearcher) Next(ctx *search.Context) (*search.DocumentMatch, erro
 }
 
 func (s *BooleanSearcher) nextInternal(ctx *search.Context) (rv *search.DocumentMatch, err error) {
-	for s.currentID != -1 {
+	for s.currentMatch != nil {
 		if s.currMustNot != nil {
 			var mustNotExcludesCandidate bool
 			mustNotExcludesCandidate, err = s.doesMustNotExcludeCandidate(ctx)
@@ -186,17 +186,17 @@ func (s *BooleanSearcher) nextInternal(ctx *search.Context) (rv *search.Document
 
 		shouldCmpOrNil := 1 // NOTE: shouldCmp will also be 1 when currShould == nil.
 		if s.currShould != nil {
-			shouldCmpOrNil = docNumberCompare(s.currShould.Number, s.currentID)
+			shouldCmpOrNil = docNumberCompare(s.currShould.Number, s.currentMatch.Number)
 		}
 
 		if shouldCmpOrNil < 0 {
 			ctx.DocumentMatchPool.Put(s.currShould)
 			// advance should searcher to our candidate entry
-			s.currShould, err = s.shouldSearcher.Advance(ctx, s.currentID)
+			s.currShould, err = s.shouldSearcher.Advance(ctx, s.currentMatch.Number)
 			if err != nil {
 				return nil, err
 			}
-			if s.currShould != nil && s.currShould.Number == s.currentID {
+			if s.currShould != nil && s.currShould.Number == s.currentMatch.Number {
 				// score bonus matches should
 				rv = s.buildDocumentMatch(s.buildConstituents())
 				err = s.advanceNextMust(ctx, rv)
@@ -244,15 +244,15 @@ func (s *BooleanSearcher) nextInternal(ctx *search.Context) (rv *search.Document
 }
 
 func (s *BooleanSearcher) doesMustNotExcludeCandidate(ctx *search.Context) (excluded bool, err error) {
-	cmp := docNumberCompare(s.currMustNot.Number, s.currentID)
+	cmp := docNumberCompare(s.currMustNot.Number, s.currentMatch.Number)
 	if cmp < 0 {
 		ctx.DocumentMatchPool.Put(s.currMustNot)
 		// advance must not searcher to our candidate entry
-		s.currMustNot, err = s.mustNotSearcher.Advance(ctx, s.currentID)
+		s.currMustNot, err = s.mustNotSearcher.Advance(ctx, s.currentMatch.Number)
 		if err != nil {
 			return false, err
 		}
-		if s.currMustNot != nil && s.currMustNot.Number == s.currentID {
+		if s.currMustNot != nil && s.currMustNot.Number == s.currentMatch.Number {
 			// the candidate is excluded
 			err = s.advanceNextMust(ctx, nil)
 			if err != nil {
@@ -284,7 +284,7 @@ func (s *BooleanSearcher) buildConstituents() []*search.DocumentMatch {
 	return cons
 }
 
-func (s *BooleanSearcher) Advance(ctx *search.Context, number int) (*search.DocumentMatch, error) {
+func (s *BooleanSearcher) Advance(ctx *search.Context, number uint64) (*search.DocumentMatch, error) {
 	if s.done {
 		return nil, nil
 	}
@@ -297,7 +297,7 @@ func (s *BooleanSearcher) Advance(ctx *search.Context, number int) (*search.Docu
 	}
 
 	// Advance the searcher only if the cursor is trailing the lookup ID
-	if s.currentID == -1 || docNumberCompare(s.currentID, number) < 0 {
+	if s.currentMatch == nil || docNumberCompare(s.currentMatch.Number, number) < 0 {
 		err := s.advanceIfTrailing(ctx, number)
 		if err != nil {
 			return nil, err
@@ -307,7 +307,7 @@ func (s *BooleanSearcher) Advance(ctx *search.Context, number int) (*search.Docu
 	return s.Next(ctx)
 }
 
-func (s *BooleanSearcher) advanceIfTrailing(ctx *search.Context, number int) error {
+func (s *BooleanSearcher) advanceIfTrailing(ctx *search.Context, number uint64) error {
 	var err error
 	if s.mustSearcher != nil {
 		if s.currMust != nil {
@@ -345,11 +345,11 @@ func (s *BooleanSearcher) advanceIfTrailing(ctx *search.Context, number int) err
 	}
 
 	if s.mustSearcher != nil && s.currMust != nil {
-		s.currentID = s.currMust.Number
+		s.currentMatch = s.currMust
 	} else if s.mustSearcher == nil && s.currShould != nil {
-		s.currentID = s.currShould.Number
+		s.currentMatch = s.currShould
 	} else {
-		s.currentID = -1
+		s.currentMatch = nil
 	}
 	return nil
 }

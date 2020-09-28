@@ -41,7 +41,7 @@ func TestIndexReader(t *testing.T) {
 		}
 	}()
 
-	var expectedCount int
+	var expectedCount uint64
 	doc := &FakeDocument{
 		NewFakeField("_id", "1", true, false, false),
 		NewFakeField("name", "test", false, false, true),
@@ -103,7 +103,7 @@ func TestIndexReader(t *testing.T) {
 	}
 
 	var match segment.Posting
-	var actualCount int
+	var actualCount uint64
 	match, err = reader.Next()
 	for err == nil && match != nil {
 		match, err = reader.Next()
@@ -285,7 +285,7 @@ func TestIndexDocIdReader(t *testing.T) {
 		t.Error(err)
 	}
 	count := uint64(0)
-	var secondNumber int
+	var secondNumber uint64
 	for tfd != nil {
 		count++
 		tfd, err = postingsIterator.Next()
@@ -332,88 +332,88 @@ func TestIndexDocIdReader(t *testing.T) {
 
 func TestSegmentIndexAndLocalDocNumFromGlobal(t *testing.T) {
 	tests := []struct {
-		offsets      []int
-		globalDocNum int
+		offsets      []uint64
+		globalDocNum uint64
 		segmentIndex int
-		localDocNum  int
+		localDocNum  uint64
 	}{
 		// just 1 segment
 		{
-			offsets:      []int{0},
+			offsets:      []uint64{0},
 			globalDocNum: 0,
 			segmentIndex: 0,
 			localDocNum:  0,
 		},
 		{
-			offsets:      []int{0},
+			offsets:      []uint64{0},
 			globalDocNum: 1,
 			segmentIndex: 0,
 			localDocNum:  1,
 		},
 		{
-			offsets:      []int{0},
+			offsets:      []uint64{0},
 			globalDocNum: 25,
 			segmentIndex: 0,
 			localDocNum:  25,
 		},
 		// now 2 segments, 30 docs in first
 		{
-			offsets:      []int{0, 30},
+			offsets:      []uint64{0, 30},
 			globalDocNum: 0,
 			segmentIndex: 0,
 			localDocNum:  0,
 		},
 		{
-			offsets:      []int{0, 30},
+			offsets:      []uint64{0, 30},
 			globalDocNum: 1,
 			segmentIndex: 0,
 			localDocNum:  1,
 		},
 		{
-			offsets:      []int{0, 30},
+			offsets:      []uint64{0, 30},
 			globalDocNum: 25,
 			segmentIndex: 0,
 			localDocNum:  25,
 		},
 		{
-			offsets:      []int{0, 30},
+			offsets:      []uint64{0, 30},
 			globalDocNum: 30,
 			segmentIndex: 1,
 			localDocNum:  0,
 		},
 		{
-			offsets:      []int{0, 30},
+			offsets:      []uint64{0, 30},
 			globalDocNum: 35,
 			segmentIndex: 1,
 			localDocNum:  5,
 		},
 		// lots of segments
 		{
-			offsets:      []int{0, 30, 40, 70, 99, 172, 800, 25000},
+			offsets:      []uint64{0, 30, 40, 70, 99, 172, 800, 25000},
 			globalDocNum: 0,
 			segmentIndex: 0,
 			localDocNum:  0,
 		},
 		{
-			offsets:      []int{0, 30, 40, 70, 99, 172, 800, 25000},
+			offsets:      []uint64{0, 30, 40, 70, 99, 172, 800, 25000},
 			globalDocNum: 25,
 			segmentIndex: 0,
 			localDocNum:  25,
 		},
 		{
-			offsets:      []int{0, 30, 40, 70, 99, 172, 800, 25000},
+			offsets:      []uint64{0, 30, 40, 70, 99, 172, 800, 25000},
 			globalDocNum: 35,
 			segmentIndex: 1,
 			localDocNum:  5,
 		},
 		{
-			offsets:      []int{0, 30, 40, 70, 99, 172, 800, 25000},
+			offsets:      []uint64{0, 30, 40, 70, 99, 172, 800, 25000},
 			globalDocNum: 100,
 			segmentIndex: 4,
 			localDocNum:  1,
 		},
 		{
-			offsets:      []int{0, 30, 40, 70, 99, 172, 800, 25000},
+			offsets:      []uint64{0, 30, 40, 70, 99, 172, 800, 25000},
 			globalDocNum: 825,
 			segmentIndex: 6,
 			localDocNum:  25,

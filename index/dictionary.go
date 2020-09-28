@@ -28,14 +28,14 @@ type segmentDictCursor struct {
 
 type dictionaryEntry struct {
 	term  string
-	count int
+	count uint64
 }
 
 func (d *dictionaryEntry) Term() string {
 	return d.term
 }
 
-func (d *dictionaryEntry) Count() int {
+func (d *dictionaryEntry) Count() uint64 {
 	return d.count
 }
 

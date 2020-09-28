@@ -181,7 +181,7 @@ OUTER:
 	return rv, nil
 }
 
-func (s *ConjunctionSearcher) Advance(ctx *search.Context, number int) (*search.DocumentMatch, error) {
+func (s *ConjunctionSearcher) Advance(ctx *search.Context, number uint64) (*search.DocumentMatch, error) {
 	if !s.initialized {
 		err := s.initSearchers(ctx)
 		if err != nil {
@@ -200,7 +200,7 @@ func (s *ConjunctionSearcher) Advance(ctx *search.Context, number int) (*search.
 	return s.Next(ctx)
 }
 
-func (s *ConjunctionSearcher) advanceChild(ctx *search.Context, i, number int) (err error) {
+func (s *ConjunctionSearcher) advanceChild(ctx *search.Context, i int, number uint64) (err error) {
 	if s.currs[i] != nil {
 		ctx.DocumentMatchPool.Put(s.currs[i])
 	}

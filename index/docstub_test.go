@@ -210,7 +210,7 @@ func (f *FakeLocation) Start() int    { return f.S }
 func (f *FakeLocation) End() int      { return f.E }
 func (f *FakeLocation) Size() int     { return 0 }
 
-func checkDocIDForNumber(indexReader *Snapshot, number int, docID string) error {
+func checkDocIDForNumber(indexReader *Snapshot, number uint64, docID string) error {
 	var ok bool
 	err := indexReader.VisitStoredFields(number, func(field string, value []byte) bool {
 		if field == "_id" {
@@ -229,11 +229,11 @@ func checkDocIDForNumber(indexReader *Snapshot, number int, docID string) error 
 	return nil
 }
 
-func findNumberByID(indexReader *Snapshot, docID string) (int, error) {
+func findNumberByID(indexReader *Snapshot, docID string) (uint64, error) {
 	return findNumberByUniqueFieldTerm(indexReader, "_id", docID)
 }
 
-func findNumberByUniqueFieldTerm(indexReader *Snapshot, field, val string) (int, error) {
+func findNumberByUniqueFieldTerm(indexReader *Snapshot, field, val string) (uint64, error) {
 	tfr, err := indexReader.PostingsIterator([]byte(val), field, false, false, false)
 	if err != nil {
 		return 0, fmt.Errorf("error building tfr for %s = '%s'", field, val)

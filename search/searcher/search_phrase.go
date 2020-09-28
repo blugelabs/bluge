@@ -341,7 +341,7 @@ func editDistance(p1, p2 int) int {
 	return dist
 }
 
-func (s *PhraseSearcher) Advance(ctx *search.Context, number int) (*search.DocumentMatch, error) {
+func (s *PhraseSearcher) Advance(ctx *search.Context, number uint64) (*search.DocumentMatch, error) {
 	if !s.initialized {
 		err := s.initSearchers(ctx)
 		if err != nil {

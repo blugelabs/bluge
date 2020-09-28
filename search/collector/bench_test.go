@@ -32,7 +32,7 @@ func benchHelper(numOfMatches int, cc createCollector, b *testing.B) {
 	matches := make([]*search.DocumentMatch, 0, numOfMatches)
 	for i := 0; i < numOfMatches; i++ {
 		matches = append(matches, &search.DocumentMatch{
-			Number: i,
+			Number: uint64(i),
 			Score:  rand.Float64(),
 		})
 	}

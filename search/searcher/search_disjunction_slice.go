@@ -180,7 +180,7 @@ func (s *DisjunctionSliceSearcher) Next(ctx *search.Context) (
 }
 
 func (s *DisjunctionSliceSearcher) Advance(ctx *search.Context,
-	number int) (*search.DocumentMatch, error) {
+	number uint64) (*search.DocumentMatch, error) {
 	if !s.initialized {
 		err := s.initSearchers(ctx)
 		if err != nil {
@@ -256,7 +256,7 @@ func (s *DisjunctionSliceSearcher) Optimize(kind string, octx segment.Optimizabl
 	return nil, nil
 }
 
-func docNumberCompare(a, b int) int {
+func docNumberCompare(a, b uint64) int {
 	if a < b {
 		return -1
 	} else if a > b {

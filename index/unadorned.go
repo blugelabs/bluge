@@ -30,11 +30,11 @@ func (i *unadornedPostingsIteratorBitmap) Next() (segment.Posting, error) {
 	return i.nextAtOrAfter(0)
 }
 
-func (i *unadornedPostingsIteratorBitmap) Advance(docNum int) (segment.Posting, error) {
+func (i *unadornedPostingsIteratorBitmap) Advance(docNum uint64) (segment.Posting, error) {
 	return i.nextAtOrAfter(docNum)
 }
 
-func (i *unadornedPostingsIteratorBitmap) nextAtOrAfter(atOrAfter int) (segment.Posting, error) {
+func (i *unadornedPostingsIteratorBitmap) nextAtOrAfter(atOrAfter uint64) (segment.Posting, error) {
 	docNum, exists := i.nextDocNumAtOrAfter(atOrAfter)
 	if !exists {
 		return nil, nil
@@ -43,7 +43,7 @@ func (i *unadornedPostingsIteratorBitmap) nextAtOrAfter(atOrAfter int) (segment.
 	return &up, nil
 }
 
-func (i *unadornedPostingsIteratorBitmap) nextDocNumAtOrAfter(atOrAfter int) (int, bool) {
+func (i *unadornedPostingsIteratorBitmap) nextDocNumAtOrAfter(atOrAfter uint64) (int, bool) {
 	if i.actual == nil || !i.actual.HasNext() {
 		return 0, false
 	}
@@ -64,8 +64,8 @@ func (i *unadornedPostingsIteratorBitmap) Empty() bool {
 	return false
 }
 
-func (i *unadornedPostingsIteratorBitmap) Count() int {
-	return int(i.actualBM.GetCardinality())
+func (i *unadornedPostingsIteratorBitmap) Count() uint64 {
+	return i.actualBM.GetCardinality()
 }
 
 func (i *unadornedPostingsIteratorBitmap) Close() error {
@@ -102,11 +102,11 @@ func (i *unadornedPostingsIterator1Hit) Next() (segment.Posting, error) {
 	return i.nextAtOrAfter(0)
 }
 
-func (i *unadornedPostingsIterator1Hit) Advance(docNum int) (segment.Posting, error) {
+func (i *unadornedPostingsIterator1Hit) Advance(docNum uint64) (segment.Posting, error) {
 	return i.nextAtOrAfter(docNum)
 }
 
-func (i *unadornedPostingsIterator1Hit) nextAtOrAfter(atOrAfter int) (segment.Posting, error) {
+func (i *unadornedPostingsIterator1Hit) nextAtOrAfter(atOrAfter uint64) (segment.Posting, error) {
 	docNum, exists := i.nextDocNumAtOrAfter(atOrAfter)
 	if !exists {
 		return nil, nil
@@ -115,11 +115,11 @@ func (i *unadornedPostingsIterator1Hit) nextAtOrAfter(atOrAfter int) (segment.Po
 	return &up, nil
 }
 
-func (i *unadornedPostingsIterator1Hit) nextDocNumAtOrAfter(atOrAfter int) (uint64, bool) {
+func (i *unadornedPostingsIterator1Hit) nextDocNumAtOrAfter(atOrAfter uint64) (uint64, bool) {
 	if i.docNum == docNum1HitFinished {
 		return 0, false
 	}
-	if i.docNum < uint64(atOrAfter) {
+	if i.docNum < atOrAfter {
 		// advanced past our 1-hit
 		i.docNum = docNum1HitFinished // consume our 1-hit docNum
 		return 0, false
@@ -137,7 +137,7 @@ func (i *unadornedPostingsIterator1Hit) Empty() bool {
 	return false
 }
 
-func (i *unadornedPostingsIterator1Hit) Count() int {
+func (i *unadornedPostingsIterator1Hit) Count() uint64 {
 	return 1
 }
 
@@ -151,13 +151,13 @@ func newUnadornedPostingsIteratorFrom1Hit(docNum1Hit uint64) segment.PostingsIte
 	}
 }
 
-type unadornedPosting int
+type unadornedPosting uint64
 
-func (p *unadornedPosting) Number() int {
-	return int(*p)
+func (p *unadornedPosting) Number() uint64 {
+	return uint64(*p)
 }
 
-func (p *unadornedPosting) SetNumber(n int) {
+func (p *unadornedPosting) SetNumber(n uint64) {
 	*p = unadornedPosting(n)
 }
 

@@ -27,7 +27,7 @@ import (
 func makeMatches(n int, score float64) (rv []*search.DocumentMatch) {
 	for i := 1; i <= n; i++ {
 		rv = append(rv, &search.DocumentMatch{
-			Number: i,
+			Number: uint64(i),
 			Score:  score,
 		})
 	}
@@ -247,7 +247,7 @@ func TestPaginationSameScores(t *testing.T) {
 		t.Fatalf("expected 5 results, got %d", len(results))
 	}
 
-	firstResults := make(map[int]struct{})
+	firstResults := make(map[uint64]struct{})
 	for _, hit := range results {
 		firstResults[hit.Number] = struct{}{}
 	}

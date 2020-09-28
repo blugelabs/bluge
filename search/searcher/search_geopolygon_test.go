@@ -32,12 +32,12 @@ func TestSimpleGeoPolygons(t *testing.T) {
 	tests := []struct {
 		polygon []geo.Point
 		field   string
-		want    []int
+		want    []uint64
 	}{
 		// test points inside a triangle & on vertices
 		// r, s - inside and t,u - on vertices.
 		{[]geo.Point{{Lon: 1.0, Lat: 1.0}, {Lon: 2.0, Lat: 1.9}, {Lon: 2.0, Lat: 1.0}}, "loc",
-			[]int{
+			[]uint64{
 				indexReader.docNumByID("r"),
 				indexReader.docNumByID("s"),
 				indexReader.docNumByID("t"),
@@ -65,18 +65,18 @@ func TestRealGeoPolygons(t *testing.T) {
 	tests := []struct {
 		polygon []geo.Point
 		field   string
-		want    []int
+		want    []uint64
 	}{
 		{[]geo.Point{{Lon: -80.881, Lat: 35.282}, {Lon: -80.858, Lat: 35.281},
 			{Lon: -80.864, Lat: 35.270}}, "loc",
-			[]int{
+			[]uint64{
 				indexReader.docNumByID("k"),
 				indexReader.docNumByID("l"),
 			},
 		},
 		{[]geo.Point{{Lon: -82.467, Lat: 36.356}, {Lon: -78.127, Lat: 36.321}, {Lon: -80.555, Lat: 32.932},
 			{Lon: -84.807, Lat: 33.111}}, "loc",
-			[]int{
+			[]uint64{
 				indexReader.docNumByID("k"),
 				indexReader.docNumByID("l"),
 				indexReader.docNumByID("m"),
@@ -90,13 +90,13 @@ func TestRealGeoPolygons(t *testing.T) {
 		{[]geo.Point{{Lon: -71.65, Lat: 42.446}, {Lon: -71.649, Lat: 42.428}, {Lon: -71.640, Lat: 42.445}, {Lon: -71.649, Lat: 42.435}}, "loc", nil},
 		// V like concave polygon with a document 'p' residing inside the bottom corner
 		{[]geo.Point{{Lon: -80.304, Lat: 40.740}, {Lon: -80.038, Lat: 40.239}, {Lon: -79.562, Lat: 40.786}, {Lon: -80.018, Lat: 40.328}}, "loc",
-			[]int{
+			[]uint64{
 				indexReader.docNumByID("p"),
 			},
 		},
 		{[]geo.Point{{Lon: -111.918, Lat: 33.515}, {Lon: -111.938, Lat: 33.494}, {Lon: -111.944, Lat: 33.481}, {Lon: -111.886, Lat: 33.517},
 			{Lon: -111.919, Lat: 33.468}, {Lon: -111.929, Lat: 33.508}}, "loc",
-			[]int{
+			[]uint64{
 				indexReader.docNumByID("q"),
 			},
 		},
@@ -104,7 +104,7 @@ func TestRealGeoPolygons(t *testing.T) {
 		{[]geo.Point{{Lat: 12.974872, Lon: 77.607749}, {Lat: 12.971725, Lon: 77.610110},
 			{Lat: 12.972530, Lon: 77.606912}, {Lat: 12.975112, Lon: 77.603780},
 		}, "loc",
-			[]int{
+			[]uint64{
 				indexReader.docNumByID("amoeba"),
 				indexReader.docNumByID("communiti"),
 			},
@@ -128,10 +128,10 @@ func TestGeoRectanglePolygon(t *testing.T) {
 	tests := []struct {
 		polygon []geo.Point
 		field   string
-		want    []int
+		want    []uint64
 	}{
 		{[]geo.Point{{Lon: 0, Lat: 0}, {Lon: 0, Lat: 50}, {Lon: 50, Lat: 50}, {Lon: 50, Lat: 0}, {Lon: 0, Lat: 0}}, "loc",
-			[]int{
+			[]uint64{
 				indexReader.docNumByID("a"),
 				indexReader.docNumByID("b"),
 				indexReader.docNumByID("c"),
@@ -157,8 +157,8 @@ func TestGeoRectanglePolygon(t *testing.T) {
 	}
 }
 
-func testGeoPolygonSearch(i search.Reader, polygon []geo.Point, field string) ([]int, error) {
-	var rv []int
+func testGeoPolygonSearch(i search.Reader, polygon []geo.Point, field string) ([]uint64, error) {
+	var rv []uint64
 	gbs, err := NewGeoBoundedPolygonSearcher(i, polygon, field, 1.0,
 		similarity.ConstantScorer(1.0), similarity.NewCompositeSumScorer(),
 		search.SearcherOptions{}, testGeoPrecisionStep)
@@ -290,7 +290,7 @@ func TestComplexGeoPolygons(t *testing.T) {
 			t.Fatal(err)
 		}
 		// convert wanted ids to doc nums
-		var convertedWant []int
+		var convertedWant []uint64
 		for _, w := range test.want {
 			convertedWant = append(convertedWant, indexReader.docNumByID(w))
 		}

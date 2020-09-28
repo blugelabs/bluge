@@ -57,14 +57,14 @@ func (s *segmentSnapshot) Close() error {
 	return s.segment.Close()
 }
 
-func (s *segmentSnapshot) VisitDocument(num int, visitor segment.StoredFieldVisitor) error {
+func (s *segmentSnapshot) VisitDocument(num uint64, visitor segment.StoredFieldVisitor) error {
 	return s.segment.VisitStoredFields(num, visitor)
 }
 
-func (s *segmentSnapshot) Count() int {
+func (s *segmentSnapshot) Count() uint64 {
 	rv := s.segment.Count()
 	if s.deleted != nil {
-		rv -= int(s.deleted.GetCardinality())
+		rv -= s.deleted.GetCardinality()
 	}
 	return rv
 }
@@ -72,7 +72,7 @@ func (s *segmentSnapshot) Count() int {
 // DocNumbersLive returns a bitmap containing doc numbers for all live docs
 func (s *segmentSnapshot) DocNumbersLive() *roaring.Bitmap {
 	rv := roaring.NewBitmap()
-	rv.AddRange(0, uint64(s.segment.Count()))
+	rv.AddRange(0, s.segment.Count())
 	if s.deleted != nil {
 		rv.AndNot(s.deleted)
 	}

@@ -30,7 +30,7 @@ func TestTermRangeSearch(t *testing.T) {
 		inclusiveMin bool
 		inclusiveMax bool
 		field        string
-		want         []int
+		want         []uint64
 	}{
 		{
 			min:          []byte("marty"),
@@ -38,7 +38,7 @@ func TestTermRangeSearch(t *testing.T) {
 			field:        "name",
 			inclusiveMin: true,
 			inclusiveMax: true,
-			want: []int{
+			want: []uint64{
 				baseTestIndexReaderDirect.docNumByID("1"),
 			},
 		},
@@ -48,7 +48,7 @@ func TestTermRangeSearch(t *testing.T) {
 			field:        "name",
 			inclusiveMin: true,
 			inclusiveMax: true,
-			want: []int{
+			want: []uint64{
 				baseTestIndexReaderDirect.docNumByID("1"),
 				baseTestIndexReaderDirect.docNumByID("4"),
 			},
@@ -60,7 +60,7 @@ func TestTermRangeSearch(t *testing.T) {
 			field:        "name",
 			inclusiveMin: true,
 			inclusiveMax: false,
-			want: []int{
+			want: []uint64{
 				baseTestIndexReaderDirect.docNumByID("1"),
 			},
 		},
@@ -80,7 +80,7 @@ func TestTermRangeSearch(t *testing.T) {
 			field:        "name",
 			inclusiveMin: false,
 			inclusiveMax: true,
-			want: []int{
+			want: []uint64{
 				baseTestIndexReaderDirect.docNumByID("4"),
 			},
 		},
@@ -100,7 +100,7 @@ func TestTermRangeSearch(t *testing.T) {
 			field:        "name",
 			inclusiveMin: true,
 			inclusiveMax: true,
-			want: []int{
+			want: []uint64{
 				baseTestIndexReaderDirect.docNumByID("1"),
 				baseTestIndexReaderDirect.docNumByID("2"),
 				baseTestIndexReaderDirect.docNumByID("4"),
@@ -113,7 +113,7 @@ func TestTermRangeSearch(t *testing.T) {
 			field:        "name",
 			inclusiveMin: true,
 			inclusiveMax: true,
-			want: []int{
+			want: []uint64{
 				baseTestIndexReaderDirect.docNumByID("1"),
 				baseTestIndexReaderDirect.docNumByID("3"),
 				baseTestIndexReaderDirect.docNumByID("4"),
@@ -127,7 +127,7 @@ func TestTermRangeSearch(t *testing.T) {
 			field:        "name",
 			inclusiveMin: true,
 			inclusiveMax: true,
-			want: []int{
+			want: []uint64{
 				baseTestIndexReaderDirect.docNumByID("1"),
 				baseTestIndexReaderDirect.docNumByID("2"),
 				baseTestIndexReaderDirect.docNumByID("3"),
@@ -142,7 +142,7 @@ func TestTermRangeSearch(t *testing.T) {
 			field:        "name",
 			inclusiveMin: false,
 			inclusiveMax: true,
-			want: []int{
+			want: []uint64{
 				baseTestIndexReaderDirect.docNumByID("1"),
 				baseTestIndexReaderDirect.docNumByID("2"),
 				baseTestIndexReaderDirect.docNumByID("3"),
@@ -157,7 +157,7 @@ func TestTermRangeSearch(t *testing.T) {
 			field:        "name",
 			inclusiveMin: true,
 			inclusiveMax: false,
-			want: []int{
+			want: []uint64{
 				baseTestIndexReaderDirect.docNumByID("1"),
 				baseTestIndexReaderDirect.docNumByID("2"),
 				baseTestIndexReaderDirect.docNumByID("3"),
@@ -172,7 +172,7 @@ func TestTermRangeSearch(t *testing.T) {
 			field:        "name",
 			inclusiveMin: false,
 			inclusiveMax: false,
-			want: []int{
+			want: []uint64{
 				baseTestIndexReaderDirect.docNumByID("1"),
 				baseTestIndexReaderDirect.docNumByID("2"),
 				baseTestIndexReaderDirect.docNumByID("3"),
@@ -208,7 +208,7 @@ func TestTermRangeSearch(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		var got []int
+		var got []uint64
 		ctx := &search.Context{
 			DocumentMatchPool: search.NewDocumentMatchPool(
 				searcher.DocumentMatchPoolSize(), 0),

@@ -117,11 +117,11 @@ func TestMultiPhraseSearch(t *testing.T) {
 
 	tests := []struct {
 		phrase [][]string
-		docids []int
+		docids []uint64
 	}{
 		{
 			phrase: [][]string{{"angst", "what"}, {"beer"}},
-			docids: []int{baseTestIndexReaderDirect.docNumByID("2")},
+			docids: []uint64{baseTestIndexReaderDirect.docNumByID("2")},
 		},
 	}
 
@@ -134,7 +134,7 @@ func TestMultiPhraseSearch(t *testing.T) {
 			DocumentMatchPool: search.NewDocumentMatchPool(searcher.DocumentMatchPoolSize(), 0),
 		}
 		next, err := searcher.Next(ctx)
-		var actualIds []int
+		var actualIds []uint64
 		for err == nil && next != nil {
 			actualIds = append(actualIds, next.Number)
 			ctx.DocumentMatchPool.Put(next)

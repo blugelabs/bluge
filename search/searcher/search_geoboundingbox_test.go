@@ -38,22 +38,22 @@ func TestGeoBoundingBox(t *testing.T) {
 		maxLon float64
 		maxLat float64
 		field  string
-		want   []int
+		want   []uint64
 	}{
 		{10.001, 10.001, 20.002, 20.002, "loc", nil},
 		{0.001, 0.001, 0.002, 0.002, "loc",
-			[]int{
+			[]uint64{
 				indexReader.docNumByID("a"),
 			},
 		},
 		{0.001, 0.001, 1.002, 1.002, "loc",
-			[]int{
+			[]uint64{
 				indexReader.docNumByID("a"),
 				indexReader.docNumByID("b"),
 			},
 		},
 		{0.001, 0.001, 9.002, 9.002, "loc",
-			[]int{
+			[]uint64{
 				indexReader.docNumByID("a"),
 				indexReader.docNumByID("b"),
 				indexReader.docNumByID("c"),
@@ -83,8 +83,8 @@ func TestGeoBoundingBox(t *testing.T) {
 	}
 }
 
-func testGeoBoundingBoxSearch(i search.Reader, minLon, minLat, maxLon, maxLat float64, field string) ([]int, error) {
-	var rv []int
+func testGeoBoundingBoxSearch(i search.Reader, minLon, minLat, maxLon, maxLat float64, field string) ([]uint64, error) {
+	var rv []uint64
 	gbs, err := NewGeoBoundingBoxSearcher(i, minLon, minLat, maxLon, maxLat, field,
 		1.0, similarity.ConstantScorer(1.0), similarity.NewCompositeSumScorer(),
 		search.SearcherOptions{}, true, testGeoPrecisionStep)

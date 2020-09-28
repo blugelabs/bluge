@@ -174,7 +174,7 @@ func (s *DisjunctionHeapSearcher) Next(ctx *search.Context) (
 }
 
 func (s *DisjunctionHeapSearcher) Advance(ctx *search.Context,
-	number int) (*search.DocumentMatch, error) {
+	number uint64) (*search.DocumentMatch, error) {
 	if !s.initialized {
 		err := s.initSearchers(ctx)
 		if err != nil {

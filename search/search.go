@@ -85,7 +85,7 @@ type FieldFragmentMap map[string][]string
 
 type DocumentMatch struct {
 	reader      MatchReader
-	Number      int
+	Number      uint64
 	Score       float64
 	Explanation *Explanation
 	Locations   FieldTermLocationMap
@@ -252,7 +252,7 @@ func (c DocumentMatchCollection) Less(i, j int) bool { return c[i].Score > c[j].
 
 type Searcher interface {
 	Next(ctx *Context) (*DocumentMatch, error)
-	Advance(ctx *Context, number int) (*DocumentMatch, error)
+	Advance(ctx *Context, number uint64) (*DocumentMatch, error)
 	Close() error
 	Count() uint64
 	Min() int
@@ -322,7 +322,7 @@ type DocumentValueReadable interface {
 type StoredFieldVisitable interface {
 	// VisitStoredFields will call the visitor for each stored field
 	// of the specified document number.
-	VisitStoredFields(number int, visitor segment.StoredFieldVisitor) error
+	VisitStoredFields(number uint64, visitor segment.StoredFieldVisitor) error
 }
 
 type MatchReader interface {

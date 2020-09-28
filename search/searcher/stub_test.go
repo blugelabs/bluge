@@ -38,7 +38,7 @@ type thingFreq struct {
 }
 
 type thing struct {
-	num    int
+	num    uint64
 	freq   *thingFreq
 	length int
 }
@@ -60,23 +60,23 @@ func (s stubDict) Close() error {
 
 type stubIndexReader struct {
 	inv       map[string]stubDict
-	doc       map[int]segment.Document
-	docExtInt map[string]int
-	count     int
-	uninv     map[int]map[string][]string
+	doc       map[uint64]segment.Document
+	docExtInt map[string]uint64
+	count     uint64
+	uninv     map[uint64]map[string][]string
 
-	fieldDocs  map[string]int
-	fieldFreqs map[string]int
+	fieldDocs  map[string]uint64
+	fieldFreqs map[string]uint64
 }
 
 func newStubIndexReader() *stubIndexReader {
 	return &stubIndexReader{
 		inv:        make(map[string]stubDict),
-		doc:        make(map[int]segment.Document),
-		docExtInt:  make(map[string]int),
-		uninv:      make(map[int]map[string][]string),
-		fieldDocs:  make(map[string]int),
-		fieldFreqs: make(map[string]int),
+		doc:        make(map[uint64]segment.Document),
+		docExtInt:  make(map[string]uint64),
+		uninv:      make(map[uint64]map[string][]string),
+		fieldDocs:  make(map[string]uint64),
+		fieldFreqs: make(map[string]uint64),
 	}
 }
 
@@ -106,7 +106,7 @@ func (s *stubIndexReader) add(d segment.Document) {
 		if field.Index() {
 			fieldLength := field.Length()
 			fieldsSeen[field.Name()] = struct{}{}
-			s.fieldFreqs[field.Name()] += fieldLength
+			s.fieldFreqs[field.Name()] += uint64(fieldLength)
 			fd := s.field(field.Name())
 			field.EachTerm(func(term segment.FieldTerm) {
 				termStr := string(term.Term())
@@ -219,7 +219,7 @@ func (s *stubTermFieldReader) Next() (segment.Posting, error) {
 
 // Advance resets the enumeration at specified document or its immediate
 // follower.
-func (s *stubTermFieldReader) Advance(number int) (segment.Posting, error) {
+func (s *stubTermFieldReader) Advance(number uint64) (segment.Posting, error) {
 	// start over at beginning and brute force till we find it
 	s.i = 0
 	for s.i < len(s.list) && s.list[s.i].num < number {
@@ -229,8 +229,8 @@ func (s *stubTermFieldReader) Advance(number int) (segment.Posting, error) {
 }
 
 // Count returns the number of documents contains the term in this field.
-func (s *stubTermFieldReader) Count() int {
-	return len(s.list)
+func (s *stubTermFieldReader) Count() uint64 {
+	return uint64(len(s.list))
 }
 
 func (s *stubTermFieldReader) Empty() bool {
@@ -271,14 +271,14 @@ func newStubDictItr(sd stubDict) *stubDictItr {
 
 type stubDictEntry struct {
 	term  string
-	count int
+	count uint64
 }
 
 func (d *stubDictEntry) Term() string {
 	return d.term
 }
 
-func (d *stubDictEntry) Count() int {
+func (d *stubDictEntry) Count() uint64 {
 	return d.count
 }
 
@@ -288,7 +288,7 @@ func (sd *stubDictItr) Next() (segment.DictionaryEntry, error) {
 	}
 	rv := stubDictEntry{
 		term:  sd.keys[sd.i],
-		count: len(sd.keys[sd.i]),
+		count: uint64(len(sd.keys[sd.i])),
 	}
 	sd.i++
 	return &rv, nil
@@ -343,7 +343,7 @@ func automatonAccepts(a segment.Automaton, val string) bool {
 	return false
 }
 
-func (s *stubIndexReader) VisitStoredFields(number int, visitor segment.StoredFieldVisitor) error {
+func (s *stubIndexReader) VisitStoredFields(number uint64, visitor segment.StoredFieldVisitor) error {
 	if doc, ok := s.doc[number]; ok {
 		doc.EachField(func(field segment.Field) {
 			visitor(field.Name(), field.Value())
@@ -353,20 +353,20 @@ func (s *stubIndexReader) VisitStoredFields(number int, visitor segment.StoredFi
 }
 
 type CollectionStats struct {
-	totalDocCount    int
-	docCount         int
-	sumTotalTermFreq int
+	totalDocCount    uint64
+	docCount         uint64
+	sumTotalTermFreq uint64
 }
 
-func (c *CollectionStats) TotalDocumentCount() int {
+func (c *CollectionStats) TotalDocumentCount() uint64 {
 	return c.totalDocCount
 }
 
-func (c *CollectionStats) DocumentCount() int {
+func (c *CollectionStats) DocumentCount() uint64 {
 	return c.docCount
 }
 
-func (c *CollectionStats) SumTotalTermFrequency() int {
+func (c *CollectionStats) SumTotalTermFrequency() uint64 {
 	return c.sumTotalTermFreq
 }
 
@@ -405,7 +405,7 @@ func newStubDocValueReader(sir *stubIndexReader, fields []string) *stubDocValueR
 	}
 }
 
-func (s *stubDocValueReader) VisitDocumentValues(docNum int, visitor segment.DocumentValueVisitor) error {
+func (s *stubDocValueReader) VisitDocumentValues(docNum uint64, visitor segment.DocumentValueVisitor) error {
 	for _, field := range s.fields {
 		for _, term := range s.sir.uninv[docNum][field] {
 			visitor(field, []byte(term))
@@ -432,7 +432,7 @@ func (s *stubIndexReader) GetInternal(key []byte) ([]byte, error) {
 	return nil, nil
 }
 
-func (s *stubIndexReader) Count() (int, error) {
+func (s *stubIndexReader) Count() (uint64, error) {
 	return s.count, nil
 }
 
@@ -440,7 +440,7 @@ func (s *stubIndexReader) Close() error {
 	return nil
 }
 
-func (s *stubIndexReader) docNumByID(id string) int {
+func (s *stubIndexReader) docNumByID(id string) uint64 {
 	return s.docExtInt[id]
 }
 
@@ -470,7 +470,7 @@ func (tfv *stubTermFieldVector) Size() int {
 
 type stubTermFieldDoc struct {
 	term    string
-	number  int
+	number  uint64
 	freq    uint64
 	norm    float64
 	vectors []segment.Location
@@ -479,10 +479,10 @@ type stubTermFieldDoc struct {
 func (tfd *stubTermFieldDoc) Term() string {
 	return tfd.term
 }
-func (tfd *stubTermFieldDoc) Number() int {
+func (tfd *stubTermFieldDoc) Number() uint64 {
 	return tfd.number
 }
-func (tfd *stubTermFieldDoc) SetNumber(n int) {
+func (tfd *stubTermFieldDoc) SetNumber(n uint64) {
 	tfd.number = n
 }
 func (tfd *stubTermFieldDoc) Frequency() int {

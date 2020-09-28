@@ -47,7 +47,7 @@ func (s *MatchAllSearcher) Size() int {
 }
 
 func (s *MatchAllSearcher) Count() uint64 {
-	return uint64(s.reader.Count())
+	return s.reader.Count()
 }
 
 func (s *MatchAllSearcher) Next(ctx *search.Context) (*search.DocumentMatch, error) {
@@ -67,7 +67,7 @@ func (s *MatchAllSearcher) Next(ctx *search.Context) (*search.DocumentMatch, err
 	return docMatch, nil
 }
 
-func (s *MatchAllSearcher) Advance(ctx *search.Context, number int) (*search.DocumentMatch, error) {
+func (s *MatchAllSearcher) Advance(ctx *search.Context, number uint64) (*search.DocumentMatch, error) {
 	tfd, err := s.reader.Advance(number)
 	if err != nil {
 		return nil, err

@@ -178,7 +178,7 @@ func TestCrud(t *testing.T) {
 	}
 }
 
-func docNumberForTerm(r *Reader, t segment.Term) (int, error) {
+func docNumberForTerm(r *Reader, t segment.Term) (uint64, error) {
 	q := NewTermQuery(string(t.Term())).SetField(t.Field())
 	req := NewTopNSearch(1, q)
 	dmi, err := r.Search(context.Background(), req)
@@ -840,7 +840,7 @@ func TestBug408(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cnt != numToTest {
+	if cnt != uint64(numToTest) {
 		t.Fatalf("expected %d documents in index, got %d", numToTest, cnt)
 	}
 
@@ -871,7 +871,7 @@ func TestBug408(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if dmi.Aggregations().Count() != numToTest/2 {
+	if dmi.Aggregations().Count() != uint64(numToTest/2) {
 		t.Fatalf("expected %d search hits, got %d", numToTest/2, dmi.Aggregations().Count())
 	}
 

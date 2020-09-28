@@ -24,7 +24,7 @@ import (
 )
 
 type match struct {
-	Number           int
+	Number           uint64
 	Score            float64
 	SortValue        [][]byte
 	Fields           map[string][][]byte

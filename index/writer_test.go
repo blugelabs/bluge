@@ -65,7 +65,7 @@ func TestIndexOpenReopen(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var expectedCount int
+	var expectedCount uint64
 	reader, err := idx.Reader()
 	if err != nil {
 		t.Fatal(err)
@@ -160,7 +160,7 @@ func TestIndexOpenReopenWithInsert(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var expectedCount int
+	var expectedCount uint64
 	reader, err := idx.Reader()
 	if err != nil {
 		t.Fatal(err)
@@ -275,7 +275,7 @@ func TestIndexInsert(t *testing.T) {
 		}
 	}()
 
-	var expectedCount int
+	var expectedCount uint64
 	reader, err := idx.Reader()
 	if err != nil {
 		t.Fatal(err)
@@ -341,7 +341,7 @@ func TestIndexInsertThenDelete(t *testing.T) {
 		}
 	}()
 
-	var expectedCount int
+	var expectedCount uint64
 	reader, err := idx.Reader()
 	if err != nil {
 		t.Fatal(err)
@@ -487,7 +487,7 @@ func TestIndexInsertThenUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var expectedCount int
+	var expectedCount uint64
 	defer func() {
 		err = idx.Close()
 		if err != nil {
@@ -568,7 +568,7 @@ func TestIndexInsertMultiple(t *testing.T) {
 		}
 	}()
 
-	var expectedCount int
+	var expectedCount uint64
 
 	doc := &FakeDocument{
 		NewFakeField("_id", "1", true, false, false),
@@ -643,7 +643,7 @@ func TestIndexInsertWithStore(t *testing.T) {
 		}
 	}()
 
-	var expectedCount int
+	var expectedCount uint64
 	reader, err := idx.Reader()
 	if err != nil {
 		t.Fatal(err)
@@ -746,7 +746,7 @@ func TestIndexBatch(t *testing.T) {
 		}
 	}()
 
-	var expectedCount int
+	var expectedCount uint64
 
 	// first create 2 docs the old fashioned way
 	doc := &FakeDocument{

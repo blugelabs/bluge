@@ -43,7 +43,7 @@ func OpenReader(config Config) (*Reader, error) {
 	return rv, nil
 }
 
-func (r *Reader) Count() (count int, err error) {
+func (r *Reader) Count() (count uint64, err error) {
 	return r.reader.Count()
 }
 
@@ -53,7 +53,7 @@ func (r *Reader) Fields() (fields []string, err error) {
 
 type StoredFieldVisitor func(field string, value []byte) bool
 
-func (r *Reader) VisitStoredFields(number int, visitor StoredFieldVisitor) error {
+func (r *Reader) VisitStoredFields(number uint64, visitor StoredFieldVisitor) error {
 	return r.reader.VisitStoredFields(number, segment.StoredFieldVisitor(visitor))
 }
 

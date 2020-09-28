@@ -39,17 +39,17 @@ func TestRegexpStringSearchScorch(t *testing.T) {
 
 	tests := []struct {
 		searcher  search.Searcher
-		num2score map[int]float64
+		num2score map[uint64]float64
 	}{
 		{
 			searcher: regexpSearcher,
-			num2score: map[int]float64{
+			num2score: map[uint64]float64{
 				baseTestIndexReaderDirect.docNumByID("1"): 0.7608983788962145,
 			},
 		},
 		{
 			searcher: regexpSearcherCo,
-			num2score: map[int]float64{
+			num2score: map[uint64]float64{
 				baseTestIndexReaderDirect.docNumByID("2"): 1.0935524440417956,
 				baseTestIndexReaderDirect.docNumByID("3"): 1.0935524440417956,
 			},

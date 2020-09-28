@@ -43,10 +43,10 @@ func NewTermSearcherBytes(indexReader search.Reader, term []byte, field string, 
 }
 
 type termStatsWrapper struct {
-	docFreq int
+	docFreq uint64
 }
 
-func (t *termStatsWrapper) DocumentFrequency() int {
+func (t *termStatsWrapper) DocumentFrequency() uint64 {
 	return t.docFreq
 }
 
@@ -73,7 +73,7 @@ func (s *TermSearcher) Size() int {
 }
 
 func (s *TermSearcher) Count() uint64 {
-	return uint64(s.reader.Count())
+	return s.reader.Count()
 }
 
 func (s *TermSearcher) Next(ctx *search.Context) (*search.DocumentMatch, error) {
@@ -93,7 +93,7 @@ func (s *TermSearcher) Next(ctx *search.Context) (*search.DocumentMatch, error) 
 	return docMatch, nil
 }
 
-func (s *TermSearcher) Advance(ctx *search.Context, number int) (*search.DocumentMatch, error) {
+func (s *TermSearcher) Advance(ctx *search.Context, number uint64) (*search.DocumentMatch, error) {
 	termMatch, err := s.reader.Advance(number)
 	if err != nil {
 		return nil, err
