@@ -166,16 +166,7 @@ func (d *FileSystemDirectory) Load(kind string, id uint64) (*segment.Data, io.Cl
 }
 
 func (d *FileSystemDirectory) Remove(kind string, id uint64) error {
-	segmentPath := filepath.Join(d.path, d.fileName(kind, id))
-	segmentFile, err := d.openExclusive(segmentPath, os.O_CREATE|os.O_RDWR, d.newFilePerm)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		_ = segmentFile.Close()
-	}()
-
-	return os.Remove(segmentPath)
+	return d.remove(kind, id)
 }
 
 func (d *FileSystemDirectory) Lock() error {

@@ -126,6 +126,12 @@ func TestCrud(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error getting reader from indexWriter writer")
 	}
+	defer func() {
+		err = indexReader.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
 
 	count, err := indexReader.Count()
 	if err != nil {
@@ -873,6 +879,11 @@ func TestBug408(t *testing.T) {
 
 	if dmi.Aggregations().Count() != uint64(numToTest/2) {
 		t.Fatalf("expected %d search hits, got %d", numToTest/2, dmi.Aggregations().Count())
+	}
+
+	err = indexReader.Close()
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	err = indexWriter.Close()
