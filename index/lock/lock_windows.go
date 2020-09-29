@@ -15,6 +15,7 @@
 package lock
 
 import (
+	"log"
 	"os"
 
 	"golang.org/x/sys/windows"
