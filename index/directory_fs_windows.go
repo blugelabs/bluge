@@ -14,6 +14,12 @@
 
 package index
 
+import (
+	"log"
+	"os"
+	"path/filepath"
+)
+
 func (d *FileSystemDirectory) remove(kind string, id uint64) error {
 	segmentPath := filepath.Join(d.path, d.fileName(kind, id))
 	//segmentFile, err := d.openExclusive(segmentPath, os.O_CREATE|os.O_RDWR, d.newFilePerm)
