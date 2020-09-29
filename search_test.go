@@ -1250,4 +1250,14 @@ func TestSearchHighlightingWithRegexpReplacement(t *testing.T) {
 	if dmi.Aggregations().Count() != 1 {
 		t.Fatalf("Expected 1 hit, got: %v", dmi.Aggregations().Count())
 	}
+
+	err = indexReader.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = indexWriter.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
 }

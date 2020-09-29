@@ -17,6 +17,7 @@ package index
 import (
 	"fmt"
 	"io"
+	"log"
 	"sync"
 
 	"github.com/RoaringBitmap/roaring"
@@ -101,7 +102,9 @@ func (s *WriterOffline) doMerge() error {
 		// the first error is returned
 		closeOpenedSegs := func() error {
 			var err error
-			for _, closer := range closers {
+			log.Printf("closers len: %d", len(closers))
+			for i, closer := range closers {
+				log.Printf("closing %d", i)
 				clErr := closer.Close()
 				if clErr != nil && err == nil {
 					err = clErr
