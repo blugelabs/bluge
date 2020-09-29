@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -167,22 +166,7 @@ func (d *FileSystemDirectory) Load(kind string, id uint64) (*segment.Data, io.Cl
 }
 
 func (d *FileSystemDirectory) Remove(kind string, id uint64) error {
-	segmentPath := filepath.Join(d.path, d.fileName(kind, id))
-	segmentFile, err := d.openExclusive(segmentPath, os.O_CREATE|os.O_RDWR, d.newFilePerm)
-	if err != nil {
-		return err
-	}
-	log.Printf("opened file %s exclusive for removing", segmentPath)
-	defer func() {
-		log.Printf("trying to close %s", segmentPath)
-		erry := segmentFile.Close()
-		log.Printf("clsoing %s got %v", segmentPath, erry)
-	}()
-
-	log.Printf("trying to remove %s", segmentPath)
-	errx := os.Remove(segmentPath)
-	log.Printf("removing %s got %v", segmentPath, errx)
-	return errx
+	return d.remove(kind, id)
 }
 
 func (d *FileSystemDirectory) Lock() error {
