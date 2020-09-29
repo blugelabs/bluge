@@ -9,9 +9,8 @@ require (
 	github.com/blevesearch/mmap-go v1.0.2
 	github.com/blevesearch/segment v0.9.0
 	github.com/blevesearch/snowballstem v0.9.0
-	github.com/blugelabs/bleve v1.0.13
-	github.com/blugelabs/bluge_segment_api v0.0.0-00010101000000-000000000000
-	github.com/blugelabs/ice v0.0.0-00010101000000-000000000000
+	github.com/blugelabs/bluge_segment_api v0.1.0
+	github.com/blugelabs/ice v0.1.1
 	github.com/caio/go-tdigest v3.1.0+incompatible
 	github.com/couchbase/vellum v1.0.2
 	github.com/leesper/go_rng v0.0.0-20190531154944-a612b043e353 // indirect

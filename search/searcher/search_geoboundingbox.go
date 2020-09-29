@@ -15,7 +15,6 @@
 package searcher
 
 import (
-	"github.com/blugelabs/bleve/document"
 	"github.com/blugelabs/bluge/numeric"
 	"github.com/blugelabs/bluge/numeric/geo"
 	"github.com/blugelabs/bluge/search"
@@ -126,6 +125,7 @@ func ComputeGeoRange(term uint64, shift uint,
 		checkBoundaries:  checkBoundaries,
 		isIndexed:        isIndexed,
 		geoDetailLevel:   geoDetailLevel,
+		precisionStep:    precisionStep,
 	}
 
 	grc.computeGeoRange(term, shift)
@@ -198,6 +198,7 @@ type geoRangeCompute struct {
 	onBoundary, notOnBoundary          [][]byte
 	isIndexed                          func(term []byte) bool
 	geoDetailLevel                     uint
+	precisionStep                      uint
 }
 
 func (grc *geoRangeCompute) makePrefixCoded(in int64, shift uint) (rv numeric.PrefixCoded) {
@@ -233,7 +234,7 @@ func (grc *geoRangeCompute) relateAndRecurse(start, end uint64, res uint) {
 
 	level := ((geo.GeoBits << 1) - res) >> 1
 
-	within := res%document.GeoPrecisionStep == 0 &&
+	within := res%grc.precisionStep == 0 &&
 		geo.RectWithin(minLon, minLat, maxLon, maxLat,
 			grc.sminLon, grc.sminLat, grc.smaxLon, grc.smaxLat)
 	if within || (level == grc.geoDetailLevel &&
