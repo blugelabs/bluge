@@ -15,6 +15,7 @@
 package lock
 
 import (
+	"log"
 	"os"
 )
 
@@ -47,7 +48,10 @@ func (e *DefaultLockedFile) Exclusive() bool {
 
 func (e *DefaultLockedFile) Close() error {
 	err := e.unlock()
+	log.Printf("unlock %d: %v", e.f.Fd(), err)
+	fd := e.f.Fd()
 	err2 := e.f.Close()
+	log.Printf("close %d: %v", fd, err)
 	if err2 != nil && err == nil {
 		err = err2
 	}

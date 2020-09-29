@@ -44,5 +44,6 @@ func open(path string, flag int, perm os.FileMode, exclusive bool) (LockedFile, 
 }
 
 func (e *DefaultLockedFile) unlock() error {
+	log.Printf("windows unlock %d", e.f.Fd())
 	return windows.UnlockFileEx(windows.Handle(e.f.Fd()), 0, 1, 0, &windows.Overlapped{})
 }
