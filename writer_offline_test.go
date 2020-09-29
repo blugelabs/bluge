@@ -17,6 +17,7 @@ package bluge
 import (
 	"context"
 	"fmt"
+	"log"
 	"testing"
 )
 
@@ -43,6 +44,8 @@ func TestOfflineWriter(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	log.Printf("start phase 2")
 
 	indexReader, err := OpenReader(config)
 	if err != nil {

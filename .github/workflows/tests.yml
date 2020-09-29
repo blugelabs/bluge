@@ -21,4 +21,4 @@ jobs:
     - name: Test
       run: |
         go version
-        go test -race ./...
+        go test -run=TestOfflineWriter
