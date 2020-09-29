@@ -1,5 +1,7 @@
 # ![Bluge](docs/bluge.png) Bluge
 
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/blugelabs/bluge)](https://pkg.go.dev/github.com/blugelabs/bluge)
+
 modern text indexing in go - [blugelabs.com](https://www.blugelabs.com/)
 
 ## Features
