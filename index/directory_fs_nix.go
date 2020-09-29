@@ -17,7 +17,6 @@
 package index
 
 import (
-	"log"
 	"os"
 	"path/filepath"
 )
@@ -28,15 +27,9 @@ func (d *FileSystemDirectory) remove(kind string, id uint64) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("opened file %s exclusive for removing", segmentPath)
 	defer func() {
-		log.Printf("trying to close %s", segmentPath)
-		erry := segmentFile.Close()
-		log.Printf("clsoing %s got %v", segmentPath, erry)
+		_ = segmentFile.Close()
 	}()
 
-	log.Printf("trying to remove %s", segmentPath)
-	errx := os.Remove(segmentPath)
-	log.Printf("removing %s got %v", segmentPath, errx)
-	return errx
+	return os.Remove(segmentPath)
 }
