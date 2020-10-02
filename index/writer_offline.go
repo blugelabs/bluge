@@ -43,6 +43,11 @@ func OpenOfflineWriter(config Config) (writer *WriterOffline, err error) {
 		mergeMax:  10,
 	}
 
+	err = writer.directory.Setup(false)
+	if err != nil {
+		return nil, fmt.Errorf("error setting up directory: %w", err)
+	}
+
 	writer.segPlugin, err = loadSegmentPlugin(config.supportedSegmentPlugins, config.SegmentType, config.SegmentVersion)
 	if err != nil {
 		return nil, fmt.Errorf("error loading segment plugin: %v", err)
