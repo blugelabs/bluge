@@ -184,7 +184,8 @@ type AllMatches struct {
 func NewAllMatches(q Query) *AllMatches {
 	return &AllMatches{
 		BaseSearch: BaseSearch{
-			query: q,
+			query:        q,
+			aggregations: make(search.Aggregations),
 		},
 	}
 }

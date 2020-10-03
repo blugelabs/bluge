@@ -21,6 +21,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/blugelabs/bluge/search/aggregations"
 	"github.com/blugelabs/bluge/search/highlight"
 
 	"github.com/blugelabs/bluge/analysis/char"
@@ -1260,4 +1261,13 @@ func TestSearchHighlightingWithRegexpReplacement(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestAllMatchesWithAggregationIssue31(t *testing.T) {
+	query := NewMatchQuery("bluge").SetField("name")
+	request := NewAllMatches(query)
+
+	// This line would panic because aggregations map was not initialized internally
+	// should not panic with the fix
+	request.AddAggregation("score", aggregations.MaxStartingAt(search.DocumentScore(), 0))
 }
