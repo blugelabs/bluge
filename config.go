@@ -89,6 +89,10 @@ func InMemoryOnlyConfig() Config {
 	indexConfig := index.InMemoryOnlyConfig()
 	return defaultConfig(indexConfig)
 }
+func DefaultConfigWithDirectory(df func() index.Directory) Config {
+	indexConfig := index.DefaultConfigWithDirectory(df)
+	return defaultConfig(indexConfig)
+}
 
 func defaultConfig(indexConfig index.Config) Config {
 	rv := Config{

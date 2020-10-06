@@ -145,6 +145,12 @@ func InMemoryOnlyConfig() Config {
 	return rv
 }
 
+func DefaultConfigWithDirectory(df func() Directory) Config {
+	rv := defaultConfig()
+	rv.DirectoryFunc = df
+	return rv
+}
+
 func defaultConfig() Config {
 	rv := Config{
 		SegmentType:      ice.Type,
