@@ -520,7 +520,9 @@ func (s *Writer) loadSegment(id uint64, plugin *SegmentPlugin) (*segmentWrapper,
 	}
 	seg, err := plugin.Load(data)
 	if err != nil {
-		_ = closer.Close()
+		if closer != nil {
+			_ = closer.Close()
+		}
 		return nil, fmt.Errorf("error loading segment: %v", err)
 	}
 	return &segmentWrapper{
