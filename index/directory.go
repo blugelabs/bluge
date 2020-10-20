@@ -49,6 +49,7 @@ type Directory interface {
 	// Item data is accessible via the returned *segment.Data structure
 	// A io.Closer is returned, which must be called to release
 	// resources held by this open item.
+	// NOTE: care must be taken to handle a possible nil io.Closer
 	Load(kind string, id uint64) (*segment.Data, io.Closer, error)
 
 	// Persist a new item with data from the provided WriterTo

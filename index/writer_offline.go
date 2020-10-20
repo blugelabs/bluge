@@ -121,7 +121,9 @@ func (s *WriterOffline) doMerge() error {
 				_ = closeOpenedSegs()
 				return fmt.Errorf("error loading segment from directory: %w", err)
 			}
-			closers = append(closers, closer)
+			if closer != nil {
+				closers = append(closers, closer)
+			}
 			seg, err := s.segPlugin.Load(data)
 			if err != nil {
 				_ = closeOpenedSegs()
@@ -177,7 +179,9 @@ func (s *WriterOffline) Close() error {
 	}
 	finalSeg, err := s.segPlugin.Load(data)
 	if err != nil {
-		_ = closer.Close()
+		if closer != nil {
+			_ = closer.Close()
+		}
 		return fmt.Errorf("error loading segment: %w", err)
 	}
 
@@ -204,5 +208,8 @@ func (s *WriterOffline) Close() error {
 		return fmt.Errorf("error recording snapshot: %w", err)
 	}
 
-	return closer.Close()
+	if closer != nil {
+		return closer.Close()
+	}
+	return nil
 }
