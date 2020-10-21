@@ -109,7 +109,7 @@ func (c *closeOnLastRefCounter) DecRef() error {
 	c.m.Lock()
 	c.refs--
 	var err error
-	if c.refs == 0 {
+	if c.refs == 0 && c.closer != nil {
 		err = c.closer.Close()
 	}
 	c.m.Unlock()

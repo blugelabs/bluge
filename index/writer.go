@@ -472,7 +472,9 @@ func (s *Writer) loadSnapshot(epoch uint64) (*Snapshot, error) {
 
 	_, err = snapshot.ReadFrom(dataReader)
 	if err != nil {
-		_ = closer.Close()
+		if closer != nil {
+			_ = closer.Close()
+		}
 		return nil, err
 	}
 
@@ -482,17 +484,24 @@ func (s *Writer) loadSnapshot(epoch uint64) (*Snapshot, error) {
 		var fileCRCBytes []byte
 		fileCRCBytes, err = data.Read(data.Len()-crcWidth, data.Len())
 		if err != nil {
+			if closer != nil {
+				_ = closer.Close()
+			}
 			return nil, fmt.Errorf("error reading snapshot CRC: %w", err)
 		}
 		if !bytes.Equal(computedCRCBytes, fileCRCBytes) {
+			if closer != nil {
+				_ = closer.Close()
+			}
 			return nil, fmt.Errorf("CRC mismatch loading snapshot %d: computed: %x file: %x",
 				epoch, computedCRCBytes, fileCRCBytes)
 		}
 	}
-
-	err = closer.Close()
-	if err != nil {
-		return nil, err
+	if closer != nil {
+		err = closer.Close()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var running uint64
@@ -520,7 +529,9 @@ func (s *Writer) loadSegment(id uint64, plugin *SegmentPlugin) (*segmentWrapper,
 	}
 	seg, err := plugin.Load(data)
 	if err != nil {
-		_ = closer.Close()
+		if closer != nil {
+			_ = closer.Close()
+		}
 		return nil, fmt.Errorf("error loading segment: %v", err)
 	}
 	return &segmentWrapper{
