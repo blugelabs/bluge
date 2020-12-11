@@ -151,7 +151,7 @@ func (s *Writer) loadSnapshots() (lastPersistedEpoch, nextSnapshotEpoch uint64, 
 		var indexSnapshot *Snapshot
 		indexSnapshot, err = s.loadSnapshot(snapshotEpoch)
 		if err != nil {
-			log.Printf("error loading snaphot epoch: %d: %v", snapshotEpoch, err)
+			log.Printf("error loading snapshot epoch: %d: %v", snapshotEpoch, err)
 			// but keep going and hope there is another newer snapshot that works
 			continue
 		}
@@ -436,7 +436,7 @@ func OpenReader(config Config) (*Snapshot, error) {
 	for _, snapshotEpoch := range snapshotEpochs {
 		indexSnapshot, err = parent.loadSnapshot(snapshotEpoch)
 		if err != nil {
-			log.Printf("error loading snaphot epoch: %d: %v", snapshotEpoch, err)
+			log.Printf("error loading snapshot epoch: %d: %v", snapshotEpoch, err)
 			// but keep going and hope there is another newer snapshot that works
 			continue
 		}
