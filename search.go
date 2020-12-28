@@ -55,6 +55,8 @@ func (b BaseSearch) Searcher(i search.Reader, config Config) (search.Searcher, e
 	return b.query.Searcher(i, searchOptionsFromConfig(config, b.options))
 }
 
+// TopNSearch is used to search for a fixed number of matches which can be sorted by a custom sort order.
+// it also allows for skipping a specified number of matches which can be used to enable pagination.
 type TopNSearch struct {
 	BaseSearch
 	n        int
@@ -64,6 +66,8 @@ type TopNSearch struct {
 	reversed bool
 }
 
+// NewTopNSearch creates a search which will find the matches matches with thei highest score for the query
+// n is the number of matches that would be retured for the query
 func NewTopNSearch(n int, q Query) *TopNSearch {
 	return &TopNSearch{
 		BaseSearch: BaseSearch{
@@ -83,6 +87,7 @@ var standardAggs = search.Aggregations{
 	"duration":  aggregations.Duration(),
 }
 
+// WithStandardAggregations adds the standard aggregations in the search query
 func (s *TopNSearch) WithStandardAggregations() *TopNSearch {
 	for name, agg := range standardAggs {
 		s.AddAggregation(name, agg)
@@ -90,49 +95,62 @@ func (s *TopNSearch) WithStandardAggregations() *TopNSearch {
 	return s
 }
 
+// Size returns the number of matches that would be provided by the search
 func (s *TopNSearch) Size() int {
 	return s.n
 }
 
+// SetFrom sets the number of results to ignore
 func (s *TopNSearch) SetFrom(from int) *TopNSearch {
 	s.from = from
 	return s
 }
 
+// From returns the number of matches that would be ignored
 func (s *TopNSearch) From() int {
 	return s.from
 }
 
+// After sets the values used to skip matches until the value is encountered
 func (s *TopNSearch) After(after [][]byte) *TopNSearch {
 	s.after = after
 	return s
 }
 
+// Before is used to set the stop value for the matches
+// matches will be returned until the value is encountered
 func (s *TopNSearch) Before(before [][]byte) *TopNSearch {
 	s.after = before
 	s.reversed = true
 	return s
 }
 
+// SortBy is used to set the match sort order in the search
+// the prefix '-' will sort in descending order
+// the special field '_score' can be used sort by score
 func (s *TopNSearch) SortBy(order []string) *TopNSearch {
 	s.sort = search.ParseSortOrderStrings(order)
 	return s
 }
 
+// SortByCustom sets a custom sort order used to sort the matches of the search
 func (s *TopNSearch) SortByCustom(order search.SortOrder) *TopNSearch {
 	s.sort = order
 	return s
 }
 
+// SortOrder returns the sort order of the current search
 func (s *TopNSearch) SortOrder() search.SortOrder {
 	return s.sort
 }
 
+// ExplainScores enables the addition of scoring explanation to each match
 func (s *TopNSearch) ExplainScores() *TopNSearch {
 	s.options.ExplainScores = true
 	return s
 }
 
+// IncludeLocations enables the addition of match location in the original field
 func (s *TopNSearch) IncludeLocations() *TopNSearch {
 	s.options.IncludeLocations = true
 	return s
