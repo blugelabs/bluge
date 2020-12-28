@@ -25,12 +25,13 @@ import (
 )
 
 type InMemoryDirectory struct {
-	sync.RWMutex
+	segLock  sync.RWMutex
 	segments map[uint64]*bytes.Buffer
 }
 
 func NewInMemoryDirectory() *InMemoryDirectory {
 	return &InMemoryDirectory{
+		segLock:  sync.RWMutex{},
 		segments: make(map[uint64]*bytes.Buffer),
 	}
 }
@@ -40,8 +41,8 @@ func (d *InMemoryDirectory) Setup(readOnly bool) error {
 }
 
 func (d *InMemoryDirectory) List(kind string) ([]uint64, error) {
-	d.RLock()
-	defer d.RUnlock()
+	d.segLock.RLock()
+	defer d.segLock.RUnlock()
 	var rv uint64Slice
 	if kind == ItemKindSegment {
 		for id := range d.segments {
@@ -54,8 +55,8 @@ func (d *InMemoryDirectory) List(kind string) ([]uint64, error) {
 }
 
 func (d *InMemoryDirectory) Load(kind string, id uint64) (*segment.Data, io.Closer, error) {
-	d.RLock()
-	defer d.RUnlock()
+	d.segLock.RLock()
+	defer d.segLock.RUnlock()
 	if kind == ItemKindSegment {
 		if buf, ok := d.segments[id]; ok {
 			return segment.NewDataBytes(buf.Bytes()), nil, nil
@@ -67,8 +68,8 @@ func (d *InMemoryDirectory) Load(kind string, id uint64) (*segment.Data, io.Clos
 }
 
 func (d *InMemoryDirectory) Persist(kind string, id uint64, w WriterTo, closeCh chan struct{}) error {
-	d.Lock()
-	defer d.Unlock()
+	d.segLock.Lock()
+	defer d.segLock.Unlock()
 	if kind == ItemKindSegment {
 		var buf bytes.Buffer
 		_, err := w.WriteTo(&buf, closeCh)
@@ -81,8 +82,8 @@ func (d *InMemoryDirectory) Persist(kind string, id uint64, w WriterTo, closeCh 
 }
 
 func (d *InMemoryDirectory) Remove(kind string, id uint64) error {
-	d.Lock()
-	defer d.Unlock()
+	d.segLock.Lock()
+	defer d.segLock.Unlock()
 	if kind == ItemKindSegment {
 		delete(d.segments, id)
 	}
