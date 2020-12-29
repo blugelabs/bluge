@@ -56,7 +56,7 @@ func (b BaseSearch) Searcher(i search.Reader, config Config) (search.Searcher, e
 }
 
 // TopNSearch is used to search for a fixed number of matches which can be sorted by a custom sort order.
-// it also allows for skipping a specified number of matches which can be used to enable pagination.
+// It also allows for skipping a specified number of matches which can be used to enable pagination.
 type TopNSearch struct {
 	BaseSearch
 	n        int
@@ -66,8 +66,8 @@ type TopNSearch struct {
 	reversed bool
 }
 
-// NewTopNSearch creates a search which will find the matches matches with thei highest score for the query
-// n is the number of matches that would be retured for the query
+// NewTopNSearch creates a search which will find the matches and return the first N when ordered by the
+// specified sort order (default: score descending)
 func NewTopNSearch(n int, q Query) *TopNSearch {
 	return &TopNSearch{
 		BaseSearch: BaseSearch{
@@ -88,6 +88,10 @@ var standardAggs = search.Aggregations{
 }
 
 // WithStandardAggregations adds the standard aggregations in the search query
+// The standard aggregations are:
+//   - count (total number of documents that matched the query)
+//   - max_score (the highest score of all the matched documents)
+//   - duration (time taken performing the search)
 func (s *TopNSearch) WithStandardAggregations() *TopNSearch {
 	for name, agg := range standardAggs {
 		s.AddAggregation(name, agg)
@@ -95,39 +99,40 @@ func (s *TopNSearch) WithStandardAggregations() *TopNSearch {
 	return s
 }
 
-// Size returns the number of matches that would be provided by the search
+// Size returns the number of matches this search request will return
 func (s *TopNSearch) Size() int {
 	return s.n
 }
 
-// SetFrom sets the number of results to ignore
+// SetFrom sets the number of results to skip
 func (s *TopNSearch) SetFrom(from int) *TopNSearch {
 	s.from = from
 	return s
 }
 
-// From returns the number of matches that would be ignored
+// From returns the number of matches that will be skipped
 func (s *TopNSearch) From() int {
 	return s.from
 }
 
-// After sets the values used to skip matches until the value is encountered
+// After can be used to specify a sort key, any match with a sort key less than this will be skipped
 func (s *TopNSearch) After(after [][]byte) *TopNSearch {
 	s.after = after
 	return s
 }
 
-// Before is used to set the stop value for the matches
-// matches will be returned until the value is encountered
+// Before can be used to specify a sort key, any match with a sort key greather than this will be skipped
 func (s *TopNSearch) Before(before [][]byte) *TopNSearch {
 	s.after = before
 	s.reversed = true
 	return s
 }
 
-// SortBy is used to set the match sort order in the search
-// the prefix '-' will sort in descending order
-// the special field '_score' can be used sort by score
+// SortBy is a convenience method to specify search result sort order using a simple string slice.
+// Strings in the slice are interpreted as the name of a field to sort ascending.
+// The following special cases are handled.
+//   - the prefix '-' will sort in descending order
+//   - the special field '_score' can be used sort by score
 func (s *TopNSearch) SortBy(order []string) *TopNSearch {
 	s.sort = search.ParseSortOrderStrings(order)
 	return s
