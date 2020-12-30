@@ -20,7 +20,7 @@ import (
 	"github.com/blugelabs/bluge/search"
 )
 
-func TestHTMLFragmentFormatter1(t *testing.T) {
+func TestHTMLFragmentFormatter(t *testing.T) {
 	tests := []struct {
 		name      string
 		fragment  *Fragment
@@ -68,6 +68,46 @@ func TestHTMLFragmentFormatter1(t *testing.T) {
 			beforeTag: "<em>",
 			afterTag:  "</em>",
 			output:    "the <em>quick</em> brown fox",
+		},
+		// test html escaping
+		{
+			fragment: &Fragment{
+				Orig:  []byte("<the> quick brown & fox"),
+				Start: 0,
+				End:   23,
+			},
+			tlm: search.TermLocationMap{
+				"quick": []*search.Location{
+					{
+						Pos:   2,
+						Start: 6,
+						End:   11,
+					},
+				},
+			},
+			output:    "&lt;the&gt; <em>quick</em> brown &amp; fox",
+			beforeTag: "<em>",
+			afterTag:  "</em>",
+		},
+		// test html escaping inside search term
+		{
+			fragment: &Fragment{
+				Orig:  []byte("<the> qu&ick brown & fox"),
+				Start: 0,
+				End:   24,
+			},
+			tlm: search.TermLocationMap{
+				"qu&ick": []*search.Location{
+					{
+						Pos:   2,
+						Start: 6,
+						End:   12,
+					},
+				},
+			},
+			output:    "&lt;the&gt; <em>qu&amp;ick</em> brown &amp; fox",
+			beforeTag: "<em>",
+			afterTag:  "</em>",
 		},
 	}
 
