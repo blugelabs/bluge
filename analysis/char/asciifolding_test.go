@@ -48,6 +48,11 @@ func TestAsciiFoldingFilter(t *testing.T) {
 			input:  []byte(`Ápple Àpple Äpple Âpple Ãpple Åpple`),
 			output: []byte(`Apple Apple Apple Apple Apple Apple`),
 		},
+		{
+			// Fix ASCII folding of \u24A2
+			input:  []byte(`⒢`),
+			output: []byte(`(g)`),
+		},
 	}
 
 	for _, test := range tests {
