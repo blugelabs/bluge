@@ -305,6 +305,16 @@ func NewDateRangeInclusiveQuery(start, end time.Time, startInclusive, endInclusi
 	}
 }
 
+// Start returns the date range start and if the start is included in the query
+func (q *DateRangeQuery) Start() (time.Time, bool) {
+	return q.start, q.inclusiveStart
+}
+
+// End returns the date range end and if the end is included in the query
+func (q *DateRangeQuery) End() (time.Time, bool) {
+	return q.end, q.inclusiveEnd
+}
+
 func (q *DateRangeQuery) SetBoost(b float64) *DateRangeQuery {
 	boostVal := boost(b)
 	q.boost = &boostVal
@@ -413,6 +423,16 @@ func (q *FuzzyQuery) Term() string {
 	return q.term
 }
 
+// PrefixLen returns the prefix match value
+func (q *FuzzyQuery) Prefix() int {
+	return q.prefix
+}
+
+// Fuzziness returns the fuzziness of the query
+func (q *FuzzyQuery) Fuzziness() int {
+	return q.fuzziness
+}
+
 func (q *FuzzyQuery) SetBoost(b float64) *FuzzyQuery {
 	boostVal := boost(b)
 	q.boost = &boostVal
@@ -467,6 +487,16 @@ func NewGeoBoundingBoxQuery(topLeftLon, topLeftLat, bottomRightLon, bottomRightL
 		topLeft:     []float64{topLeftLon, topLeftLat},
 		bottomRight: []float64{bottomRightLon, bottomRightLat},
 	}
+}
+
+// TopLeft returns the start corner of the bounding box
+func (q *GeoBoundingBoxQuery) TopLeft() []float64 {
+	return q.topLeft
+}
+
+// BottomRight returns the end cornder of the bounding box
+func (q *GeoBoundingBoxQuery) BottomRight() []float64 {
+	return q.bottomRight
 }
 
 func (q *GeoBoundingBoxQuery) SetBoost(b float64) *GeoBoundingBoxQuery {
@@ -547,6 +577,16 @@ func NewGeoDistanceQuery(lon, lat float64, distance string) *GeoDistanceQuery {
 		location: []float64{lon, lat},
 		distance: distance,
 	}
+}
+
+// Location returns the location being queried
+func (q *GeoDistanceQuery) Location() []float64 {
+	return q.location
+}
+
+// Distance returns the distance being queried
+func (q *GeoDistanceQuery) Distance() string {
+	return q.distance
 }
 
 func (q *GeoDistanceQuery) SetBoost(b float64) *GeoDistanceQuery {
@@ -1321,14 +1361,14 @@ func (q *TermRangeQuery) Validate() error {
 	return nil
 }
 
-// Min returns the query lower bound
-func (q *TermRangeQuery) Min() string {
-	return q.min
+// Min returns the query lower bound and if the lower bound is included in query
+func (q *TermRangeQuery) Min() (string, bool) {
+	return q.min, q.inclusiveMin
 }
 
-// Max returns the query upperbound
-func (q *TermRangeQuery) Max() string {
-	return q.max
+// Max returns the query upperbound and if the upper bound is included in the query
+func (q *TermRangeQuery) Max() (string, bool) {
+	return q.max, q.inclusiveMax
 }
 
 type WildcardQuery struct {
