@@ -60,7 +60,7 @@ func basicLoad(writer *bluge.Writer) error {
 		return err
 	}
 	err = writer.Insert(bluge.NewDocument("b").
-		AddField(bluge.NewTextField("name", "steve has a long name").
+		AddField(bluge.NewTextField("name", "steve has <a> long & complicated name").
 			SearchTermPositions().
 			StoreValue().
 			WithAnalyzer(enAnalyzer)).
@@ -141,7 +141,8 @@ func basicTests() []*RequestVerify {
 		{
 			Comment: "test match phrase search",
 			Request: bluge.NewTopNSearch(10,
-				bluge.NewMatchPhraseQuery("long name")),
+				bluge.NewMatchPhraseQuery("complicated name").
+					SetAnalyzer(enAnalyzer)),
 			Aggregations: standardAggs,
 			ExpectTotal:  1,
 			ExpectMatches: []*match{
@@ -377,7 +378,7 @@ func basicTests() []*RequestVerify {
 						{
 							Highlighter: highlight.NewHTMLHighlighter(),
 							Field:       "name",
-							Result:      "steve has a <mark>long</mark> name",
+							Result:      "steve has &lt;a&gt; <mark>long</mark> &amp; complicated name",
 						},
 					},
 				},
@@ -400,7 +401,7 @@ func basicTests() []*RequestVerify {
 						{
 							Highlighter: highlight.NewHTMLHighlighter(),
 							Field:       "name",
-							Result:      "steve has a <mark>long</mark> name",
+							Result:      "steve has &lt;a&gt; <mark>long</mark> &amp; complicated name",
 						},
 						{
 							Highlighter: highlight.NewHTMLHighlighter(),
