@@ -1081,14 +1081,14 @@ func NewNumericRangeInclusiveQuery(min, max float64, minInclusive, maxInclusive 
 	}
 }
 
-// Min returns tehe numeric range lower bound
-func (q *NumericRangeQuery) Min() float64 {
-	return q.min
+// Min returns the numeric range lower bound and if the lowerbound is included
+func (q *NumericRangeQuery) Min() (float64, bool) {
+	return q.min, q.inclusiveMin
 }
 
-// Max returns the numeric range upperbound
-func (q *NumericRangeQuery) Max() float64 {
-	return q.max
+// Max returns the numeric range upperbound and if the upperbound is included
+func (q *NumericRangeQuery) Max() (float64, bool) {
+	return q.max, q.inclusiveMax
 }
 
 func (q *NumericRangeQuery) SetBoost(b float64) *NumericRangeQuery {
