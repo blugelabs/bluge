@@ -110,8 +110,9 @@ func NewBooleanQuery() *BooleanQuery {
 
 // SetMinShould requires that at least minShould of the
 // should Queries must be satisfied.
-func (q *BooleanQuery) SetMinShould(minShould int) {
+func (q *BooleanQuery) SetMinShould(minShould int) *BooleanQuery {
 	q.minShould = minShould
+	return q
 }
 
 func (q *BooleanQuery) AddMust(m ...Query) *BooleanQuery {
@@ -119,14 +120,34 @@ func (q *BooleanQuery) AddMust(m ...Query) *BooleanQuery {
 	return q
 }
 
+// Musts returns the queries that the documents must match
+func (q *BooleanQuery) Musts() []Query {
+	return q.musts
+}
+
 func (q *BooleanQuery) AddShould(m ...Query) *BooleanQuery {
 	q.shoulds = append(q.shoulds, m...)
 	return q
 }
 
+// Shoulds returns queries that the documents may match
+func (q *BooleanQuery) Shoulds() []Query {
+	return q.shoulds
+}
+
 func (q *BooleanQuery) AddMustNot(m ...Query) *BooleanQuery {
 	q.mustNots = append(q.mustNots, m...)
 	return q
+}
+
+// MustNots returns queries that the documents must not match
+func (q *BooleanQuery) MustNots() []Query {
+	return q.mustNots
+}
+
+// MinShould returns the minimum number of should queries that need to match
+func (q *BooleanQuery) MinShould() int {
+	return q.minShould
 }
 
 func (q *BooleanQuery) SetBoost(b float64) *BooleanQuery {
@@ -284,6 +305,16 @@ func NewDateRangeInclusiveQuery(start, end time.Time, startInclusive, endInclusi
 	}
 }
 
+// Start returns the date range start and if the start is included in the query
+func (q *DateRangeQuery) Start() (time.Time, bool) {
+	return q.start, q.inclusiveStart
+}
+
+// End returns the date range end and if the end is included in the query
+func (q *DateRangeQuery) End() (time.Time, bool) {
+	return q.end, q.inclusiveEnd
+}
+
 func (q *DateRangeQuery) SetBoost(b float64) *DateRangeQuery {
 	boostVal := boost(b)
 	q.boost = &boostVal
@@ -387,6 +418,21 @@ func NewFuzzyQuery(term string) *FuzzyQuery {
 	}
 }
 
+// Term returns the term being queried
+func (q *FuzzyQuery) Term() string {
+	return q.term
+}
+
+// PrefixLen returns the prefix match value
+func (q *FuzzyQuery) Prefix() int {
+	return q.prefix
+}
+
+// Fuzziness returns the fuzziness of the query
+func (q *FuzzyQuery) Fuzziness() int {
+	return q.fuzziness
+}
+
 func (q *FuzzyQuery) SetBoost(b float64) *FuzzyQuery {
 	boostVal := boost(b)
 	q.boost = &boostVal
@@ -441,6 +487,16 @@ func NewGeoBoundingBoxQuery(topLeftLon, topLeftLat, bottomRightLon, bottomRightL
 		topLeft:     []float64{topLeftLon, topLeftLat},
 		bottomRight: []float64{bottomRightLon, bottomRightLat},
 	}
+}
+
+// TopLeft returns the start corner of the bounding box
+func (q *GeoBoundingBoxQuery) TopLeft() []float64 {
+	return q.topLeft
+}
+
+// BottomRight returns the end cornder of the bounding box
+func (q *GeoBoundingBoxQuery) BottomRight() []float64 {
+	return q.bottomRight
 }
 
 func (q *GeoBoundingBoxQuery) SetBoost(b float64) *GeoBoundingBoxQuery {
@@ -523,6 +579,16 @@ func NewGeoDistanceQuery(lon, lat float64, distance string) *GeoDistanceQuery {
 	}
 }
 
+// Location returns the location being queried
+func (q *GeoDistanceQuery) Location() []float64 {
+	return q.location
+}
+
+// Distance returns the distance being queried
+func (q *GeoDistanceQuery) Distance() string {
+	return q.distance
+}
+
 func (q *GeoDistanceQuery) SetBoost(b float64) *GeoDistanceQuery {
 	boostVal := boost(b)
 	q.boost = &boostVal
@@ -573,6 +639,11 @@ type GeoBoundingPolygonQuery struct {
 func NewGeoBoundingPolygonQuery(points []geo.Point) *GeoBoundingPolygonQuery {
 	return &GeoBoundingPolygonQuery{
 		points: points}
+}
+
+// Points returns all the points being queried inside the bounding box
+func (q *GeoBoundingPolygonQuery) Points() []geo.Point {
+	return q.points
 }
 
 func (q *GeoBoundingPolygonQuery) SetBoost(b float64) *GeoBoundingPolygonQuery {
@@ -676,6 +747,11 @@ func NewMatchPhraseQuery(matchPhrase string) *MatchPhraseQuery {
 	return &MatchPhraseQuery{
 		matchPhrase: matchPhrase,
 	}
+}
+
+// Phrase returns the phrase being queried
+func (q *MatchPhraseQuery) Phrase() string {
+	return q.matchPhrase
 }
 
 func (q *MatchPhraseQuery) SetBoost(b float64) *MatchPhraseQuery {
@@ -789,6 +865,11 @@ func NewMatchQuery(match string) *MatchQuery {
 		match:    match,
 		operator: MatchQueryOperatorOr,
 	}
+}
+
+// Match returns the term being queried
+func (q *MatchQuery) Match() string {
+	return q.match
 }
 
 func (q *MatchQuery) SetBoost(b float64) *MatchQuery {
@@ -925,6 +1006,11 @@ func NewMultiPhraseQuery(terms [][]string) *MultiPhraseQuery {
 	}
 }
 
+// Terms returns the term phrases being queried
+func (q *MultiPhraseQuery) Terms() [][]string {
+	return q.terms
+}
+
 func (q *MultiPhraseQuery) SetBoost(b float64) *MultiPhraseQuery {
 	boostVal := boost(b)
 	q.boost = &boostVal
@@ -995,6 +1081,16 @@ func NewNumericRangeInclusiveQuery(min, max float64, minInclusive, maxInclusive 
 	}
 }
 
+// Min returns the numeric range lower bound and if the lowerbound is included
+func (q *NumericRangeQuery) Min() (float64, bool) {
+	return q.min, q.inclusiveMin
+}
+
+// Max returns the numeric range upperbound and if the upperbound is included
+func (q *NumericRangeQuery) Max() (float64, bool) {
+	return q.max, q.inclusiveMax
+}
+
 func (q *NumericRangeQuery) SetBoost(b float64) *NumericRangeQuery {
 	boostVal := boost(b)
 	q.boost = &boostVal
@@ -1049,6 +1145,11 @@ func NewPrefixQuery(prefix string) *PrefixQuery {
 	}
 }
 
+// Prefix return the prefix being queried
+func (q *PrefixQuery) Prefix() string {
+	return q.prefix
+}
+
 func (q *PrefixQuery) SetBoost(b float64) *PrefixQuery {
 	boostVal := boost(b)
 	q.boost = &boostVal
@@ -1091,6 +1192,11 @@ func NewRegexpQuery(regexp string) *RegexpQuery {
 	return &RegexpQuery{
 		regexp: regexp,
 	}
+}
+
+// Regexp returns the regular expression being queried
+func (q *RegexpQuery) Regexp() string {
+	return q.regexp
 }
 
 func (q *RegexpQuery) SetBoost(b float64) *RegexpQuery {
@@ -1165,6 +1271,11 @@ func (q *TermQuery) SetField(f string) *TermQuery {
 
 func (q *TermQuery) Field() string {
 	return q.field
+}
+
+// Term returns the exact term being queried
+func (q *TermQuery) Term() string {
+	return q.term
 }
 
 func (q *TermQuery) Searcher(i search.Reader, options search.SearcherOptions) (search.Searcher, error) {
@@ -1250,6 +1361,16 @@ func (q *TermRangeQuery) Validate() error {
 	return nil
 }
 
+// Min returns the query lower bound and if the lower bound is included in query
+func (q *TermRangeQuery) Min() (string, bool) {
+	return q.min, q.inclusiveMin
+}
+
+// Max returns the query upperbound and if the upper bound is included in the query
+func (q *TermRangeQuery) Max() (string, bool) {
+	return q.max, q.inclusiveMax
+}
+
 type WildcardQuery struct {
 	wildcard string
 	field    string
@@ -1266,6 +1387,11 @@ func NewWildcardQuery(wildcard string) *WildcardQuery {
 	return &WildcardQuery{
 		wildcard: wildcard,
 	}
+}
+
+// Wildcard returns the wildcard being queried
+func (q *WildcardQuery) Wildcard() string {
+	return q.wildcard
 }
 
 func (q *WildcardQuery) SetBoost(b float64) *WildcardQuery {
