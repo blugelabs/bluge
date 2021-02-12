@@ -57,300 +57,180 @@ func phraseTests() []*RequestVerify {
 			Request: bluge.NewTopNSearch(10,
 				bluge.NewMatchPhraseQuery("Twenty").
 					SetAnalyzer(enAnalyzer)),
-			Aggregations: standardAggs,
-			ExpectTotal:  1,
-			ExpectMatches: []*match{
-				{
-					Fields: map[string][][]byte{
-						"_id": {[]byte("a")},
-					},
-				},
-			},
+			Aggregations:  standardAggs,
+			ExpectTotal:   1,
+			ExpectMatches: newIDMatches("a"),
 		},
 		{
 			Comment: "phrase 2",
 			Request: bluge.NewTopNSearch(10,
 				bluge.NewMatchPhraseQuery("Twenty Thousand").
 					SetAnalyzer(enAnalyzer)),
-			Aggregations: standardAggs,
-			ExpectTotal:  1,
-			ExpectMatches: []*match{
-				{
-					Fields: map[string][][]byte{
-						"_id": {[]byte("a")},
-					},
-				},
-			},
+			Aggregations:  standardAggs,
+			ExpectTotal:   1,
+			ExpectMatches: newIDMatches("a"),
 		},
 		{
 			Comment: "phrase 3",
 			Request: bluge.NewTopNSearch(10,
 				bluge.NewMatchPhraseQuery("Twenty Thousand Leagues").
 					SetAnalyzer(enAnalyzer)),
-			Aggregations: standardAggs,
-			ExpectTotal:  1,
-			ExpectMatches: []*match{
-				{
-					Fields: map[string][][]byte{
-						"_id": {[]byte("a")},
-					},
-				},
-			},
+			Aggregations:  standardAggs,
+			ExpectTotal:   1,
+			ExpectMatches: newIDMatches("a"),
 		},
 		{
 			Comment: "phrase 4",
 			Request: bluge.NewTopNSearch(10,
 				bluge.NewMatchPhraseQuery("Twenty Thousand Leagues Under").
 					SetAnalyzer(enAnalyzer)),
-			Aggregations: standardAggs,
-			ExpectTotal:  1,
-			ExpectMatches: []*match{
-				{
-					Fields: map[string][][]byte{
-						"_id": {[]byte("a")},
-					},
-				},
-			},
+			Aggregations:  standardAggs,
+			ExpectTotal:   1,
+			ExpectMatches: newIDMatches("a"),
 		},
 		{
 			Comment: "phrase 5",
 			Request: bluge.NewTopNSearch(10,
 				bluge.NewMatchPhraseQuery("Twenty Thousand Leagues Under the").
 					SetAnalyzer(enAnalyzer)),
-			Aggregations: standardAggs,
-			ExpectTotal:  1,
-			ExpectMatches: []*match{
-				{
-					Fields: map[string][][]byte{
-						"_id": {[]byte("a")},
-					},
-				},
-			},
+			Aggregations:  standardAggs,
+			ExpectTotal:   1,
+			ExpectMatches: newIDMatches("a"),
 		},
 		{
 			Comment: "phrase 6",
 			Request: bluge.NewTopNSearch(10,
 				bluge.NewMatchPhraseQuery("Twenty Thousand Leagues Under the Sea").
 					SetAnalyzer(enAnalyzer)),
-			Aggregations: standardAggs,
-			ExpectTotal:  1,
-			ExpectMatches: []*match{
-				{
-					Fields: map[string][][]byte{
-						"_id": {[]byte("a")},
-					},
-				},
-			},
+			Aggregations:  standardAggs,
+			ExpectTotal:   1,
+			ExpectMatches: newIDMatches("a"),
 		},
 		{
 			Comment: "phrase 7",
 			Request: bluge.NewTopNSearch(10,
 				bluge.NewMatchPhraseQuery("Thousand").
 					SetAnalyzer(enAnalyzer)),
-			Aggregations: standardAggs,
-			ExpectTotal:  1,
-			ExpectMatches: []*match{
-				{
-					Fields: map[string][][]byte{
-						"_id": {[]byte("a")},
-					},
-				},
-			},
+			Aggregations:  standardAggs,
+			ExpectTotal:   1,
+			ExpectMatches: newIDMatches("a"),
 		},
 		{
 			Comment: "phrase 8",
 			Request: bluge.NewTopNSearch(10,
 				bluge.NewMatchPhraseQuery("Thousand Leagues").
 					SetAnalyzer(enAnalyzer)),
-			Aggregations: standardAggs,
-			ExpectTotal:  1,
-			ExpectMatches: []*match{
-				{
-					Fields: map[string][][]byte{
-						"_id": {[]byte("a")},
-					},
-				},
-			},
+			Aggregations:  standardAggs,
+			ExpectTotal:   1,
+			ExpectMatches: newIDMatches("a"),
 		},
 		{
 			Comment: "phrase 9",
 			Request: bluge.NewTopNSearch(10,
 				bluge.NewMatchPhraseQuery("Thousand Leagues Under").
 					SetAnalyzer(enAnalyzer)),
-			Aggregations: standardAggs,
-			ExpectTotal:  1,
-			ExpectMatches: []*match{
-				{
-					Fields: map[string][][]byte{
-						"_id": {[]byte("a")},
-					},
-				},
-			},
+			Aggregations:  standardAggs,
+			ExpectTotal:   1,
+			ExpectMatches: newIDMatches("a"),
 		},
 		{
 			Comment: "phrase 10",
 			Request: bluge.NewTopNSearch(10,
 				bluge.NewMatchPhraseQuery("Thousand Leagues Under the").
 					SetAnalyzer(enAnalyzer)),
-			Aggregations: standardAggs,
-			ExpectTotal:  1,
-			ExpectMatches: []*match{
-				{
-					Fields: map[string][][]byte{
-						"_id": {[]byte("a")},
-					},
-				},
-			},
+			Aggregations:  standardAggs,
+			ExpectTotal:   1,
+			ExpectMatches: newIDMatches("a"),
 		},
 		{
 			Comment: "phrase 11",
 			Request: bluge.NewTopNSearch(10,
 				bluge.NewMatchPhraseQuery("Thousand Leagues Under the Sea").
 					SetAnalyzer(enAnalyzer)),
-			Aggregations: standardAggs,
-			ExpectTotal:  1,
-			ExpectMatches: []*match{
-				{
-					Fields: map[string][][]byte{
-						"_id": {[]byte("a")},
-					},
-				},
-			},
+			Aggregations:  standardAggs,
+			ExpectTotal:   1,
+			ExpectMatches: newIDMatches("a"),
 		},
 		{
 			Comment: "phrase 12",
 			Request: bluge.NewTopNSearch(10,
 				bluge.NewMatchPhraseQuery("Leagues").
 					SetAnalyzer(enAnalyzer)),
-			Aggregations: standardAggs,
-			ExpectTotal:  1,
-			ExpectMatches: []*match{
-				{
-					Fields: map[string][][]byte{
-						"_id": {[]byte("a")},
-					},
-				},
-			},
+			Aggregations:  standardAggs,
+			ExpectTotal:   1,
+			ExpectMatches: newIDMatches("a"),
 		},
 		{
 			Comment: "phrase 13",
 			Request: bluge.NewTopNSearch(10,
 				bluge.NewMatchPhraseQuery("Leagues Under").
 					SetAnalyzer(enAnalyzer)),
-			Aggregations: standardAggs,
-			ExpectTotal:  1,
-			ExpectMatches: []*match{
-				{
-					Fields: map[string][][]byte{
-						"_id": {[]byte("a")},
-					},
-				},
-			},
+			Aggregations:  standardAggs,
+			ExpectTotal:   1,
+			ExpectMatches: newIDMatches("a"),
 		},
 		{
 			Comment: "phrase 14",
 			Request: bluge.NewTopNSearch(10,
 				bluge.NewMatchPhraseQuery("Leagues Under the").
 					SetAnalyzer(enAnalyzer)),
-			Aggregations: standardAggs,
-			ExpectTotal:  1,
-			ExpectMatches: []*match{
-				{
-					Fields: map[string][][]byte{
-						"_id": {[]byte("a")},
-					},
-				},
-			},
+			Aggregations:  standardAggs,
+			ExpectTotal:   1,
+			ExpectMatches: newIDMatches("a"),
 		},
 		{
 			Comment: "phrase 15",
 			Request: bluge.NewTopNSearch(10,
 				bluge.NewMatchPhraseQuery("Leagues Under the Sea").
 					SetAnalyzer(enAnalyzer)),
-			Aggregations: standardAggs,
-			ExpectTotal:  1,
-			ExpectMatches: []*match{
-				{
-					Fields: map[string][][]byte{
-						"_id": {[]byte("a")},
-					},
-				},
-			},
+			Aggregations:  standardAggs,
+			ExpectTotal:   1,
+			ExpectMatches: newIDMatches("a"),
 		},
 		{
 			Comment: "phrase 16",
 			Request: bluge.NewTopNSearch(10,
 				bluge.NewMatchPhraseQuery("Under the Sea").
 					SetAnalyzer(enAnalyzer)),
-			Aggregations: standardAggs,
-			ExpectTotal:  1,
-			ExpectMatches: []*match{
-				{
-					Fields: map[string][][]byte{
-						"_id": {[]byte("a")},
-					},
-				},
-			},
+			Aggregations:  standardAggs,
+			ExpectTotal:   1,
+			ExpectMatches: newIDMatches("a"),
 		},
 		{
 			Comment: "phrase 17",
 			Request: bluge.NewTopNSearch(10,
 				bluge.NewMatchPhraseQuery("the Sea").
 					SetAnalyzer(enAnalyzer)),
-			Aggregations: standardAggs,
-			ExpectTotal:  1,
-			ExpectMatches: []*match{
-				{
-					Fields: map[string][][]byte{
-						"_id": {[]byte("a")},
-					},
-				},
-			},
+			Aggregations:  standardAggs,
+			ExpectTotal:   1,
+			ExpectMatches: newIDMatches("a"),
 		},
 		{
 			Comment: "phrase 18",
 			Request: bluge.NewTopNSearch(10,
 				bluge.NewMatchPhraseQuery("Sea").
 					SetAnalyzer(enAnalyzer)),
-			Aggregations: standardAggs,
-			ExpectTotal:  1,
-			ExpectMatches: []*match{
-				{
-					Fields: map[string][][]byte{
-						"_id": {[]byte("a")},
-					},
-				},
-			},
+			Aggregations:  standardAggs,
+			ExpectTotal:   1,
+			ExpectMatches: newIDMatches("a"),
 		},
 		{
 			Comment: "phrase 19",
 			Request: bluge.NewTopNSearch(10,
 				bluge.NewMatchPhraseQuery("bad call").
 					SetAnalyzer(enAnalyzer)),
-			Aggregations: standardAggs,
-			ExpectTotal:  1,
-			ExpectMatches: []*match{
-				{
-					Fields: map[string][][]byte{
-						"_id": {[]byte("b")},
-					},
-				},
-			},
+			Aggregations:  standardAggs,
+			ExpectTotal:   1,
+			ExpectMatches: newIDMatches("b"),
 		},
 		{
 			Comment: "phrase 20",
 			Request: bluge.NewTopNSearch(10,
 				bluge.NewMatchPhraseQuery("defenseless receiver").
 					SetAnalyzer(enAnalyzer)),
-			Aggregations: standardAggs,
-			ExpectTotal:  1,
-			ExpectMatches: []*match{
-				{
-					Fields: map[string][][]byte{
-						"_id": {[]byte("b")},
-					},
-				},
-			},
+			Aggregations:  standardAggs,
+			ExpectTotal:   1,
+			ExpectMatches: newIDMatches("b"),
 		},
 		{
 			Comment: "phrase 21",
@@ -365,15 +245,9 @@ func phraseTests() []*RequestVerify {
 			Comment: "phrase 22",
 			Request: bluge.NewTopNSearch(10,
 				bluge.NewMultiPhraseQuery([][]string{{"twenti", "thirti"}, {"thousand"}})),
-			Aggregations: standardAggs,
-			ExpectTotal:  1,
-			ExpectMatches: []*match{
-				{
-					Fields: map[string][][]byte{
-						"_id": {[]byte("a")},
-					},
-				},
-			},
+			Aggregations:  standardAggs,
+			ExpectTotal:   1,
+			ExpectMatches: newIDMatches("a"),
 		},
 		{
 			Comment: "phrase 23",
@@ -383,6 +257,36 @@ func phraseTests() []*RequestVerify {
 			Aggregations:  standardAggs,
 			ExpectTotal:   0,
 			ExpectMatches: []*match{},
+		},
+		{
+			Comment: "phrase 24",
+			Request: bluge.NewTopNSearch(10,
+				bluge.NewMatchPhraseQuery("Twenty Thousand").
+					SetAnalyzer(enAnalyzer).
+					SetSlop(1)),
+			Aggregations:  standardAggs,
+			ExpectTotal:   1,
+			ExpectMatches: newIDMatches("a"),
+		},
+		{
+			Comment: "phrase 25",
+			Request: bluge.NewTopNSearch(10,
+				bluge.NewMatchPhraseQuery("Twenty Leagues").
+					SetAnalyzer(enAnalyzer).
+					SetSlop(1)),
+			Aggregations:  standardAggs,
+			ExpectTotal:   1,
+			ExpectMatches: newIDMatches("a"),
+		},
+		{
+			Comment: "phrase 26",
+			Request: bluge.NewTopNSearch(10,
+				bluge.NewMatchPhraseQuery("Twenty under the sea").
+					SetAnalyzer(enAnalyzer).
+					SetSlop(2)),
+			Aggregations:  standardAggs,
+			ExpectTotal:   1,
+			ExpectMatches: newIDMatches("a"),
 		},
 	}
 }

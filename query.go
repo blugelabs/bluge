@@ -733,6 +733,7 @@ type MatchPhraseQuery struct {
 	field       string
 	analyzer    *analysis.Analyzer
 	boost       *boost
+	slop        int
 }
 
 // NewMatchPhraseQuery creates a new Query object
@@ -773,6 +774,18 @@ func (q *MatchPhraseQuery) Field() string {
 	return q.field
 }
 
+// Slop returns the acceptable distance between tokens
+func (q *MatchPhraseQuery) Slop() int {
+	return q.slop
+}
+
+// SetSlop updates the sloppyness of the query
+// the phrase terms can be as "dist" terms away from each other
+func (q *MatchPhraseQuery) SetSlop(dist int) *MatchPhraseQuery {
+	q.slop = dist
+	return q
+}
+
 func (q *MatchPhraseQuery) SetAnalyzer(a *analysis.Analyzer) *MatchPhraseQuery {
 	q.analyzer = a
 	return q
@@ -802,6 +815,7 @@ func (q *MatchPhraseQuery) Searcher(i search.Reader, options search.SearcherOpti
 		phraseQuery := NewMultiPhraseQuery(phrase)
 		phraseQuery.SetField(field)
 		phraseQuery.SetBoost(q.boost.Value())
+		phraseQuery.SetSlop(q.slop)
 		return phraseQuery.Searcher(i, options)
 	}
 	noneQuery := NewMatchNoneQuery()
@@ -989,6 +1003,7 @@ type MultiPhraseQuery struct {
 	field  string
 	boost  *boost
 	scorer search.Scorer
+	slop   int
 }
 
 // NewMultiPhraseQuery creates a new Query for finding
@@ -1030,13 +1045,25 @@ func (q *MultiPhraseQuery) Field() string {
 	return q.field
 }
 
+// Slop returns the acceptable distance between terms
+func (q *MultiPhraseQuery) Slop() int {
+	return q.slop
+}
+
+// SetSlop updates the sloppyness of the query
+// the phrase terms can be as "dist" terms away from each other
+func (q *MultiPhraseQuery) SetSlop(dist int) *MultiPhraseQuery {
+	q.slop = dist
+	return q
+}
+
 func (q *MultiPhraseQuery) Searcher(i search.Reader, options search.SearcherOptions) (search.Searcher, error) {
 	field := q.field
 	if q.field == "" {
 		field = options.DefaultSearchField
 	}
 
-	return searcher.NewMultiPhraseSearcher(i, q.terms, field, q.scorer, options)
+	return searcher.NewSloppyMultiPhraseSearcher(i, q.terms, field, q.slop, q.scorer, options)
 }
 
 func (q *MultiPhraseQuery) Validate() error {

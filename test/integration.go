@@ -32,6 +32,18 @@ type match struct {
 	Locations        search.FieldTermLocationMap
 }
 
+func newIDMatches(ids ...string) []*match {
+	result := []*match{}
+
+	for _, id := range ids {
+		result = append(result, &match{
+			Fields: map[string][][]byte{
+				"_id": {[]byte(id)},
+			}})
+	}
+	return result
+}
+
 type ExpectHighlight struct {
 	Highlighter highlight.Highlighter
 	Field       string

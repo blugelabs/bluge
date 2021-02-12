@@ -30,6 +30,7 @@ type PhraseSearcher struct {
 	paths        []phrasePath
 	locations    []search.Location
 	initialized  bool
+	slop         int
 }
 
 func (s *PhraseSearcher) Size() int {
@@ -55,6 +56,13 @@ func (s *PhraseSearcher) Size() int {
 
 func NewMultiPhraseSearcher(indexReader search.Reader, terms [][]string, field string, scorer search.Scorer,
 	options search.SearcherOptions) (*PhraseSearcher, error) {
+	return NewSloppyMultiPhraseSearcher(indexReader, terms, field, 0, scorer, options)
+}
+
+// NewSloppyMultiPhraseSearcher create a multi-phrase searcher which tolerates a specified "sloppyness"
+// the value of the slop parameter restricts the distance between the terms
+func NewSloppyMultiPhraseSearcher(indexReader search.Reader, terms [][]string, field string, slop int,
+	scorer search.Scorer, options search.SearcherOptions) (*PhraseSearcher, error) {
 	options.IncludeTermVectors = true
 	var termPositionSearchers []search.Searcher
 	for _, termPos := range terms {
@@ -114,6 +122,7 @@ func NewMultiPhraseSearcher(indexReader search.Reader, terms [][]string, field s
 	rv := PhraseSearcher{
 		mustSearcher: mustSearcher,
 		terms:        terms,
+		slop:         slop,
 	}
 
 	return &rv, nil
@@ -213,7 +222,7 @@ func (s *PhraseSearcher) checkCurrMustMatchField(field string, tlm search.TermLo
 	if s.path == nil {
 		s.path = make(phrasePath, 0, len(s.terms))
 	}
-	s.paths = findPhrasePaths(0, s.terms, tlm, s.path[:0], 0, s.paths[:0])
+	s.paths = findPhrasePaths(0, s.terms, tlm, s.path[:0], s.slop, s.paths[:0])
 	for _, p := range s.paths {
 		for _, pp := range p {
 			ftls = append(ftls, search.FieldTermLocation{
