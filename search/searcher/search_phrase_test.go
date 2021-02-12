@@ -188,6 +188,23 @@ func TestSloppyMultiPhraseSearch(t *testing.T) {
 			docids: []uint64{baseTestIndexReaderDirect.docNumByID("3")},
 			slop:   2,
 		},
+		// test interchanged words
+		// document 2 has the phrase "angst beer", searching for "beer angst" requires slop=2 to match
+		{
+			phrase: [][]string{{"beer"}, {"angst"}},
+			docids: []uint64{},
+			slop:   0,
+		},
+		{
+			phrase: [][]string{{"beer"}, {"angst"}},
+			docids: []uint64{},
+			slop:   1,
+		},
+		{
+			phrase: [][]string{{"beer"}, {"angst"}},
+			docids: []uint64{baseTestIndexReaderDirect.docNumByID("2")},
+			slop:   2,
+		},
 	}
 
 	for i, test := range tests {
