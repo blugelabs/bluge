@@ -159,6 +159,88 @@ func TestMultiPhraseSearch(t *testing.T) {
 	}
 }
 
+func TestSloppyMultiPhraseSearch(t *testing.T) {
+	soptions := search.SearcherOptions{
+		SimilarityForField: func(field string) search.Similarity {
+			return similarity.NewBM25Similarity()
+		},
+		Explain:            true,
+		IncludeTermVectors: true,
+	}
+
+	tests := []struct {
+		phrase [][]string
+		docids []uint64
+		slop   int
+	}{
+		{
+			phrase: [][]string{{"angst"}, {"beer"}, {"database"}},
+			docids: []uint64{},
+			slop:   0,
+		},
+		{
+			phrase: [][]string{{"angst"}, {"beer"}, {"database"}},
+			docids: []uint64{baseTestIndexReaderDirect.docNumByID("2")},
+			slop:   1,
+		},
+		{
+			phrase: [][]string{{"apple", "angst"}, {"dank"}},
+			docids: []uint64{baseTestIndexReaderDirect.docNumByID("3")},
+			slop:   2,
+		},
+		// test interchanged words
+		// document 2 has the phrase "angst beer", searching for "beer angst" requires slop=2 to match
+		{
+			phrase: [][]string{{"beer"}, {"angst"}},
+			docids: []uint64{},
+			slop:   0,
+		},
+		{
+			phrase: [][]string{{"beer"}, {"angst"}},
+			docids: []uint64{},
+			slop:   1,
+		},
+		{
+			phrase: [][]string{{"beer"}, {"angst"}},
+			docids: []uint64{baseTestIndexReaderDirect.docNumByID("2")},
+			slop:   2,
+		},
+	}
+
+	for i, test := range tests {
+		searcher, err := NewSloppyMultiPhraseSearcher(baseTestIndexReader, test.phrase, "desc", test.slop, nil, soptions)
+		if err != nil {
+			t.Error(err)
+		}
+		ctx := &search.Context{
+			DocumentMatchPool: search.NewDocumentMatchPool(searcher.DocumentMatchPoolSize(), 0),
+		}
+		next, err := searcher.Next(ctx)
+		actualIds := []uint64{}
+		for err == nil && next != nil {
+			actualIds = append(actualIds, next.Number)
+			ctx.DocumentMatchPool.Put(next)
+			next, err = searcher.Next(ctx)
+		}
+		if err != nil {
+			t.Fatalf("error iterating searcher: %v for test %d", err, i)
+		}
+		if !reflect.DeepEqual(test.docids, actualIds) {
+			t.Fatalf("test case %d: expected ids: %v, got %v", i, test.docids, actualIds)
+		}
+
+		err = searcher.Close()
+		if err != nil {
+			t.Error(err)
+		}
+
+		err = baseTestIndexReader.Close()
+		if err != nil {
+			t.Error(err)
+		}
+	}
+}
+
 func TestFindPhrasePaths(t *testing.T) {
 	tests := []struct {
 		phrase [][]string
