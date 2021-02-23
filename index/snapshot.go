@@ -575,7 +575,7 @@ func (i *Snapshot) ReadFrom(r io.Reader) (int64, error) {
 
 	// read bluge snapshot format version
 	peek, err := br.Peek(binary.MaxVarintLen64)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		return bytesRead, fmt.Errorf("error peeking snapshot format version %d: %w", i.epoch, err)
 	}
 	snapshotFormatVersion, n := binary.Uvarint(peek)
@@ -598,7 +598,7 @@ func (i *Snapshot) readFromVersion1(br *bufio.Reader) (int64, error) {
 
 	// read number of segments
 	peek, err := br.Peek(binary.MaxVarintLen64)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		return bytesRead, fmt.Errorf("error peeking snapshot number of segments %d: %w", i.epoch, err)
 	}
 	numSegments, n := binary.Uvarint(peek)

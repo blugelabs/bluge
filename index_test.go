@@ -1412,3 +1412,61 @@ func randStrn(n int) string {
 func randStr() string {
 	return randStrn(maxRandStrLen)
 }
+
+func TestBug54(t *testing.T) {
+	tmpIndexPath := createTmpIndexPath(t)
+	defer cleanupTmpIndexPath(t, tmpIndexPath)
+
+	// first index 2 documents
+	config := DefaultConfig(tmpIndexPath)
+	indexWriter, err := OpenWriter(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	doc := NewDocument("a1")
+	doc.AddField(NewTextField("TestKey1", "TestKey Data1"))
+	if err = indexWriter.Update(doc.ID(), doc); err != nil {
+		t.Fatal(err)
+	}
+
+	doc = NewDocument("a2")
+	doc.AddField(NewTextField("TestKey2", "TestKey Data2"))
+	if err = indexWriter.Update(doc.ID(), doc); err != nil {
+		t.Fatal(err)
+	}
+
+	err = indexWriter.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// now delete both documents
+	indexWriter, err = OpenWriter(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err = indexWriter.Delete(Identifier("a1")); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = indexWriter.Delete(Identifier("a2")); err != nil {
+		t.Fatal(err)
+	}
+
+	err = indexWriter.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// now open index again
+	indexWriter, err = OpenWriter(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = indexWriter.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
