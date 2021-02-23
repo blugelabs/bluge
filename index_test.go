@@ -1414,7 +1414,6 @@ func randStr() string {
 }
 
 func TestBug54(t *testing.T) {
-
 	tmpIndexPath := createTmpIndexPath(t)
 	defer cleanupTmpIndexPath(t, tmpIndexPath)
 
