@@ -1376,6 +1376,73 @@ func TestInMemoryWriterDataRace(t *testing.T) {
 	}
 }
 
+func TestInMemoryUsage(t *testing.T) {
+	cfg := InMemoryOnlyConfig()
+	w, err := OpenWriter(cfg)
+	if err != nil {
+		t.Fatalf("unable to open in memory writer: %+v", err)
+	}
+
+	doc := NewDocument("town:1")
+	doc.AddField(NewTextField("en", "Denia, Alicante"))
+
+	err = w.Insert(doc)
+	if err != nil {
+		t.Fatalf("error updating document: %v", err)
+	}
+
+	defer func() {
+		err = w.Close()
+		if err != nil {
+			t.Fatalf("error closing writer: %v", err)
+		}
+	}()
+
+	reader, err := w.Reader()
+	if err != nil {
+		t.Fatalf("unable to open reader: %v", err)
+	}
+
+	defer func() {
+		err = reader.Close()
+		if err != nil {
+			t.Fatalf("error closing reader: %v", err)
+		}
+	}()
+
+	query := NewMatchQuery("denia")
+	query.SetField("en")
+
+	req := NewTopNSearch(5, query)
+
+	dmi, err := reader.Search(context.Background(), req)
+	if err != nil {
+		t.Fatalf("error executing search: %v", err)
+	}
+
+	var found bool
+	next, err := dmi.Next()
+	for err == nil && next != nil {
+		err = next.VisitStoredFields(func(field string, value []byte) bool {
+			if field == "_id" && string(value) == "town:1" {
+				found = true
+			}
+			return true
+		})
+		if err != nil {
+			t.Fatalf("error accessing stored fields: %v", err)
+		}
+		next, err = dmi.Next()
+	}
+	if err != nil {
+		t.Fatalf("error iterating results: %v", err)
+	}
+
+	if !found {
+		t.Fatalf("expected to match doc _id 'town:1', did not")
+	}
+}
+
 func batchAddDocs(docCount int) *index.Batch {
 	batch := NewBatch()
 
