@@ -1537,3 +1537,68 @@ func TestBug54(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestSearchSizeZeroWithAggregations(t *testing.T) {
+	tmpIndexPath := createTmpIndexPath(t)
+	defer cleanupTmpIndexPath(t, tmpIndexPath)
+
+	config := DefaultConfig(tmpIndexPath)
+	indexWriter, err := OpenWriter(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	docA := NewDocument("a").
+		AddField(NewTextField("name", "marty").StoreValue()).
+		AddField(NewTextField("desc", "gophercon india")).
+		AddField(NewCompositeFieldExcluding("_all", nil))
+	err = indexWriter.Update(docA.ID(), docA)
+	if err != nil {
+		t.Error(err)
+	}
+	defer func() {
+		err = indexWriter.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	indexReader, err := indexWriter.Reader()
+	if err != nil {
+		t.Fatalf("error getting reader from indexWriter writer")
+	}
+	defer func() {
+		err = indexReader.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	q := NewMatchAllQuery()
+	req := NewTopNSearch(0, q).WithStandardAggregations()
+
+	dmi, err := indexReader.Search(context.Background(), req)
+	if err != nil {
+		t.Fatalf("error executing search: %v", err)
+	}
+
+	var sawHit bool
+	next, err := dmi.Next()
+	for err == nil && next != nil {
+		sawHit = true
+		next, err = dmi.Next()
+	}
+	if err != nil {
+		t.Fatalf("error iterating results: %v", err)
+	}
+
+	// with size 0, expect no hits
+	if sawHit {
+		t.Errorf("size 0, but saw a hit")
+	}
+
+	// assert that aggregations were computed, even with size 0
+	if dmi.Aggregations().Count() != 1 {
+		t.Errorf("expected count 1, got %d", dmi.Aggregations().Count())
+	}
+}
