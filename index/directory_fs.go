@@ -30,6 +30,8 @@ import (
 
 const pidFilename = "bluge.pid"
 
+type LoadMMapFunc func(f lock.LockedFile) (*segment.Data, io.Closer, error)
+
 type FileSystemDirectory struct {
 	path string
 	pid  lock.LockedFile
@@ -39,6 +41,8 @@ type FileSystemDirectory struct {
 
 	openExclusive func(path string, flag int, perm os.FileMode) (lock.LockedFile, error)
 	openShared    func(path string, flag int, perm os.FileMode) (lock.LockedFile, error)
+
+	loadMMapFunc LoadMMapFunc
 }
 
 func NewFileSystemDirectory(path string) *FileSystemDirectory {
@@ -48,6 +52,7 @@ func NewFileSystemDirectory(path string) *FileSystemDirectory {
 		openShared:    lock.OpenShared,
 		newDirPerm:    0700,
 		newFilePerm:   0600,
+		loadMMapFunc: LoadMMapAlways,
 	}
 }
 
@@ -138,12 +143,7 @@ func (d *FileSystemDirectory) Persist(kind string, id uint64, w WriterTo, closeC
 	return nil
 }
 
-func (d *FileSystemDirectory) Load(kind string, id uint64) (*segment.Data, io.Closer, error) {
-	path := filepath.Join(d.path, d.fileName(kind, id))
-	f, err := d.openShared(path, os.O_RDONLY, 0)
-	if err != nil {
-		return nil, nil, err
-	}
+func LoadMMapAlways(f lock.LockedFile) (*segment.Data, io.Closer, error) {
 	mm, err := mmap.Map(f.File(), mmap.RDONLY, 0)
 	if err != nil {
 		// mmap failed, try to close the file
@@ -163,6 +163,34 @@ func (d *FileSystemDirectory) Load(kind string, id uint64) (*segment.Data, io.Cl
 	}
 
 	return segment.NewDataBytes(mm), closerFunc(closeFunc), nil
+}
+
+func LoadMMapNever(f lock.LockedFile) (*segment.Data, io.Closer, error) {
+	closeFunc := func() error {
+		err := f.Close()
+		if err == nil {
+			return err
+		}
+		return nil
+	}
+	data, err := segment.NewDataFile(f.File())
+	if err != nil {
+		return nil, nil, fmt.Errorf("error creating data from file: %w", err)
+	}
+	return data, closerFunc(closeFunc), nil
+}
+
+func (d *FileSystemDirectory) SetLoadMMapFunc(f LoadMMapFunc) {
+	d.loadMMapFunc = f
+}
+
+func (d *FileSystemDirectory) Load(kind string, id uint64) (*segment.Data, io.Closer, error) {
+	path := filepath.Join(d.path, d.fileName(kind, id))
+	f, err := d.openShared(path, os.O_RDONLY, 0)
+	if err != nil {
+		return nil, nil, err
+	}
+	return d.loadMMapFunc(f)
 }
 
 func (d *FileSystemDirectory) Remove(kind string, id uint64) error {
