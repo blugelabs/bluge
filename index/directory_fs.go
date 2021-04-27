@@ -52,7 +52,7 @@ func NewFileSystemDirectory(path string) *FileSystemDirectory {
 		openShared:    lock.OpenShared,
 		newDirPerm:    0700,
 		newFilePerm:   0600,
-		loadMMapFunc: LoadMMapAlways,
+		loadMMapFunc:  LoadMMapAlways,
 	}
 }
 
@@ -166,18 +166,11 @@ func LoadMMapAlways(f lock.LockedFile) (*segment.Data, io.Closer, error) {
 }
 
 func LoadMMapNever(f lock.LockedFile) (*segment.Data, io.Closer, error) {
-	closeFunc := func() error {
-		err := f.Close()
-		if err == nil {
-			return err
-		}
-		return nil
-	}
 	data, err := segment.NewDataFile(f.File())
 	if err != nil {
 		return nil, nil, fmt.Errorf("error creating data from file: %w", err)
 	}
-	return data, closerFunc(closeFunc), nil
+	return data, closerFunc(f.Close), nil
 }
 
 func (d *FileSystemDirectory) SetLoadMMapFunc(f LoadMMapFunc) {
