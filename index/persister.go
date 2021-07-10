@@ -220,7 +220,7 @@ func (s *Writer) persistSnapshot(merges chan *segmentMerge, persists chan *persi
 	// Perform in-memory segment merging only when the memory pressure is
 	// below the configured threshold, else the persister performs the
 	// direct persistence of segments.
-	if s.numEventsBlocking() < s.config.MemoryPressurePauseThreshold {
+	if int64(s.numEventsBlocking()) < s.config.MemoryPressurePauseThreshold {
 		persisted, err := s.persistSnapshotMaybeMerge(merges, persists, snapshot)
 		if err != nil {
 			return err

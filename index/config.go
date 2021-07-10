@@ -69,7 +69,7 @@ type Config struct {
 	// pressure situation. Here the config value is an upper threshold
 	// for the number of paused application threads. The default value would
 	// be a very high number to always favor the merging of memory segments.
-	MemoryPressurePauseThreshold int
+	MemoryPressurePauseThreshold int64
 
 	ValidateSnapshotCRC bool
 
