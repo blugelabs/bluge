@@ -191,7 +191,7 @@ func defaultConfig() Config {
 		// trio results in better overall performance.
 		PersisterNapUnderNumFiles: 1000,
 
-		MemoryPressurePauseThreshold: math.MaxInt64,
+		MemoryPressurePauseThreshold: math.MaxInt32,
 
 		// VirtualFields allow you to describe a set of fields
 		// The index will behave as if all documents in this index were
