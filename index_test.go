@@ -1602,3 +1602,139 @@ func TestSearchSizeZeroWithAggregations(t *testing.T) {
 		t.Errorf("expected count 1, got %d", dmi.Aggregations().Count())
 	}
 }
+
+func TestCrudWithNoMMap(t *testing.T) {
+	tmpIndexPath := createTmpIndexPath(t)
+	defer cleanupTmpIndexPath(t, tmpIndexPath)
+
+	config := DefaultConfigWithDirectory(func() index.Directory {
+		dir := index.NewFileSystemDirectory(tmpIndexPath)
+		dir.SetLoadMMapFunc(index.LoadMMapNever)
+		return dir
+	})
+
+	indexWriter, err := OpenWriter(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	docA := NewDocument("a").
+		AddField(NewTextField("name", "marty").StoreValue()).
+		AddField(NewTextField("desc", "gophercon india")).
+		AddField(NewCompositeFieldExcluding("_all", nil))
+	err = indexWriter.Update(docA.ID(), docA)
+	if err != nil {
+		t.Error(err)
+	}
+
+	docY := NewDocument("y").
+		AddField(NewTextField("name", "jasper")).
+		AddField(NewTextField("desc", "clojure"))
+	err = indexWriter.Update(docY.ID(), docY)
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = indexWriter.Delete(Identifier("y"))
+	if err != nil {
+		t.Error(err)
+	}
+
+	docX := NewDocument("x").
+		AddField(NewTextField("name", "rose")).
+		AddField(NewTextField("desc", "googler"))
+	err = indexWriter.Update(docX.ID(), docX)
+	if err != nil {
+		t.Error(err)
+	}
+
+	docB := NewDocument("b").
+		AddField(NewTextField("name", "steve")).
+		AddField(NewTextField("desc", "cbft master"))
+	batch := NewBatch()
+	batch.Update(docB.ID(), docB)
+
+	batch.Delete(Identifier("x"))
+	err = indexWriter.Batch(batch)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// close the indexWriter, open it again, and try some more things
+	err = indexWriter.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	indexWriter, err = OpenWriter(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		err = indexWriter.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	indexReader, err := indexWriter.Reader()
+	if err != nil {
+		t.Fatalf("error getting reader from indexWriter writer")
+	}
+	defer func() {
+		err = indexReader.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	count, err := indexReader.Count()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 2 {
+		t.Errorf("expected doc count 2, got %d", count)
+	}
+
+	docANumber, err := docNumberForTerm(indexReader, Identifier("a"))
+	if err != nil {
+		t.Fatalf("error finding doc number for term: %v", err)
+	}
+
+	var foundName []byte
+	err = indexReader.VisitStoredFields(docANumber, func(field string, value []byte) bool {
+		if field == "name" {
+			copy(foundName, value)
+			return false
+		}
+		return true
+	})
+	if err != nil {
+		t.Fatalf("error visiting stored fields: %v", err)
+	}
+
+	if bytes.Equal(foundName, []byte("marty")) {
+		t.Errorf("expected to find field named 'name' with value 'marty'")
+	}
+
+	fields, err := indexReader.Fields()
+	if err != nil {
+		t.Fatal(err)
+	}
+	expectedFields := map[string]bool{
+		"_all": false,
+		"name": false,
+		"desc": false,
+	}
+	if len(fields) < len(expectedFields) {
+		t.Fatalf("expected %d fields got %d", len(expectedFields), len(fields))
+	}
+	for _, f := range fields {
+		expectedFields[f] = true
+	}
+	for ef, efp := range expectedFields {
+		if !efp {
+			t.Errorf("field %s is missing", ef)
+		}
+	}
+}
