@@ -20,9 +20,9 @@ import (
 
 	segment "github.com/blugelabs/bluge_segment_api"
 
+	"github.com/blevesearch/vellum"
+	"github.com/blevesearch/vellum/levenshtein"
 	"github.com/blugelabs/bluge/search"
-	"github.com/couchbase/vellum"
-	"github.com/couchbase/vellum/levenshtein"
 )
 
 // reusable, thread-safe levenshtein builders
