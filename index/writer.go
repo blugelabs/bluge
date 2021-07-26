@@ -30,6 +30,8 @@ import (
 )
 
 type Writer struct {
+	stats Stats
+
 	config         Config
 	deletionPolicy DeletionPolicy
 	directory      Directory
@@ -49,8 +51,6 @@ type Writer struct {
 	// control/track goroutines
 	closeCh    chan struct{}
 	asyncTasks sync.WaitGroup
-
-	stats Stats
 
 	closeOnce sync.Once
 }
