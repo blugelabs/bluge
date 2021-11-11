@@ -1271,3 +1271,112 @@ func TestAllMatchesWithAggregationIssue31(t *testing.T) {
 	// should not panic with the fix
 	request.AddAggregation("score", aggregations.MaxStartingAt(search.DocumentScore(), 0))
 }
+
+func TestNumericRangeSearchBoost(t *testing.T) {
+	tmpIndexPath := createTmpIndexPath(t)
+	defer cleanupTmpIndexPath(t, tmpIndexPath)
+
+	config := DefaultConfig(tmpIndexPath)
+	indexWriter, err := OpenWriter(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	doc := NewDocument("doc").
+		AddField(NewNumericField("age", 25.0))
+
+	batch := NewBatch()
+	batch.Update(doc.ID(), doc)
+
+	if err = indexWriter.Batch(batch); err != nil {
+		t.Fatal(err)
+	}
+
+	indexReader, err := indexWriter.Reader()
+	if err != nil {
+		t.Fatalf("error getting index reader: %v", err)
+	}
+
+	// numeric range query with boost 5.0
+	q := NewNumericRangeQuery(20, 30).SetField("age").SetBoost(5.0)
+	sr := NewTopNSearch(10, q)
+	res, err := indexReader.Search(context.Background(), sr)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	next, err := res.Next()
+	if err != nil {
+		t.Fatalf("error getting first hit")
+	}
+	if next == nil {
+		t.Fatalf("expected at least one hit")
+	}
+	if next.Score != 5.0 {
+		t.Fatalf("expected score to be 5.0, got %f", next.Score)
+	}
+
+	err = indexReader.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = indexWriter.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestBooleanSearchBoost(t *testing.T) {
+	tmpIndexPath := createTmpIndexPath(t)
+	defer cleanupTmpIndexPath(t, tmpIndexPath)
+
+	config := DefaultConfig(tmpIndexPath)
+	indexWriter, err := OpenWriter(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	doc := NewDocument("doc").
+		AddField(NewNumericField("age", 25.0))
+
+	batch := NewBatch()
+	batch.Update(doc.ID(), doc)
+
+	if err = indexWriter.Batch(batch); err != nil {
+		t.Fatal(err)
+	}
+
+	indexReader, err := indexWriter.Reader()
+	if err != nil {
+		t.Fatalf("error getting index reader: %v", err)
+	}
+
+	// numeric range query with no boost
+	nrq := NewNumericRangeQuery(20, 30).SetField("age")
+	bq := NewBooleanQuery().AddMust(nrq).SetBoost(3.0)
+	sr := NewTopNSearch(10, bq)
+	res, err := indexReader.Search(context.Background(), sr)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	next, err := res.Next()
+	if err != nil {
+		t.Fatalf("error getting first hit")
+	}
+	if next == nil {
+		t.Fatalf("expected at least one hit")
+	}
+	if next.Score != 3.0 {
+		t.Fatalf("expected score to be 3.0, got %f", next.Score)
+	}
+
+	err = indexReader.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = indexWriter.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
