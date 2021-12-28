@@ -1756,6 +1756,12 @@ func TestBug87(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer func() {
+		err = indexWriter.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
 
 	// create 1025 documents in a batch
 	// this should require more than one chunk in doc values
@@ -1770,17 +1776,17 @@ func TestBug87(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer func() {
-		err = indexWriter.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
-	}()
 
 	reader, err := indexWriter.Reader()
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer func() {
+		err = reader.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
 
 	q := NewTermQuery("marty").SetField("name")
 	req := NewTopNSearch(2000, q).SortBy([]string{"_id"})
