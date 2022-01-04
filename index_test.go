@@ -1738,3 +1738,83 @@ func TestCrudWithNoMMap(t *testing.T) {
 		}
 	}
 }
+
+// TestBug87 reproduces a situation in which a search matches several documents
+// and we compare the document's stored value for the _id field, with the
+// document's sort value.  The sort value should be the same _id, but
+// comes from the doc values storage.
+// In this case, because doc values were loaded from multiple chunks, an
+// "uncompressed" buffer is reused.  Incorrect use of of these doc values
+// bytes in computed sort values may lead to incorrect sort order and other
+// undesired behavior.
+func TestBug87(t *testing.T) {
+	tmpIndexPath := createTmpIndexPath(t)
+	defer cleanupTmpIndexPath(t, tmpIndexPath)
+
+	config := DefaultConfig(tmpIndexPath)
+	indexWriter, err := OpenWriter(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		err = indexWriter.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	// create 1025 documents in a batch
+	// this should require more than one chunk in doc values
+	batch := NewBatch()
+	for i := 0; i < 1025; i++ {
+		doc := NewDocument(fmt.Sprintf("%d", i)).
+			AddField(NewTextField("name", "marty").Sortable())
+		batch.Update(doc.ID(), doc)
+	}
+
+	err = indexWriter.Batch(batch)
+	if err != nil {
+		t.Error(err)
+	}
+
+	reader, err := indexWriter.Reader()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		err = reader.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	q := NewTermQuery("marty").SetField("name")
+	req := NewTopNSearch(2000, q).SortBy([]string{"_id"})
+
+	dmi, err := reader.Search(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	next, err := dmi.Next()
+	for err == nil && next != nil {
+		var id string
+		err = next.VisitStoredFields(func(field string, value []byte) bool {
+			if field == "_id" {
+				id = string(value)
+				return false
+			}
+			return true
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(next.SortValue[0]) != id {
+			t.Fatalf("expected id '%s' to match sort value '%s'", id, string(next.SortValue[0]))
+		}
+		next, err = dmi.Next()
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+}
