@@ -139,6 +139,19 @@ func (hc *TopNCollector) Collect(ctx context.Context, aggs search.Aggregations,
 
 	// add fields needed by aggregations
 	hc.neededFields = append(hc.neededFields, aggs.Fields()...)
+
+	// filter repeat field
+	if len(hc.neededFields) > 1 {
+		store := make(map[string]struct{}, len(hc.neededFields))
+		for _, field := range hc.neededFields {
+			store[field] = struct{}{}
+		}
+		hc.neededFields = hc.neededFields[:0]
+		for field := range store {
+			hc.neededFields = append(hc.neededFields, field)
+		}
+	}
+
 	bucket := search.NewBucket("", aggs)
 
 	var hitNumber int

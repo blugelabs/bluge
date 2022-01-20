@@ -34,17 +34,6 @@ func (a Aggregations) Fields() []string {
 	for _, aggregation := range a {
 		rv = append(rv, aggregation.Fields()...)
 	}
-
-	// filter repeat field
-	store := make(map[string]struct{}, len(rv))
-	for _, field := range rv {
-		store[field] = struct{}{}
-	}
-	rv = rv[:0]
-	for field := range store {
-		rv = append(rv, field)
-	}
-
 	return rv
 }
 

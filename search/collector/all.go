@@ -29,13 +29,28 @@ func NewAllCollector() *AllCollector {
 
 func (a *AllCollector) Collect(ctx context.Context, aggs search.Aggregations,
 	searcher search.Collectible) (search.DocumentMatchIterator, error) {
-	return &AllIterator{
+	iter := &AllIterator{
 		ctx:           ctx,
 		neededFields:  aggs.Fields(),
 		bucket:        search.NewBucket("", aggs),
 		searcher:      searcher,
 		searchContext: search.NewSearchContext(searcher.DocumentMatchPoolSize(), 0),
-	}, nil
+	}
+	if len(iter.neededFields) <= 1 {
+		return iter, nil
+	}
+
+	// filter repeat field
+	store := make(map[string]struct{}, len(iter.neededFields))
+	for _, field := range iter.neededFields {
+		store[field] = struct{}{}
+	}
+	iter.neededFields = iter.neededFields[:0]
+	for field := range store {
+		iter.neededFields = append(iter.neededFields, field)
+	}
+
+	return iter, nil
 }
 
 func (a *AllCollector) Size() int {
