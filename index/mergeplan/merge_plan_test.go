@@ -55,7 +55,7 @@ func TestSimplePlan(t *testing.T) {
 	tests := []struct {
 		Desc       string
 		Segments   []Segment
-		Options    *Options
+		options    *Options
 		ExpectPlan *MergePlan
 		ExpectErr  error
 	}{
@@ -139,7 +139,7 @@ func TestSimplePlan(t *testing.T) {
 
 	for testi, test := range tests {
 		test := test
-		plan, err := Plan(test.Segments, test.Options)
+		plan, err := Plan(test.Segments, test.options)
 		if err != test.ExpectErr {
 			testj, _ := json.Marshal(&test)
 			t.Errorf("testi: %d, test: %s, got err: %v",
