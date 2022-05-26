@@ -73,11 +73,9 @@ linters:
     - funlen
     - gochecknoinits
     - goconst
-    - gocritic
     - gocyclo
     - gofmt
     - goimports
-    - gomnd
     - goprintffuncname
     - gosec
     - gosimple
@@ -87,7 +85,6 @@ linters:
     - misspell
     - nakedret
     - nolintlint
-    - revive
     - rowserrcheck
     - staticcheck
     - structcheck
@@ -124,6 +121,7 @@ issues:
         - gocyclo
         - dupl
         - gochecknoinits
+        - gocritic
     - path: cmd/bluge/cmd
       linters:
         - gochecknoinits

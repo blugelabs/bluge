@@ -15,7 +15,7 @@
 package bluge
 
 import (
-	"io"
+	"io/ioutil"
 	"log"
 
 	"github.com/blugelabs/bluge/index"
@@ -96,7 +96,7 @@ func DefaultConfigWithDirectory(df func() index.Directory) Config {
 
 func defaultConfig(indexConfig index.Config) Config {
 	rv := Config{
-		Logger:                log.New(io.Discard, "bluge", log.LstdFlags),
+		Logger:                log.New(ioutil.Discard, "bluge", log.LstdFlags),
 		DefaultSearchField:    "_all",
 		DefaultSearchAnalyzer: analyzer.NewStandardAnalyzer(),
 		DefaultSimilarity:     similarity.NewBM25Similarity(),
