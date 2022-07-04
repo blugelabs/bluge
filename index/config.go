@@ -154,8 +154,8 @@ func DefaultConfigWithDirectory(df func() Directory) Config {
 
 func defaultConfig() Config {
 	rv := Config{
-		SegmentType:      iceV2.Type,
-		SegmentVersion:   iceV2.Version,
+		SegmentType:      iceV1.Type,
+		SegmentVersion:   iceV1.Version,
 		MergePlanOptions: mergeplan.DefaultMergePlanOptions,
 		DeletionPolicyFunc: func() DeletionPolicy {
 			return NewKeepNLatestDeletionPolicy(1)
