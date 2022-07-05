@@ -1818,3 +1818,81 @@ func TestBug87(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestLoadingFromBackup(t *testing.T) {
+	indexWriter, err := OpenWriter(InMemoryOnlyConfig())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	numDocs := 10
+
+	batch := NewBatch()
+	for i := 0; i < numDocs; i++ {
+		doc := NewDocument("a" + strconv.Itoa(i)).
+			AddField(NewKeywordField("location", "/a").Aggregatable().StoreValue())
+		batch.Update(doc.ID(), doc)
+	}
+	err = indexWriter.Batch(batch)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// create a temp directory to store the index
+	tmpDir, err := ioutil.TempDir("", "bluge.tests.TestLoadingFromBackup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		_ = os.RemoveAll(tmpDir)
+	}()
+
+	indexReader, err := indexWriter.Reader()
+	if err != nil {
+		t.Fatalf("error getting reader: %v", err)
+	}
+	defer func() { _ = indexReader.Close() }()
+
+	cancelCh := make(chan struct{})
+	err = indexReader.Backup(tmpDir, cancelCh)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_ = indexWriter.Close()
+
+	writer, err := OpenWriter(InMemoryFromBackup(tmpDir))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = writer.Close() }()
+
+	reader, err := writer.Reader()
+	if err != nil {
+		t.Fatalf("error getting reader: %v", err)
+	}
+	defer func() { _ = indexReader.Close() }()
+
+	req := NewAllMatches(NewPrefixQuery("/a").SetField("location"))
+	documentMatchIterator, err := reader.Search(context.Background(), req)
+	if err != nil {
+		t.Fatalf("error search: %v", err)
+	}
+
+	count := 0
+
+	match, err := documentMatchIterator.Next()
+	for err == nil && match != nil {
+		count++
+		err = match.VisitStoredFields(func(field string, value []byte) bool {
+			return true
+		})
+		match, err = documentMatchIterator.Next()
+	}
+	if err != nil {
+		t.Fatalf("error iterating: %v", err)
+	}
+	if count != numDocs {
+		t.Fatalf("wrong number of docs: expected %d, got %d", numDocs, count)
+	}
+}
