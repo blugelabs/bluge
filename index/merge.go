@@ -158,7 +158,7 @@ func (s *Writer) executeMergeTask(merges chan *segmentMerge, task *mergeplan.Mer
 			return fmt.Errorf("merging failed: %v", err)
 		}
 
-		seg, err = s.loadSegment(newSegmentID, s.segPlugin)
+		seg, err = s.loadSegment(newSegmentID, s.segPlugin, s.directory)
 		if err != nil {
 			atomic.AddUint64(&s.stats.TotFileMergePlanTasksErr, 1)
 			return err
@@ -313,7 +313,7 @@ func (s *Writer) mergeSegmentBases(merges chan *segmentMerge, snapshot *Snapshot
 		return nil, 0, err
 	}
 
-	seg, err := s.loadSegment(newSegmentID, s.segPlugin)
+	seg, err := s.loadSegment(newSegmentID, s.segPlugin, s.directory)
 	if err != nil {
 		atomic.AddUint64(&s.stats.TotMemMergeErr, 1)
 		return nil, 0, err

@@ -40,6 +40,8 @@ type Config struct {
 	DirectoryFunc      func() Directory
 	NormCalc           func(string, int) float32
 
+	SnapshotDirectoryFunc func() Directory
+
 	MergeBufferSize int
 
 	// Optimizations
