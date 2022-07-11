@@ -1380,3 +1380,45 @@ func TestBooleanSearchBoost(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestIndexingSearchOfEmptyKeyword(t *testing.T) {
+	tmpIndexPath := createTmpIndexPath(t)
+	defer cleanupTmpIndexPath(t, tmpIndexPath)
+
+	config := DefaultConfig(tmpIndexPath)
+	indexWriter, err := OpenWriter(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	doc := NewDocument("doc").
+		AddField(NewKeywordField("field", ""))
+	err = indexWriter.Update(doc.ID(), doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	indexReader, err := indexWriter.Reader()
+	if err != nil {
+		t.Fatalf("error getting index reader: %v", err)
+	}
+
+	q := NewTermQuery("").SetField("field")
+	sr := NewTopNSearch(10, q).WithStandardAggregations()
+	res, err := indexReader.Search(context.Background(), sr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Aggregations().Count() != 1 {
+		t.Fatalf("Unexpected search hits: %v, expected 1", res.Aggregations().Count())
+	}
+
+	err = indexReader.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = indexWriter.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
