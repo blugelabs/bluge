@@ -89,6 +89,15 @@ func InMemoryOnlyConfig() Config {
 	indexConfig := index.InMemoryOnlyConfig()
 	return defaultConfig(indexConfig)
 }
+
+func InMemoryFromBackup(path string) Config {
+	indexConfig := index.InMemoryOnlyConfig()
+	indexConfig.SnapshotDirectoryFunc = func() index.Directory {
+		return index.NewFileSystemDirectory(path)
+	}
+	return defaultConfig(indexConfig)
+}
+
 func DefaultConfigWithDirectory(df func() index.Directory) Config {
 	indexConfig := index.DefaultConfigWithDirectory(df)
 	return defaultConfig(indexConfig)

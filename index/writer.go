@@ -92,10 +92,16 @@ func OpenWriter(config Config) (*Writer, error) {
 		return nil, fmt.Errorf("error getting exclusive access to diretory: %w", err)
 	}
 
-	lastPersistedEpoch, nextSnapshotEpoch, err2 := rv.loadSnapshots()
-	if err2 != nil {
+	var lastPersistedEpoch, nextSnapshotEpoch uint64
+
+	if config.SnapshotDirectoryFunc != nil {
+		lastPersistedEpoch, nextSnapshotEpoch, err = rv.loadSnapshots(config.SnapshotDirectoryFunc())
+	} else {
+		lastPersistedEpoch, nextSnapshotEpoch, err = rv.loadSnapshots(rv.directory)
+	}
+	if err != nil {
 		_ = rv.Close()
-		return nil, err2
+		return nil, err
 	}
 
 	// initialize nextSegmentID to a safe value
@@ -133,9 +139,9 @@ func OpenWriter(config Config) (*Writer, error) {
 	return rv, nil
 }
 
-func (s *Writer) loadSnapshots() (lastPersistedEpoch, nextSnapshotEpoch uint64, err error) {
+func (s *Writer) loadSnapshots(directory Directory) (lastPersistedEpoch, nextSnapshotEpoch uint64, err error) {
 	nextSnapshotEpoch = 1
-	snapshotEpochs, err := s.directory.List(ItemKindSnapshot)
+	snapshotEpochs, err := directory.List(ItemKindSnapshot)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -149,7 +155,7 @@ func (s *Writer) loadSnapshots() (lastPersistedEpoch, nextSnapshotEpoch uint64, 
 		snapshotEpoch := snapshotEpochs[i]
 		snapshotsFound = true
 		var indexSnapshot *Snapshot
-		indexSnapshot, err = s.loadSnapshot(snapshotEpoch)
+		indexSnapshot, err = s.loadSnapshot(snapshotEpoch, directory)
 		if err != nil {
 			log.Printf("error loading snapshot epoch: %d: %v", snapshotEpoch, err)
 			// but keep going and hope there is another newer snapshot that works
@@ -434,7 +440,7 @@ func OpenReader(config Config) (*Snapshot, error) {
 	// start with most recent
 	var indexSnapshot *Snapshot
 	for _, snapshotEpoch := range snapshotEpochs {
-		indexSnapshot, err = parent.loadSnapshot(snapshotEpoch)
+		indexSnapshot, err = parent.loadSnapshot(snapshotEpoch, parent.directory)
 		if err != nil {
 			log.Printf("error loading snapshot epoch: %d: %v", snapshotEpoch, err)
 			// but keep going and hope there is another newer snapshot that works
@@ -449,7 +455,7 @@ func OpenReader(config Config) (*Snapshot, error) {
 	return indexSnapshot, nil
 }
 
-func (s *Writer) loadSnapshot(epoch uint64) (*Snapshot, error) {
+func (s *Writer) loadSnapshot(epoch uint64, directory Directory) (*Snapshot, error) {
 	snapshot := &Snapshot{
 		parent:  s,
 		epoch:   epoch,
@@ -457,7 +463,7 @@ func (s *Writer) loadSnapshot(epoch uint64) (*Snapshot, error) {
 		creator: "loadSnapshot",
 	}
 
-	data, closer, err := s.directory.Load(ItemKindSnapshot, epoch)
+	data, closer, err := directory.Load(ItemKindSnapshot, epoch)
 	if err != nil {
 		return nil, err
 	}
@@ -510,7 +516,7 @@ func (s *Writer) loadSnapshot(epoch uint64) (*Snapshot, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error loading required segment plugin: %v", err)
 		}
-		segSnapshot.segment, err = s.loadSegment(segSnapshot.id, segPlugin)
+		segSnapshot.segment, err = s.loadSegment(segSnapshot.id, segPlugin, directory)
 		if err != nil {
 			return nil, fmt.Errorf("error opening segment %d: %w", segSnapshot.id, err)
 		}
@@ -522,8 +528,8 @@ func (s *Writer) loadSnapshot(epoch uint64) (*Snapshot, error) {
 	return snapshot, nil
 }
 
-func (s *Writer) loadSegment(id uint64, plugin *SegmentPlugin) (*segmentWrapper, error) {
-	data, closer, err := s.directory.Load(ItemKindSegment, id)
+func (s *Writer) loadSegment(id uint64, plugin *SegmentPlugin, directory Directory) (*segmentWrapper, error) {
+	data, closer, err := directory.Load(ItemKindSegment, id)
 	if err != nil {
 		return nil, fmt.Errorf("error loading segment fromt directory: %v", err)
 	}

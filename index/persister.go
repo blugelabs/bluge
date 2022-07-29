@@ -352,7 +352,7 @@ func (s *Writer) prepareIntroducePersist(persists chan *persistIntroduction, new
 	}()
 	var err error
 	for _, segmentID := range newSegmentIds {
-		newSegments[segmentID], err = s.loadSegment(segmentID, s.segPlugin)
+		newSegments[segmentID], err = s.loadSegment(segmentID, s.segPlugin, s.directory)
 		if err != nil {
 			return fmt.Errorf("error opening new segment %d, %v", segmentID, err)
 		}
