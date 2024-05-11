@@ -34,9 +34,7 @@ func NewConjunctionSearcher(indexReader search.Reader,
 	search.Searcher, error) {
 	// build the sorted downstream searchers
 	searchers := make(OrderedSearcherList, len(qsearchers))
-	for i, searcher := range qsearchers {
-		searchers[i] = searcher
-	}
+	copy(searchers, qsearchers)
 	sort.Sort(searchers)
 
 	// attempt the "unadorned" conjunction optimization only when we
