@@ -21,14 +21,13 @@ import (
 
 	"github.com/RoaringBitmap/roaring"
 
-	segment "github.com/blugelabs/bluge_segment_api"
+	"github.com/blugelabs/bluge/index/segment"
 )
 
 type WriterOffline struct {
 	m         sync.Mutex
 	config    Config
 	directory Directory
-	segPlugin *SegmentPlugin
 	segCount  uint64
 	segIDs    []uint64
 
@@ -39,18 +38,12 @@ func OpenOfflineWriter(config Config) (writer *WriterOffline, err error) {
 	writer = &WriterOffline{
 		config:    config,
 		directory: config.DirectoryFunc(),
-		segPlugin: nil,
 		mergeMax:  10,
 	}
 
 	err = writer.directory.Setup(false)
 	if err != nil {
 		return nil, fmt.Errorf("error setting up directory: %w", err)
-	}
-
-	writer.segPlugin, err = loadSegmentPlugin(config.supportedSegmentPlugins, config.SegmentType, config.SegmentVersion)
-	if err != nil {
-		return nil, fmt.Errorf("error loading segment plugin: %v", err)
 	}
 
 	return writer, nil
@@ -70,7 +63,7 @@ func (s *WriterOffline) Batch(batch *Batch) (err error) {
 		}
 	}
 
-	newSegment, _, err := s.segPlugin.New(batch.documents, s.config.NormCalc)
+	newSegment, _, err := segment.New(batch.documents, s.config.NormCalc)
 	if err != nil {
 		return err
 	}
@@ -124,7 +117,7 @@ func (s *WriterOffline) doMerge() error {
 			if closer != nil {
 				closers = append(closers, closer)
 			}
-			seg, err := s.segPlugin.Load(data)
+			seg, err := segment.Load(data)
 			if err != nil {
 				_ = closeOpenedSegs()
 				return fmt.Errorf("error loading segment: %w", err)
@@ -134,9 +127,13 @@ func (s *WriterOffline) doMerge() error {
 
 		// do the merge
 		drops := make([]*roaring.Bitmap, mergeCount)
-		merger := s.segPlugin.Merge(mergeSegs, drops, s.config.MergeBufferSize)
+		merger, err := segment.Merge(mergeSegs, drops, s.config.MergeBufferSize)
+		if err != nil {
+			_ = closeOpenedSegs()
+			return fmt.Errorf("error creating merger: %w", err)
+		}
 
-		err := s.directory.Persist(ItemKindSegment, s.segCount, merger, nil)
+		err = s.directory.Persist(ItemKindSegment, s.segCount, merger, nil)
 		if err != nil {
 			_ = closeOpenedSegs()
 			return fmt.Errorf("error merging segments (%v): %w", mergeIDs, err)
@@ -177,7 +174,7 @@ func (s *WriterOffline) Close() error {
 	if err != nil {
 		return fmt.Errorf("error loading segment from directory: %w", err)
 	}
-	finalSeg, err := s.segPlugin.Load(data)
+	finalSeg, err := segment.Load(data)
 	if err != nil {
 		if closer != nil {
 			_ = closer.Close()
@@ -195,8 +192,8 @@ func (s *WriterOffline) Close() error {
 					refCounter: nil,
 					persisted:  true,
 				},
-				segmentType:    s.segPlugin.Type,
-				segmentVersion: s.segPlugin.Version,
+				segmentType:    finalSeg.Type(),
+				segmentVersion: finalSeg.Version(),
 			},
 		},
 		epoch: s.segIDs[0],

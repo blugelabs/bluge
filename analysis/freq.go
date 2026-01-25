@@ -17,7 +17,7 @@ package analysis
 import (
 	"reflect"
 
-	segment "github.com/blugelabs/bluge_segment_api"
+	"github.com/blugelabs/bluge/index/segment"
 )
 
 var reflectStaticSizeTokenLocation int

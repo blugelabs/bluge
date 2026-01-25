@@ -28,7 +28,7 @@ func (s *Writer) Stats() Stats {
 	rv.CurOnDiskBytes = numBytesUsedDisk
 	rv.CurOnDiskFiles = numFilesOnDisk
 
-	return s.stats
+	return rv
 }
 
 // Stats tracks statistics about the index, fields that are

@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"strings"
 
-	segment "github.com/blugelabs/bluge_segment_api"
+	"github.com/blugelabs/bluge/index/segment"
 )
 
 type FakeDocument []*FakeField

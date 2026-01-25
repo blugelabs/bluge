@@ -21,7 +21,7 @@ import (
 
 	"github.com/RoaringBitmap/roaring"
 	"github.com/blugelabs/bluge/index/mergeplan"
-	segment "github.com/blugelabs/bluge_segment_api"
+	"github.com/blugelabs/bluge/index/segment"
 )
 
 func (s *Writer) mergerLoop(merges chan *segmentMerge, persisterNotifier watcherChan) {
@@ -158,7 +158,7 @@ func (s *Writer) executeMergeTask(merges chan *segmentMerge, task *mergeplan.Mer
 			return fmt.Errorf("merging failed: %v", err)
 		}
 
-		seg, err = s.loadSegment(newSegmentID, s.segPlugin)
+		seg, err = s.loadSegment(newSegmentID)
 		if err != nil {
 			atomic.AddUint64(&s.stats.TotFileMergePlanTasksErr, 1)
 			return err
@@ -313,7 +313,7 @@ func (s *Writer) mergeSegmentBases(merges chan *segmentMerge, snapshot *Snapshot
 		return nil, 0, err
 	}
 
-	seg, err := s.loadSegment(newSegmentID, s.segPlugin)
+	seg, err := s.loadSegment(newSegmentID)
 	if err != nil {
 		atomic.AddUint64(&s.stats.TotMemMergeErr, 1)
 		return nil, 0, err
@@ -363,9 +363,12 @@ func (s *Writer) mergeSegmentBases(merges chan *segmentMerge, snapshot *Snapshot
 
 func (s *Writer) merge(segments []segment.Segment, drops []*roaring.Bitmap, id uint64) (
 	[][]uint64, error) {
-	merger := s.segPlugin.Merge(segments, drops, s.config.MergeBufferSize)
+	merger, err := segment.Merge(segments, drops, s.config.MergeBufferSize)
+	if err != nil {
+		return nil, err
+	}
 
-	err := s.directory.Persist(ItemKindSegment, id, merger, s.closeCh)
+	err = s.directory.Persist(ItemKindSegment, id, merger, s.closeCh)
 	if err != nil {
 		return nil, err
 	}

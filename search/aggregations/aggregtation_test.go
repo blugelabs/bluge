@@ -18,7 +18,7 @@ import (
 	"math"
 	"testing"
 
-	segment "github.com/blugelabs/bluge_segment_api"
+	"github.com/blugelabs/bluge/index/segment"
 
 	"github.com/blugelabs/bluge/numeric"
 	"github.com/blugelabs/bluge/search"

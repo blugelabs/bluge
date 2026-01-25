@@ -24,7 +24,7 @@ import (
 	"sync"
 	"testing"
 
-	segment "github.com/blugelabs/bluge_segment_api"
+	"github.com/blugelabs/bluge/index/segment"
 )
 
 func CreateConfig(name string) (config Config, cleanup func() error) {

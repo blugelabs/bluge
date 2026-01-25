@@ -16,7 +16,7 @@ package index
 
 import (
 	"github.com/RoaringBitmap/roaring"
-	segment "github.com/blugelabs/bluge_segment_api"
+	"github.com/blugelabs/bluge/index/segment"
 )
 
 type SegmentSnapshot interface {

@@ -17,7 +17,7 @@ package index
 import (
 	"io"
 
-	segment "github.com/blugelabs/bluge_segment_api"
+	"github.com/blugelabs/bluge/index/segment"
 )
 
 // Kinds of items managed by a Directory

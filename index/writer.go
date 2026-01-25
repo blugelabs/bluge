@@ -24,7 +24,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	segment "github.com/blugelabs/bluge_segment_api"
+	"github.com/blugelabs/bluge/index/segment"
 
 	"github.com/RoaringBitmap/roaring"
 )
@@ -38,7 +38,6 @@ type Writer struct {
 	config         Config
 	deletionPolicy DeletionPolicy
 	directory      Directory
-	segPlugin      *SegmentPlugin // segment plug-in in use
 
 	rootLock sync.RWMutex
 	root     *Snapshot // holds 1 ref-count on the root
@@ -70,19 +69,13 @@ func OpenWriter(config Config) (*Writer, error) {
 		})
 	}
 
-	var err error
-	rv.segPlugin, err = loadSegmentPlugin(config.supportedSegmentPlugins, config.SegmentType, config.SegmentVersion)
-	if err != nil {
-		return nil, fmt.Errorf("error loading segment plugin: %v", err)
-	}
-
 	rv.root = &Snapshot{
 		parent:  rv,
 		refs:    1,
 		creator: "NewChill",
 	}
 
-	err = rv.directory.Setup(false)
+	err := rv.directory.Setup(false)
 	if err != nil {
 		return nil, fmt.Errorf("error setting up directory: %w", err)
 	}
@@ -414,14 +407,7 @@ func OpenReader(config Config) (*Snapshot, error) {
 		directory: config.DirectoryFunc(),
 	}
 
-	var err error
-	parent.segPlugin, err = loadSegmentPlugin(config.supportedSegmentPlugins,
-		config.SegmentType, config.SegmentVersion)
-	if err != nil {
-		return nil, fmt.Errorf("error loadign segment plugin: %v", err)
-	}
-
-	err = parent.directory.Setup(true)
+	err := parent.directory.Setup(true)
 	if err != nil {
 		return nil, fmt.Errorf("error setting up directory: %w", err)
 	}
@@ -506,11 +492,8 @@ func (s *Writer) loadSnapshot(epoch uint64) (*Snapshot, error) {
 
 	var running uint64
 	for _, segSnapshot := range snapshot.segment {
-		segPlugin, err := loadSegmentPlugin(s.config.supportedSegmentPlugins, segSnapshot.segmentType, segSnapshot.segmentVersion)
-		if err != nil {
-			return nil, fmt.Errorf("error loading required segment plugin: %v", err)
-		}
-		segSnapshot.segment, err = s.loadSegment(segSnapshot.id, segPlugin)
+		var err error
+		segSnapshot.segment, err = s.loadSegment(segSnapshot.id)
 		if err != nil {
 			return nil, fmt.Errorf("error opening segment %d: %w", segSnapshot.id, err)
 		}
@@ -522,12 +505,12 @@ func (s *Writer) loadSnapshot(epoch uint64) (*Snapshot, error) {
 	return snapshot, nil
 }
 
-func (s *Writer) loadSegment(id uint64, plugin *SegmentPlugin) (*segmentWrapper, error) {
+func (s *Writer) loadSegment(id uint64) (*segmentWrapper, error) {
 	data, closer, err := s.directory.Load(ItemKindSegment, id)
 	if err != nil {
-		return nil, fmt.Errorf("error loading segment fromt directory: %v", err)
+		return nil, fmt.Errorf("error loading segment from directory: %v", err)
 	}
-	seg, err := plugin.Load(data)
+	seg, err := segment.Load(data)
 	if err != nil {
 		if closer != nil {
 			_ = closer.Close()

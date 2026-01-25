@@ -17,7 +17,7 @@ package bluge
 import (
 	"fmt"
 
-	segment "github.com/blugelabs/bluge_segment_api"
+	"github.com/blugelabs/bluge/index/segment"
 
 	"github.com/blugelabs/bluge/index"
 )
@@ -76,4 +76,9 @@ func (w *Writer) Reader() (*Reader, error) {
 		config: w.config,
 		reader: r,
 	}, nil
+}
+
+// Stats returns statistics about the index.
+func (w *Writer) Stats() index.Stats {
+	return w.chill.Stats()
 }

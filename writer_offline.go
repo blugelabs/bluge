@@ -17,7 +17,7 @@ package bluge
 import (
 	"fmt"
 
-	segment "github.com/blugelabs/bluge_segment_api"
+	"github.com/blugelabs/bluge/index/segment"
 
 	"github.com/blugelabs/bluge/index"
 )

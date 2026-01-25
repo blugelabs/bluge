@@ -274,14 +274,20 @@ func (p phrasePath) String() string {
 //
 // prevPos - the previous location, 0 on first invocation
 // phraseTerms - slice containing the phrase terms,
-//               may contain empty string as placeholder (don't care)
+//
+//	may contain empty string as placeholder (don't care)
+//
 // tlm - the Term Location Map containing all relevant term locations
 // p - the current path being explored (appended to in recursive calls)
-//     this is the primary state being built during the traversal
+//
+//	this is the primary state being built during the traversal
+//
 // remainingSlop - amount of sloppiness that's allowed, which is the
-//        sum of the editDistances from each matching phrase part,
-//        where 0 means no sloppiness allowed (all editDistances must be 0),
-//        decremented during recursion
+//
+//	sum of the editDistances from each matching phrase part,
+//	where 0 means no sloppiness allowed (all editDistances must be 0),
+//	decremented during recursion
+//
 // rv - the final result being appended to by all the recursive calls
 //
 // returns slice of paths, or nil if invocation did not find any successul paths

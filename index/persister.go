@@ -20,7 +20,7 @@ import (
 	"time"
 
 	"github.com/RoaringBitmap/roaring"
-	segment "github.com/blugelabs/bluge_segment_api"
+	"github.com/blugelabs/bluge/index/segment"
 )
 
 func (s *Writer) persisterLoop(merges chan *segmentMerge, persists chan *persistIntroduction,
@@ -352,7 +352,7 @@ func (s *Writer) prepareIntroducePersist(persists chan *persistIntroduction, new
 	}()
 	var err error
 	for _, segmentID := range newSegmentIds {
-		newSegments[segmentID], err = s.loadSegment(segmentID, s.segPlugin)
+		newSegments[segmentID], err = s.loadSegment(segmentID)
 		if err != nil {
 			return fmt.Errorf("error opening new segment %d, %v", segmentID, err)
 		}

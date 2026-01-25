@@ -19,7 +19,7 @@ import (
 
 	"github.com/blugelabs/bluge/search/similarity"
 
-	segment "github.com/blugelabs/bluge_segment_api"
+	"github.com/blugelabs/bluge/index/segment"
 
 	"github.com/blugelabs/bluge/search"
 )

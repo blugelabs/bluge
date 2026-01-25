@@ -14,7 +14,7 @@
 
 package index
 
-import segment "github.com/blugelabs/bluge_segment_api"
+import "github.com/blugelabs/bluge/index/segment"
 
 type emptyPostingsIterator struct{}
 
