@@ -39,7 +39,7 @@ func OpenOfflineWriter(config Config, batchSize, maxSegmentsToMerge int) (*Offli
 	}
 
 	var err error
-	rv.writer, err = index.OpenOfflineWriter(config.indexConfig)
+	rv.writer, err = index.OpenOfflineWriter(config.indexConfigForWriting())
 	if err != nil {
 		return nil, fmt.Errorf("error opening index: %w", err)
 	}

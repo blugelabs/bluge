@@ -27,6 +27,10 @@ type TextValueSource interface {
 	Value(match *DocumentMatch) []byte
 }
 
+type textValueSourcePrealloc interface {
+	ValuePrealloc(match *DocumentMatch, prealloc []byte) []byte
+}
+
 type TextValuesSource interface {
 	Fields() []string
 	Values(match *DocumentMatch) [][]byte
@@ -156,6 +160,14 @@ func (n *ScoreSource) Value(d *DocumentMatch) []byte {
 	return numeric.MustNewPrefixCodedInt64(numeric.Float64ToInt64(d.Score), 0)
 }
 
+func (n *ScoreSource) ValuePrealloc(d *DocumentMatch, prealloc []byte) []byte {
+	rv, _, err := numeric.NewPrefixCodedInt64Prealloc(numeric.Float64ToInt64(d.Score), 0, prealloc)
+	if err != nil {
+		panic(err)
+	}
+	return rv
+}
+
 func (n *ScoreSource) Values(d *DocumentMatch) [][]byte {
 	return [][]byte{numeric.MustNewPrefixCodedInt64(numeric.Float64ToInt64(d.Score), 0)}
 }
@@ -189,6 +201,36 @@ func (f *MissingTextValueSource) Value(match *DocumentMatch) []byte {
 		return f.replacement.Value(match)
 	}
 	return primaryValue
+}
+
+func (f *MissingTextValueSource) ValuePrealloc(match *DocumentMatch, prealloc []byte) []byte {
+	var primaryValue []byte
+	if primary, ok := f.primary.(textValueSourcePrealloc); ok {
+		primaryValue = primary.ValuePrealloc(match, prealloc)
+		if primaryValue != nil {
+			return primaryValue
+		}
+	} else {
+		primaryValue = f.primary.Value(match)
+		if primaryValue != nil {
+			return copyTextValue(prealloc, primaryValue)
+		}
+	}
+	if replacement, ok := f.replacement.(textValueSourcePrealloc); ok {
+		return replacement.ValuePrealloc(match, prealloc)
+	}
+	replacementValue := f.replacement.Value(match)
+	return copyTextValue(prealloc, replacementValue)
+}
+
+func copyTextValue(prealloc, value []byte) []byte {
+	if cap(prealloc) < len(value) {
+		prealloc = make([]byte, len(value))
+	} else {
+		prealloc = prealloc[:len(value)]
+	}
+	copy(prealloc, value)
+	return prealloc
 }
 
 type MissingNumericSource struct {

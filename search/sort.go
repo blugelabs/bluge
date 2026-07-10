@@ -42,12 +42,51 @@ func (o SortOrder) Reverse() {
 }
 
 func (o SortOrder) Compute(match *DocumentMatch) {
-	for _, sort := range o {
-		sortVal := sort.Value(match)
-		sortValCopy := make([]byte, len(sortVal))
-		copy(sortValCopy, sortVal)
-		match.SortValue = append(match.SortValue, sortValCopy)
+	if cap(match.SortValue) < len(o) {
+		match.SortValue = make([][]byte, len(o))
+	} else {
+		match.SortValue = match.SortValue[:len(o)]
 	}
+	for i, sort := range o {
+		prealloc := match.SortValue[i]
+		if source, ok := sort.source.(textValueSourcePrealloc); ok {
+			match.SortValue[i] = source.ValuePrealloc(match, prealloc)
+			continue
+		}
+		sortVal := sort.Value(match)
+		if cap(prealloc) < len(sortVal) {
+			prealloc = make([]byte, len(sortVal))
+		} else {
+			prealloc = prealloc[:len(sortVal)]
+		}
+		copy(prealloc, sortVal)
+		match.SortValue[i] = prealloc
+	}
+}
+
+func (o SortOrder) IsScoreDescending() bool {
+	if len(o) != 1 {
+		return false
+	}
+	if !o[0].desc {
+		return false
+	}
+	missing, ok := o[0].source.(*MissingTextValueSource)
+	if !ok {
+		return false
+	}
+	_, ok = missing.primary.(*ScoreSource)
+	return ok
+}
+
+func (o SortOrder) CompareScore(i, j *DocumentMatch) int {
+	if i.Score > j.Score {
+		return -1
+	}
+	if i.Score < j.Score {
+		return 1
+	}
+	return compareHitNumber(i, j)
 }
 
 func (o SortOrder) Compare(i, j *DocumentMatch) int {
@@ -66,6 +105,10 @@ func (o SortOrder) Compare(i, j *DocumentMatch) int {
 		}
 		return c
 	}
+	return compareHitNumber(i, j)
+}
+
+func compareHitNumber(i, j *DocumentMatch) int {
 	// if they are the same at this point, impose order based on index natural sort order
 	if i.HitNumber == j.HitNumber {
 		return 0

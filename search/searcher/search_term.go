@@ -24,7 +24,16 @@ type TermSearcher struct {
 	reader      segment.PostingsIterator
 	options     search.SearcherOptions
 	scorer      search.Scorer
+	rawScorer   rawNormScorer
 	queryTerm   string
+}
+
+type rawNormScorer interface {
+	ScoreRawNorm(freq int, normBits uint64) float64
+}
+
+type rawNormPosting interface {
+	NormUint64() uint64
 }
 
 func NewTermSearcher(indexReader search.Reader, term, field string, boost float64, scorer search.Scorer,
@@ -63,9 +72,15 @@ func newTermSearcherFromReader(indexReader search.Reader, reader segment.Posting
 		indexReader: indexReader,
 		reader:      reader,
 		scorer:      scorer,
+		rawScorer:   rawScorerFor(scorer),
 		options:     options,
 		queryTerm:   string(term),
 	}, nil
+}
+
+func rawScorerFor(scorer search.Scorer) rawNormScorer {
+	rawScorer, _ := scorer.(rawNormScorer)
+	return rawScorer
 }
 
 func (s *TermSearcher) Size() int {
@@ -140,16 +155,23 @@ func (s *TermSearcher) buildDocumentMatch(ctx *search.Context, termMatch segment
 	if s.options.Explain {
 		rv.Explanation = s.scorer.Explain(termMatch.Frequency(), termMatch.Norm())
 		rv.Score = rv.Explanation.Value
+	} else if s.rawScorer != nil {
+		if rawPosting, ok := termMatch.(rawNormPosting); ok {
+			rv.Score = s.rawScorer.ScoreRawNorm(termMatch.Frequency(), rawPosting.NormUint64())
+		} else {
+			rv.Score = s.scorer.Score(termMatch.Frequency(), termMatch.Norm())
+		}
 	} else {
 		rv.Score = s.scorer.Score(termMatch.Frequency(), termMatch.Norm())
 	}
 
-	if len(termMatch.Locations()) > 0 {
-		if cap(rv.FieldTermLocations) < len(termMatch.Locations()) {
-			rv.FieldTermLocations = make([]search.FieldTermLocation, 0, len(termMatch.Locations()))
+	if s.options.IncludeTermVectors {
+		locations := termMatch.Locations()
+		if cap(rv.FieldTermLocations) < len(locations) {
+			rv.FieldTermLocations = make([]search.FieldTermLocation, 0, len(locations))
 		}
 
-		for _, v := range termMatch.Locations() {
+		for _, v := range locations {
 			rv.FieldTermLocations =
 				append(rv.FieldTermLocations, search.FieldTermLocation{
 					Field: v.Field(),

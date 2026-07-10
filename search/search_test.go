@@ -45,3 +45,18 @@ func TestLocationsDedupe(t *testing.T) {
 		}
 	}
 }
+
+func BenchmarkSortOrderComputeScore(b *testing.B) {
+	order := SortOrder{SortBy(DocumentScore()).Desc()}
+	match := &DocumentMatch{
+		Score:     1.25,
+		SortValue: make([][]byte, 0, len(order)),
+	}
+
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		match.Score = float64(i%1000) / 10
+		order.Compute(match)
+		match.Reset()
+	}
+}

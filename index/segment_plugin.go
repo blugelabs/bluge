@@ -48,6 +48,13 @@ func supportedSegmentTypeVersions(supportedSegmentPlugins map[string]map[uint32]
 
 func loadSegmentPlugin(supportedSegmentPlugins map[string]map[uint32]*SegmentPlugin,
 	forcedSegmentType string, forcedSegmentVersion uint32) (*SegmentPlugin, error) {
+	if forcedSegmentType == "ice" {
+		return nil, fmt.Errorf("unsupported legacy segment type %q; migrate the index offline", forcedSegmentType)
+	}
+	if forcedSegmentType == "zap" {
+		return nil, fmt.Errorf("unsupported experimental segment type %q version %d; rebuild the index with zapx-bluge",
+			forcedSegmentType, forcedSegmentVersion)
+	}
 	if versions, ok := supportedSegmentPlugins[forcedSegmentType]; ok {
 		if segPlugin, ok := versions[forcedSegmentVersion]; ok {
 			return segPlugin, nil

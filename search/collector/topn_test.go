@@ -17,6 +17,7 @@ package collector
 import (
 	"context"
 	"math"
+	"reflect"
 	"testing"
 
 	"github.com/blugelabs/bluge/search/aggregations"
@@ -101,6 +102,41 @@ func TestTop10Scores(t *testing.T) {
 	if minScore < 10 {
 		t.Errorf("expected minimum score to be higher than 10, got %f", minScore)
 	}
+}
+
+func TestScoreSortFastPathMatchesGenericSort(t *testing.T) {
+	scores := []float64{2, -3, 9, 9, 0, 4.5, -1, 12, 4.5, 7}
+	fast := collectScoreSortResults(t, scores, true)
+	generic := collectScoreSortResults(t, scores, false)
+	if !reflect.DeepEqual(fast, generic) {
+		t.Fatalf("fast score sort differs from generic sort:\nfast: %#v\ngeneric: %#v", fast, generic)
+	}
+}
+
+func collectScoreSortResults(t *testing.T, scores []float64, fast bool) [][2]float64 {
+	t.Helper()
+	matches := make([]*search.DocumentMatch, len(scores))
+	for i, score := range scores {
+		matches[i] = &search.DocumentMatch{Number: uint64(i + 1), Score: score}
+	}
+	collector := NewTopNCollector(4, 2, search.SortOrder{search.SortBy(search.DocumentScore()).Desc()})
+	if !fast {
+		collector.scoreSort = false
+	}
+	iterator, err := collector.Collect(context.Background(), nil, &stubSearcher{matches: matches})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var results [][2]float64
+	match, err := iterator.Next()
+	for err == nil && match != nil {
+		results = append(results, [2]float64{float64(match.Number), match.Score})
+		match, err = iterator.Next()
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	return results
 }
 
 func getTotalHitsMaxScore(bucket *search.Bucket) (total int, topScore float64) {

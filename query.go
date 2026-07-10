@@ -285,7 +285,9 @@ type DateRangeQuery struct {
 // NewDateRangeQuery creates a new Query for ranges
 // of date values.
 // Date strings are parsed using the DateTimeParser configured in the
-//  top-level config.QueryDateTimeParser
+//
+//	top-level config.QueryDateTimeParser
+//
 // Either, but not both endpoints can be nil.
 func NewDateRangeQuery(start, end time.Time) *DateRangeQuery {
 	return NewDateRangeInclusiveQuery(start, end, true, false)
@@ -294,7 +296,9 @@ func NewDateRangeQuery(start, end time.Time) *DateRangeQuery {
 // NewDateRangeInclusiveQuery creates a new Query for ranges
 // of date values.
 // Date strings are parsed using the DateTimeParser configured in the
-//  top-level config.QueryDateTimeParser
+//
+//	top-level config.QueryDateTimeParser
+//
 // Either, but not both endpoints can be nil.
 // startInclusive and endInclusive control inclusion of the endpoints.
 func NewDateRangeInclusiveQuery(start, end time.Time, startInclusive, endInclusive bool) *DateRangeQuery {
@@ -948,6 +952,10 @@ func (q *MatchQuery) Operator() MatchQueryOperator {
 }
 
 func (q *MatchQuery) Searcher(i search.Reader, options search.SearcherOptions) (search.Searcher, error) {
+	if q.operator != MatchQueryOperatorOr && q.operator != MatchQueryOperatorAnd {
+		return nil, fmt.Errorf("unhandled operator %d", q.operator)
+	}
+
 	field := q.field
 	if q.field == "" {
 		field = options.DefaultSearchField
@@ -963,6 +971,13 @@ func (q *MatchQuery) Searcher(i search.Reader, options search.SearcherOptions) (
 	}
 
 	if len(tokens) > 0 {
+		if len(tokens) == 1 && q.fuzziness == 0 {
+			tq := NewTermQuery(string(tokens[0].Term))
+			tq.SetField(field)
+			tq.SetBoost(q.boost.Value())
+			return tq.Searcher(i, options)
+		}
+
 		tqs := make([]Query, len(tokens))
 		if q.fuzziness != 0 {
 			for i, token := range tokens {
@@ -970,14 +985,12 @@ func (q *MatchQuery) Searcher(i search.Reader, options search.SearcherOptions) (
 				query.SetFuzziness(q.fuzziness)
 				query.SetPrefix(q.prefix)
 				query.SetField(field)
-				query.SetBoost(q.boost.Value())
 				tqs[i] = query
 			}
 		} else {
 			for i, token := range tokens {
 				tq := NewTermQuery(string(token.Term))
 				tq.SetField(field)
-				tq.SetBoost(q.boost.Value())
 				tqs[i] = tq
 			}
 		}

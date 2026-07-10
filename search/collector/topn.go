@@ -52,6 +52,7 @@ type TopNCollector struct {
 
 	lowestMatchOutsideResults *search.DocumentMatch
 	searchAfter               *search.DocumentMatch
+	scoreSort                 bool
 }
 
 // CheckDoneEvery controls how frequently we check the context deadline
@@ -72,6 +73,7 @@ func NewTopNCollectorAfter(size int, sort search.SortOrder, after [][]byte, reve
 	rv.searchAfter = &search.DocumentMatch{
 		SortValue: after,
 	}
+	rv.scoreSort = false
 
 	return rv
 }
@@ -85,6 +87,7 @@ func newTopNCollector(size, skip int, sort search.SortOrder, reverse bool) *TopN
 		sort:    sort,
 		reverse: reverse,
 	}
+	hc.scoreSort = !reverse && sort.IsScoreDescending()
 
 	// pre-allocate space on the store to avoid reslicing
 	// unless the size + skip is too large, then cap it
@@ -94,14 +97,17 @@ func newTopNCollector(size, skip int, sort search.SortOrder, reverse bool) *TopN
 		hc.backingSize = PreAllocSizeSkipCap + 1
 	}
 
+	compare := func(i, j *search.DocumentMatch) int {
+		if hc.scoreSort {
+			return hc.sort.CompareScore(i, j)
+		}
+		return hc.sort.Compare(i, j)
+	}
+
 	if size+skip > switchFromSliceToHeap {
-		hc.store = newStoreHeap(hc.backingSize, func(i, j *search.DocumentMatch) int {
-			return hc.sort.Compare(i, j)
-		})
+		hc.store = newStoreHeap(hc.backingSize, compare)
 	} else {
-		hc.store = newStoreSlice(hc.backingSize, func(i, j *search.DocumentMatch) int {
-			return hc.sort.Compare(i, j)
-		})
+		hc.store = newStoreSlice(hc.backingSize, compare)
 	}
 
 	// these lookups traverse an interface, so do once up-front
@@ -198,8 +204,10 @@ func (hc *TopNCollector) collectSingle(ctx *search.Context, d *search.DocumentMa
 		}
 	}
 
-	// compute this hits sort value
-	hc.sort.Compute(d)
+	if !hc.scoreSort {
+		// compute this hits sort value
+		hc.sort.Compute(d)
+	}
 
 	// calculate aggregations
 	bucket.Consume(d)
@@ -220,7 +228,7 @@ func (hc *TopNCollector) collectSingle(ctx *search.Context, d *search.DocumentMa
 	// with this one comparison, we can avoid all heap operations if
 	// this hit would have been added and then immediately removed
 	if hc.lowestMatchOutsideResults != nil {
-		cmp := hc.sort.Compare(d, hc.lowestMatchOutsideResults)
+		cmp := hc.compare(d, hc.lowestMatchOutsideResults)
 		if cmp >= 0 {
 			// this hit can't possibly be in the result set, so avoid heap ops
 			ctx.DocumentMatchPool.Put(d)
@@ -233,7 +241,7 @@ func (hc *TopNCollector) collectSingle(ctx *search.Context, d *search.DocumentMa
 		if hc.lowestMatchOutsideResults == nil {
 			hc.lowestMatchOutsideResults = removed
 		} else {
-			cmp := hc.sort.Compare(removed, hc.lowestMatchOutsideResults)
+			cmp := hc.compare(removed, hc.lowestMatchOutsideResults)
 			if cmp < 0 {
 				tmp := hc.lowestMatchOutsideResults
 				hc.lowestMatchOutsideResults = removed
@@ -242,6 +250,13 @@ func (hc *TopNCollector) collectSingle(ctx *search.Context, d *search.DocumentMa
 		}
 	}
 	return nil
+}
+
+func (hc *TopNCollector) compare(i, j *search.DocumentMatch) int {
+	if hc.scoreSort {
+		return hc.sort.CompareScore(i, j)
+	}
+	return hc.sort.Compare(i, j)
 }
 
 // finalizeResults starts with the heap containing the final top size+skip
@@ -257,6 +272,11 @@ func (hc *TopNCollector) finalizeResults() error {
 	if hc.reverse {
 		for i, j := 0, len(hc.results)-1; i < j; i, j = i+1, j-1 {
 			hc.results[i], hc.results[j] = hc.results[j], hc.results[i]
+		}
+	}
+	if hc.scoreSort {
+		for _, doc := range hc.results {
+			hc.sort.Compute(doc)
 		}
 	}
 

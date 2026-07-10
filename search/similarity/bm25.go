@@ -49,7 +49,10 @@ func (b *BM25Similarity) ComputeNorm(numTerms int) float32 {
 }
 
 func (b *BM25Similarity) Idf(docFreq, docCount uint64) float64 {
-	return math.Log(1.0 + float64(docCount-docFreq) + 0.5/(float64(docFreq)+0.5))
+	if docFreq > docCount {
+		return 0
+	}
+	return math.Log(1.0 + (float64(docCount-docFreq)+0.5)/(float64(docFreq)+0.5))
 }
 
 func (b *BM25Similarity) IdfExplainTerm(collectionStats segment.CollectionStats, termStats segment.TermStats) *search.Explanation {
@@ -98,6 +101,11 @@ func NewBM25Scorer(boost, k1, b, avgDocLen float64, idf *search.Explanation) *BM
 
 func (b *BM25Scorer) Score(freq int, norm float64) float64 {
 	docLen := math.Float32bits(float32(norm))
+	return b.ScoreRawNorm(freq, uint64(docLen))
+}
+
+func (b *BM25Scorer) ScoreRawNorm(freq int, normBits uint64) float64 {
+	docLen := normBits
 	normInverse := 1 / (b.k1 * ((1 - b.b) + b.b*float64(docLen)/b.avgDocLen))
 	return b.weight - b.weight/(1+float64(freq)*normInverse)
 }
